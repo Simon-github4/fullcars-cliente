@@ -1,0 +1,80 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.simon</groupId>
+  <artifactId>fullcars-cliente</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>fullcars-cliente</name>
+  <description>Cliente desarrollado en Swing que consume servicio REST</description>
+  
+  <dependencies>
+		<dependency>
+	    	<groupId>com.itextpdf</groupId>
+	    	<artifactId>itext7-core</artifactId>
+	    	<version>9.0.0</version>
+	    	<type>pom</type>
+		</dependency>
+		<dependency>
+	  		<groupId>com.formdev</groupId>
+	  		<artifactId>flatlaf</artifactId>
+	  		<version>3.5.2</version>
+		</dependency>
+	<!-- https://mvnrepository.com/artifact/com.formdev/flatlaf-extras -->
+		<dependency>
+		    <groupId>com.formdev</groupId>
+		    <artifactId>flatlaf-extras</artifactId>
+		    <version>3.5.2</version>
+		</dependency>
+
+		<dependency>
+	   	 	<groupId>io.github.dj-raven</groupId>
+	    	<artifactId>swing-datetime-picker</artifactId>
+	    	<version>2.0.0</version>
+		</dependency>
+	    <dependency>
+	        <groupId>com.fasterxml.jackson.core</groupId>
+	        <artifactId>jackson-databind</artifactId>
+	        <version>2.17.1</version>
+	    </dependency>
+	<!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
+		<dependency>
+		    <groupId>com.squareup.okhttp3</groupId>
+		    <artifactId>okhttp</artifactId>
+		    <version>5.0.0-alpha.14</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.38</version>
+			<optional>true</optional>
+		</dependency>
+  </dependencies>
+  
+  <build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
