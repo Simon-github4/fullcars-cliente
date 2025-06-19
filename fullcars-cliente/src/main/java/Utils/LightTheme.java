@@ -1,24 +1,32 @@
 package Utils;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.UIManager;
+
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class LightTheme extends FlatLightLaf {
 
     public static final String NAME = "MiTemaOscuro";
     private static final Color COLOR_PRIMARIO = new Color(26, 115, 232); // Azul Google
     private static final Color COLOR_TEXTO = Color.WHITE;
-
     private static final Color COLOR_SECUNDARIO = new Color(224, 224, 224); 
     private static final Color COLOR_TEXTO_SEC = new Color(26, 115, 232);
 	private static final Color COLOR_HEADER_TABLE = new Color(64, 152, 215);     
 
-    public static boolean setup() {
+	public static final Font TITLE_FONT = getTitleFont();
+    
+	public static boolean setup() {
         return setup(new LightTheme());
     }
 
@@ -45,6 +53,25 @@ public class LightTheme extends FlatLightLaf {
         return NAME;
     }
 
+    private static Font getTitleFont() {
+    	Font font=null;
+    	try {
+			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/fonts/Montserrat-Bold.ttf")).deriveFont(40f);
+		} catch (FontFormatException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return font;
+    }
+    
+    public static JLabel createTitle(String text) {
+    	JLabel title = new JLabel("Gestion de Auto Partes", JLabel.CENTER);
+    	title.setFont(TITLE_FONT);
+    	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 75));
+    	return title;
+    }
+    
     public LightTheme() {
         super();
         InputStream is = getClass().getResourceAsStream("/fonts/Roboto-Medium.ttf");

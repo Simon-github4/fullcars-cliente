@@ -1,6 +1,8 @@
 package data.service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,5 +113,26 @@ public class ClienteRestCarPart {
 	        return new CarPart();
 	    }
 	}
+
+	public CarPart getCarPart(String sku) {
+		String uri = ADDRESS + "?sku=" + URLEncoder.encode(sku, StandardCharsets.UTF_8) ;
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<CarPart>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return new CarPart();
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace(); // Manejo de error de conexión o de lectura
+	        return new CarPart();
+	    }	}
 
 }
