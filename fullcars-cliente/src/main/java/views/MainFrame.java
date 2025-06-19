@@ -5,12 +5,10 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontFormatException;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.io.InputStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -19,10 +17,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 
-import com.formdev.flatlaf.FlatLightLaf;
-
+import Utils.LightTheme;
 import controller.BrandController;
 import controller.CarPartController;
 
@@ -35,12 +31,17 @@ public class MainFrame extends JFrame{
     
     
     public MainFrame() {
-        setTitle("Full Cars");
+    	setStyling();
+        //setTitle("Full Cars");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(1820, 1000);
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        int width = gd.getDisplayMode().getWidth();
+        int height = gd.getDisplayMode().getHeight();
+        setSize(width - 450, height - 400);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        
         setLocationRelativeTo(null);
         setBackground(new Color(220, 220, 220));
-        setStyling();
 
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(Color.white);
@@ -106,37 +107,6 @@ public class MainFrame extends JFrame{
     }
     
     private void setStyling() {
-    	FlatLightLaf.setup();	
-    	
-    	 InputStream is = getClass().getResourceAsStream("/fonts/Roboto-Medium.ttf");
-         Font roboto = null;
-		try {
-			roboto = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(14f);
-		} catch (FontFormatException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-        GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(roboto);
-        UIManager.put("defaultFont", roboto);
-       
-        UIManager.put("TableHeader.background", new Color(52, 58, 64));
-        UIManager.put("TableHeader.foreground", Color.WHITE);
-
-
-		UIManager.put("Button.arc", 15);		
-		//UIManager.put("Button.font", new Font("Montserrat", Font.PLAIN, 16));		
-		UIManager.put("Button.foreground", Color.WHITE);		
-		UIManager.put("Button.background", new Color(84, 173, 253 ));	//new Color(157, 201, 255)	
-		//UIManager.put("Button.borderColor", new Color(84, 173, 253));				
-
-		UIManager.put("TextComponent.arc", 10);		
-		UIManager.put("Component.arc", 10);		
-		//UIManager.put("Component.innerFocusWidth", 0.001f);		
-		UIManager.put("Table.alternateRowColor", new Color(225,225,225));
-	    
-        UIManager.put("Panel.background", new Color(225,225,225));
-
-		//((JPanel) this.getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY, 3, true)); // Soft shadow
+    	LightTheme.setup();
 	}
 }
