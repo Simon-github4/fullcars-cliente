@@ -41,6 +41,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.formdev.flatlaf.FlatClientProperties;
+
 import Utils.Icons;
 import Utils.LightTheme;
 import Utils.TypedComboBox;
@@ -81,21 +83,20 @@ private static final long serialVersionUID = 1L;
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
 
-		public FormCarPart(CarPartController controller, IBrandProvider brandProvider, CategoryController categoryProvider) {
+		public FormCarPart(CarPartController controller, IBrandProvider brand, CategoryController category) {
 		    this.controller = controller;
-		    this.brandProvider = brandProvider;
-		    this.categoryProvider = categoryProvider;
+		    this.brandProvider = brand;
+		    this.categoryProvider = category;
 
 		    setLayout(new BorderLayout(0, 0));
 		    createInputPanel();	
 		    createTablePanel();
-		    createMessageLabel();
 		    createJPopupMenu();
-			initUI();
+		    createMessageLabel();
+		    initUI();
 			
-			fillBrands();
-			fillCategories();
-
+			comboBoxBrands.fill(brandProvider.getBrands(), new Brand(null, "Seleccione una Marca")); 
+			comboBoxCategory.fill(categoryProvider.getCategories(), new Category(null, "Seleccione una Categoria"));
 			sorter = new TableRowSorter<>(tableModel);
 	        table.setRowSorter(sorter);
 	        setupLiveFilterListeners();
@@ -155,12 +156,13 @@ private static final long serialVersionUID = 1L;
 			JLabel titulo = LightTheme.createTitle("Gestion de AutoPartes");
 
 			JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-			filterPanel.add(new JLabel("SKU: ", JLabel.RIGHT));
-			//filterPanel.setMaximumSize(new Dimension(WIDTH, 60));
-			//filterPanel.setPreferredSize(new Dimension(WIDTH, 50));
+			filterPanel.add(new JLabel("          ", JLabel.RIGHT));
+			filterPanel.add(new JLabel("Sku: ", JLabel.RIGHT));
 			filterPanel.add(skuSearchTextField);
 			filterPanel.add(new JLabel("Nombre: ", JLabel.RIGHT));
 			filterPanel.add(nameSearchTextField);
+			nameSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+			skuSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 			filterPanel.add(searchButton);
 			filterPanel.add(toggleButton);
 			LightTheme.aplicarEstiloPrimario(searchButton);
@@ -176,13 +178,11 @@ private static final long serialVersionUID = 1L;
 				        Color.BLACK
 				    )
 			));
-			
 			north.add(titulo, BorderLayout.NORTH);		
 			north.add(filterPanel, BorderLayout.SOUTH);
 			
 			add(north, BorderLayout.NORTH);	
-			
-//--------------------------------------------------------CENTER PANEL-------------------------------------------------(NO se personaliza)
+//------------------------------------------------CENTER PANEL-----------------------------(NO se personaliza)
 			JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tablePanel, inputPanel);
 	        splitPane.setResizeWeight(1); // El panel de arriba no se estira al redimensionar
 
@@ -201,7 +201,6 @@ private static final long serialVersionUID = 1L;
 	            }
 	            splitPane.revalidate();
 	        });
-	        //splitPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 	        add(splitPane, BorderLayout.CENTER);
 //--------------------------------------------------------CENTER PANEL------------------------------------------------------------
 		}
@@ -215,6 +214,7 @@ private static final long serialVersionUID = 1L;
 			inputPanel.setPreferredSize(size);
 
 			skuTextField.setEnabled(false);
+			skuTextField.setToolTipText("Codigo interno generado Automaticamente");
 			stockTextField.setToolTipText("Stock disponible (solo lectura)");
 			stockTextField.setEnabled(false);
 	
@@ -266,6 +266,7 @@ private static final long serialVersionUID = 1L;
 			inputPanel.add(buttonsPanel);		
 		}
 
+		@SuppressWarnings("serial")
 		private void createTablePanel() { //TO-DO : Personalize
 			tableModel = new DefaultTableModel(COLUMNS, 0){
 				@Override
@@ -276,25 +277,19 @@ private static final long serialVersionUID = 1L;
 	            public Class<?> getColumnClass(int column) {
 	                switch (column) {
 	                    case 3: return Long.class;
-	                    //case 5: return Category.class;
 	                    case 6: return Long.class;
 	                    default:return Object.class;
 	                }
 	            }
 	        };
-	        //tableModel.setColumnIdentifiers(COLUMNS);
-	
-			table = new JTable(tableModel) {
-				@Override
-				public String getToolTipText(MouseEvent e) {
-				       return "Click Derecho para Eliminar o Modificar";
-				}
-			};
+			table = new JTable(tableModel);
+			table.setToolTipText("Click Derecho para Eliminar o Modificar");
+			table.setShowGrid(true);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMaxWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMinWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setPreferredWidth(0);
-	        
-	        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+
+			DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 	        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 	        for (int i = 0; i < table.getColumnCount(); i++) {
 	            Class<?> columnClass = tableModel.getColumnClass(i);
@@ -302,7 +297,6 @@ private static final long serialVersionUID = 1L;
 	                table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 	        }
 
-	        table.setShowGrid(true);
 			tablePanel = new JPanel();
 			tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.Y_AXIS));
 			tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
@@ -313,20 +307,15 @@ private static final long serialVersionUID = 1L;
            	int modelRow = table.getSelectedRow();
            	if(modelRow != -1){
            	    int row = table.convertRowIndexToModel(modelRow);
-
-				String name = (String) tableModel.getValueAt(row, table.getColumnModel().getColumnIndex((String)"Nombre"));
-				String description = (String) tableModel.getValueAt(row, 1);
-				String sku = (String) tableModel.getValueAt(row, 2);
-				Long stock = (Long) tableModel.getValueAt(row, 3);
-				Brand brand = (Brand) tableModel.getValueAt(row, 4);
-				Category category = (Category) tableModel.getValueAt(row, 5);
-					
-				nameTextField.setText(name);
-				descriptionTextField.setText(description);
-				skuTextField.setText(sku);
-				stockTextField.setText(stock.toString());
-				comboBoxCategory.setSelectedItem(category);
-				comboBoxBrands.setSelectedItem(brand);
+				Long id = (Long) tableModel.getValueAt(row, table.getColumnModel().getColumnIndex((String)"id"));
+				CarPart part = controller.getCarPart(id);
+				
+				nameTextField.setText(part.getName());
+				descriptionTextField.setText(part.getDescription());
+				skuTextField.setText(part.getSku());
+				stockTextField.setText(String.valueOf(part.getStock()));
+				comboBoxCategory.setSelectedItem(part.getCategory());
+				comboBoxBrands.setSelectedItem(part.getBrand());
 					
 				if(!inputPanel.isVisible())
 					toggleButton.doClick();
@@ -357,28 +346,8 @@ private static final long serialVersionUID = 1L;
 			messageLabel.setText("");
 	        messageLabel.setOpaque(false);
 		}
-
-		private void fillBrands() {// metodo en obj de I,  fillBrands(JComboBox c){..}
-			comboBoxBrands.removeAllItems();
-			comboBoxBrands.addItem(new Brand(null, "Seleccione una Marca"));
-			List<Brand> brands = brandProvider.getBrands();
-			for(Brand b : brands)
-				comboBoxBrands.addItem(b);
-		}
-		private void fillCategories() {
-			comboBoxCategory.removeAllItems();
-			comboBoxCategory.addItem(new Category(null, "Seleccione una Categoria"));
-			List<Category> categories = categoryProvider.getCategories();
-			for(Category c : categories)
-				comboBoxCategory.addItem(c);
-		}
 		
 		private void applyCombinedFilters() {//TO-DO : Personalize			
-			/*skuSearchTextField.getDocument().addDocumentListener(new DocumentListener() {
-		        public void insertUpdate(DocumentEvent e) { applyCombinedFilters(); }
-		        public void removeUpdate(DocumentEvent e) { applyCombinedFilters(); }
-		        public void changedUpdate(DocumentEvent e) { applyCombinedFilters(); }
-		    });*/
 		    String skuText = skuSearchTextField.getText().trim();
 		    String nameText = nameSearchTextField.getText();
 		    List<RowFilter<Object, Object>> filters = new ArrayList<>();
@@ -416,46 +385,13 @@ private static final long serialVersionUID = 1L;
 		}
 
 		private void createJPopupMenu() {
-			JPopupMenu popupMenu = new JPopupMenu();
-			JMenuItem editarItem = new JMenuItem("Modificar fila");
-			JMenuItem eliminarItem = new JMenuItem("Eliminar fila");
-			popupMenu.add(editarItem);
-			popupMenu.add(eliminarItem);
-			//table.setComponentPopupMenu(popupMenu);
-
-			table.addMouseListener(new MouseAdapter() {
-				@Override
-				public void mousePressed(MouseEvent e) {
-					if (e.isPopupTrigger())
-						showPopup(e);
-				}
-				@Override
-				public void mouseReleased(MouseEvent e) {
-					if (e.isPopupTrigger())
-						showPopup(e);
-				}
-				private void showPopup(MouseEvent e) {
-					int row = table.rowAtPoint(e.getPoint());
-					if (row >= 0 && row < table.getRowCount()) {
-						table.setRowSelectionInterval(row, row); // selecciona la fila
-						popupMenu.show(e.getComponent(), e.getX(), e.getY());
-					}
-				}
-			});
-			eliminarItem.addActionListener(e -> delete() );
-			editarItem.addActionListener(e -> setRowToEdit() );
+			new JPopupMenuModifyDelete(table, this::setRowToEdit, this::delete );
 		}
 		
 		private void createMessageLabel() {
-			messageLabel = new JLabel("", SwingConstants.CENTER);
-	        messageLabel.setForeground(Color.WHITE);
-	        messageLabel.setBackground(Color.RED);
-	        messageLabel.setFont(new Font("Montserrat", Font.BOLD, 16));
+			messageLabel = LightTheme.createMessageLabel();
 	        JPanel horizontalPanel = new JPanel(new GridLayout());
-	        horizontalPanel.setPreferredSize(new Dimension(1920,55));
-	        horizontalPanel.setMaximumSize(new Dimension(1920,100));
 	        horizontalPanel.add(messageLabel);
-			//tablePanel.add(horizontalPanel);
 			add(horizontalPanel, BorderLayout.SOUTH);
 		}
 

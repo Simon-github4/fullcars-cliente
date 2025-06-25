@@ -54,10 +54,10 @@ public class ClienteRestCarPart {
 	
 			try (Response response = client.newCall(request).execute()) {
 				if (response.isSuccessful()) {
-					System.out.println("✅ CarPart posted successfully!");
+					System.out.println("CarPart posted successfully");
 					return true;
 				} else {
-					System.err.println("❌ Failed to post CarPart. Code: " + response.code());
+					System.err.println("Failed to post CarPart. Code: " + response.code());
 					System.err.println("Response: " + response.body().string());
 					return false;
 				}
@@ -79,10 +79,10 @@ public class ClienteRestCarPart {
 
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
-                System.out.println("✅ CarPart deleted successfully (ID: " + id + ")");
+                System.out.println("CarPart deleted successfully (ID: " + id + ")");
                 return true;
             } else {
-                System.err.println("❌ Failed to delete CarPart. Code: " + response.code());
+                System.err.println("Failed to delete CarPart. Code: " + response.code());
                 System.err.println("Response: " + response.body().string());
             }
         } catch (Exception e) {

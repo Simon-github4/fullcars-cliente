@@ -6,11 +6,14 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
 import java.io.IOException;
 import java.io.InputStream;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatLightLaf;
@@ -70,6 +73,16 @@ public class LightTheme extends FlatLightLaf {
     	title.setFont(TITLE_FONT);
     	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 75));
     	return title;
+    }
+    
+    public static JLabel createMessageLabel() {
+    	JLabel messageLabel = new JLabel("", SwingConstants.CENTER);
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setBackground(Color.RED);
+        messageLabel.setFont(new Font("Montserrat", Font.BOLD, 16));
+        messageLabel.setPreferredSize(new Dimension(1920,55));
+        messageLabel.setMaximumSize(new Dimension(1920,100));
+        return messageLabel;
     }
     
     public LightTheme() {

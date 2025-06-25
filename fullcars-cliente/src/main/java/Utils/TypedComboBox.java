@@ -1,5 +1,7 @@
 package Utils;
 
+import java.util.List;
+
 import javax.swing.JComboBox;
 
 public class TypedComboBox<T> extends JComboBox<T> {
@@ -11,6 +13,12 @@ public class TypedComboBox<T> extends JComboBox<T> {
 	public T getSelectedItem() {
         return (T) super.getSelectedItem();
     }
+
+	public void fill(List<T> items, T placeholder) {
+	    removeAllItems();
+	    addItem(placeholder);
+	    items.forEach(this::addItem); // << this is correct
+	}
 
 }
 

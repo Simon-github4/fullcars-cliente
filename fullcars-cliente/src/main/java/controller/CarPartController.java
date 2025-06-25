@@ -25,7 +25,7 @@ public class CarPartController {
 		if(c.getId() != null) 
 			c.setStock(getCarPart(c.getId()).getStock());
 			//set actual Stock to ensure that is no modified on the client, or had change
-		c.setSku("sku"+c.getName()+c.getDescription());
+
 		return serviceCarPart.save(c);
 	}
 
