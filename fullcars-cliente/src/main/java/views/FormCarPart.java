@@ -69,7 +69,6 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
 	private JButton toggleButton = new JButton("Mostrar formulario");
-	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18,18));
 	
 	private JTextField nameTextField = new JTextField("", 29);
 	private JTextField stockTextField = new JTextField("", 29);
@@ -78,6 +77,7 @@ private static final long serialVersionUID = 1L;
 	private JTextField descriptionTextField = new JTextField("", 29);
 	private JTextField skuTextField = new JTextField(29);
 	
+	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18,18));
 	private JTextField skuSearchTextField = new JTextField("", 15);
 	private JTextField nameSearchTextField = new JTextField("",15);  // Agregado
 	private TableRowSorter<DefaultTableModel> sorter;
@@ -267,7 +267,7 @@ private static final long serialVersionUID = 1L;
 		}
 
 		@SuppressWarnings("serial")
-		private void createTablePanel() { //TO-DO : Personalize
+		private void createTablePanel() { //TO-DO : Personalize getColumnClass()
 			tableModel = new DefaultTableModel(COLUMNS, 0){
 				@Override
 	            public boolean isCellEditable(int row, int column) {
@@ -299,7 +299,7 @@ private static final long serialVersionUID = 1L;
 
 			tablePanel = new JPanel();
 			tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.Y_AXIS));
-			tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
+			tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 			tablePanel.add(new JScrollPane(table));				
 		}
 
