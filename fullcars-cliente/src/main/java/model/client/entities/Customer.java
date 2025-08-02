@@ -13,7 +13,6 @@ public class Customer {
 
     private Long id;
     
-    private long balance;
     private String fullName;
     private String dni;
     private String cuit;

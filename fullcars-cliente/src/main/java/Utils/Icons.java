@@ -1,9 +1,11 @@
 package Utils;
 
 import java.awt.Image;
-import java.net.URL;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
+
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public enum Icons {
 	LENS("lupa.png"),
@@ -11,29 +13,31 @@ public enum Icons {
 	DELETE("eliminar.png"),
 	CLEAN("escoba.png"),
 	BILL("factura.png"),
-	MODIFY("modificar.png");
+	MODIFY("modificar.png"),
+	REFRESH("actualizar.png"),
+	NEW("nuevo.png"),
+	LOGO("fullcarsLOGO.jpg");
 	
 	private static final String SRC = "/resources/imgs/";
 	private final String fileName;
 
-	public ImageIcon create(int width, int height) {
-		URL url = getClass().getResource(this.getPath());
-        if (url != null) {
-            ImageIcon icon = new ImageIcon(url);
-            Image image = icon.getImage();
-            Image resizedImage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            ImageIcon resizedIcon = new ImageIcon(resizedImage);
-            return resizedIcon;
-        }else
-        	return new ImageIcon();//default
+	public Icon create(int width, int height) {
+		if (fileName.toLowerCase().endsWith(".svg")) {
+            return new FlatSVGIcon(getPath(), width, height);
+        } else {
+            ImageIcon icon = new ImageIcon(getClass().getResource(getPath()));
+            if (icon.getIconWidth() != width || icon.getIconHeight() != height) {
+                Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                return new ImageIcon(scaled);
+            }
+            return icon;
+        }   
 	}
-	public ImageIcon create() {
-		URL url = getClass().getResource(this.getPath());
-        if (url != null) 
-            return new ImageIcon(url);
-        else
-        	return new ImageIcon();
-	}
+
+    public Icon create() {
+        return create(24, 24); 
+    }
+
 	Icons(String fileName) {
 		this.fileName = fileName;
 	}

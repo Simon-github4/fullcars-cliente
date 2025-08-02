@@ -4,8 +4,8 @@ import javax.swing.SwingUtilities;
 
 import com.formdev.flatlaf.FlatLaf;
 
-import Utils.LightTheme;
 import views.MainFrame;
+import views.components.LightTheme;
 
 
 public class Initializr {

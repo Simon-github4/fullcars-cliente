@@ -11,21 +11,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import model.client.entities.Brand;
-import model.client.entities.Category;
+import model.client.entities.Customer;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class ClienteRestCategory {
-
-	private static final String ADDRESS = "http://localhost:8080/categories";
+public class ClienteRestCustomer {
+	
+	private static final String ADDRESS = "http://localhost:8080/customers";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 
-	public List<Category> getCategories() {
-	    String uri = ADDRESS;// + "getMarcas?filterName=" + URLEncoder.encode(filterName, StandardCharsets.UTF_8);
+	public List<Customer> getCustomers() {
+	    String uri = ADDRESS;
 
 	    Request request = new Request.Builder()
 	            .url(uri)
@@ -35,7 +35,7 @@ public class ClienteRestCategory {
 	    try (Response response = client.newCall(request).execute()) {
 	        if (response.isSuccessful() && response.body() != null) {
 	        	String json = response.body().string();
-	            return mapper.readValue(json, new TypeReference<List<Category>>() {});
+	            return mapper.readValue(json, new TypeReference<List<Customer>>() {});
 	        } else {
 	            System.err.println("Error HTTP: " + response.code());
 	            return new ArrayList<>();
@@ -45,8 +45,8 @@ public class ClienteRestCategory {
 	        return new ArrayList<>();
 	    }
 	}
-
-	public Category getCategory(Long id) {
+	
+	public Customer getCustomer(Long id) {
 		String uri = ADDRESS +"/"+ URLEncoder.encode(id.toString(), StandardCharsets.UTF_8);
 
 	    Request request = new Request.Builder()
@@ -57,18 +57,40 @@ public class ClienteRestCategory {
 	    try (Response response = client.newCall(request).execute()) {
 	        if (response.isSuccessful() && response.body() != null) {
 	        	String json = response.body().string();
-	            return mapper.readValue(json, new TypeReference<Category>() {});
+	            return mapper.readValue(json, new TypeReference<Customer>() {});
 	        } else {
 	            System.err.println("Error HTTP: " + response.code());
 	            return null;
 	        }
 	    } catch (IOException e) {
-	        e.printStackTrace(); // Manejo de error de conexión o de lectura
+	        e.printStackTrace();
 	        return null;
 	    }
 	}
 
-	public boolean save(Category m) {
+	public Customer getCustomer(String dni) {
+		String uri = ADDRESS +"?dni=" + URLEncoder.encode(dni, StandardCharsets.UTF_8);
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<Customer>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return null;
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
+	
+	public boolean save(Customer m) {
 		try{
 			String json = mapper.writeValueAsString(m);
 	
@@ -77,10 +99,10 @@ public class ClienteRestCategory {
 	
 			try (Response response = client.newCall(request).execute()) {
 				if (response.isSuccessful()) {
-					System.out.println("Category posted successfully");
+					System.out.println("Customer posted successfully");
 					return true;
 				} else {
-					System.err.println("Failed to post Category. Code: " + response.code());
+					System.err.println("Failed to post Customer. Code: " + response.code());
 					System.err.println("Response: " + response.body().string());
 					return false;
 				}
@@ -102,11 +124,12 @@ public class ClienteRestCategory {
 
 	        try (Response response = client.newCall(request).execute()) {
 	            if (response.isSuccessful()) {
-	                System.out.println("Category deleted successfully (ID: " + id + ")");
+	                System.out.println("Customer deleted successfully (ID: " + id + ")");
 	            } else {
-	                System.err.println("Failed to delete Category. Code: " + response.code());
+	                System.err.println("Failed to delete Customer. Code: " + response.code());
 	                System.err.println("Response: " + response.body().string());
 	            }
 	        } 
 	}
+	
 }

@@ -3,31 +3,28 @@ package views;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-
-import Utils.FormFactory;
-import Utils.LightTheme;
+import Utils.Icons;
+import interfaces.Refreshable;
+import views.components.FormFactory;
+import views.components.LightTheme;
 
 public class MainFrame extends JFrame{
 
+	private static final long serialVersionUID = 1L;
 	private CardLayout cardLayout;
     private JPanel cardPanels;
    
@@ -51,19 +48,39 @@ public class MainFrame extends JFrame{
         setJMenuBar(menuBar);
 
         JMenu menuProductos = new JMenu("PRODUCTOS");//en vex de eomji icono
-        JMenu menuCompras   = new JMenu("COMPRAS");
-        JMenu menuVentas    = new JMenu("VENTAS");
-        JMenu menuClientes  = new JMenu("CLIENTES");
-
-        menuBar.add(menuProductos);
-        menuBar.add(menuCompras);
-        menuBar.add(menuVentas);
-        menuBar.add(menuClientes);
-
         menuProductos.addMouseListener(new ClickAdapter("PRODUCTOS"));
-        menuCompras.addMouseListener(new ClickAdapter("COMPRAS"));
-        menuVentas.addMouseListener(new ClickAdapter("VENTAS"));
+
+        JMenu menuCategorias = new JMenu("CATEGORIAS");
+        menuCategorias.addMouseListener(new ClickAdapter("CATEGORIAS"));
+
+        JMenu menuMarcas  = new JMenu("MARCAS");
+        menuMarcas.addMouseListener(new ClickAdapter("MARCAS"));
+
+        JMenu menuClientes  = new JMenu("CLIENTES");
         menuClientes.addMouseListener(new ClickAdapter("CLIENTES"));
+        
+        JMenu menuProveedores = new JMenu("PROVEEDORES");
+        menuProveedores.addMouseListener(new ClickAdapter("PROVEEDORES"));
+        
+        JMenu menuMovimientosStock = new JMenu("MOV. STOCK");
+        menuMovimientosStock.addMouseListener(new ClickAdapter("MOV. STOCK"));
+        
+        JMenu menuVentas = new JMenu("VENTAS");
+        
+        JMenuItem history = new JMenuItem("HISTORIAL");
+        history.addMouseListener(new ClickAdapter("HISTORIAL"));
+        menuVentas.add(history);
+        JMenuItem form = new JMenuItem("NUEVA VENTA");
+        form.addMouseListener(new ClickAdapter("NUEVA VENTA"));
+        menuVentas.add(form);
+        
+        menuBar.add(menuProductos);
+        menuBar.add(menuClientes);
+        menuBar.add(menuProveedores);
+        menuBar.add(menuMovimientosStock);
+        menuBar.add(menuCategorias);
+        menuBar.add(menuMarcas);
+        menuBar.add(menuVentas);
         
         cardLayout = new CardLayout();
         
@@ -71,22 +88,14 @@ public class MainFrame extends JFrame{
         add(cardPanels, BorderLayout.CENTER);
         
         cardPanels.add(FormFactory.createFormCarPart(), "PRODUCTOS");
-        cardPanels.add(crearPanel("🛒 Panel de Compras", new Color(232, 245, 233)), "COMPRAS");
-        cardPanels.add(crearPanel("💵 Panel de Ventas", new Color(255, 243, 224)), "VENTAS");
-        cardPanels.add(crearPanel("👥 Panel de Clientes", new Color(255, 236, 239)), "CLIENTES");
-
-    }
-
-    private JPanel crearPanel(String texto, Color colorFondo) {
-        JPanel panel = new JPanel(new BorderLayout(0,0));
-        panel.setBackground(colorFondo);
-        panel.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
+        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
+        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
+        cardPanels.add(FormFactory.createCustomerForm(), "CLIENTES");
+        cardPanels.add(FormFactory.createProviderForm(), "PROVEEDORES");
+        cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
+        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL");
+        cardPanels.add(FormFactory.createSalesForm(), "NUEVA VENTA");
         
-        JLabel label = new JLabel(texto, SwingConstants.CENTER);
-        label.setFont(new Font("Montserrat", Font.BOLD, 24));
-        panel.add(label, BorderLayout.CENTER);
-
-        return panel;
     }
 
     private class ClickAdapter extends MouseAdapter {
@@ -97,12 +106,17 @@ public class MainFrame extends JFrame{
         }
 
         @Override
-        public void mouseClicked(MouseEvent e) {
-            cardLayout.show(cardPanels, panelNombre);
+        public void mousePressed(MouseEvent e) {
+        	cardLayout.show(cardPanels, panelNombre);
+            
+            for (Component comp : cardPanels.getComponents()) 
+                if (comp.isVisible() && comp instanceof Refreshable )
+                	((Refreshable)comp).refresh();
         }
     }
     
     private void setStyling() {
     	LightTheme.setup();
+    	setIconImage(new ImageIcon(getClass().getResource(Icons.LOGO.getPath())).getImage());
 	}
 }

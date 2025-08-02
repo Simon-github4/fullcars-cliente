@@ -15,11 +15,17 @@ public class CarPart {
     private String name;
     private String description;
     private String sku;
-    private long stock;
+    private Long stock;
+    
     private Brand brand;
-
+    private Provider provider;
     private Category category;
+    
+    @Builder.Default
+    private Long basePrice = 0L;
 
-    //private int purchasePrice;
-    //private BigDecimal salePrice;
+    @Override
+    public String toString() {
+    	return sku;
+    }
 }

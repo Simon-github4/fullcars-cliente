@@ -1,4 +1,4 @@
-package views;
+package views.components;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -14,7 +14,7 @@ public class JPopupMenuModifyDelete extends JPopupMenu {
 	public JPopupMenuModifyDelete(JTable table, Runnable onEdit, Runnable onDelete) {
         JMenuItem editItem = new JMenuItem("Modificar fila");
         JMenuItem deleteItem = new JMenuItem("Eliminar fila");
-
+        
         add(editItem);
         add(deleteItem);
 
@@ -44,5 +44,37 @@ public class JPopupMenuModifyDelete extends JPopupMenu {
             }
         });
     }
+	
+	public JPopupMenuModifyDelete(JTable table, Runnable toDo, String text) {
+        JMenuItem editItem = new JMenuItem(text);
+        
+        add(editItem);
+
+        editItem.addActionListener(e -> toDo.run());
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override 
+            public void mousePressed(MouseEvent e) {
+            	if (e.isPopupTrigger())
+            		showIfPopup(e); 
+            }
+            @Override
+            public void mouseReleased(MouseEvent e){
+            	if (e.isPopupTrigger()) 
+            		showIfPopup(e); 
+            }
+
+            private void showIfPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int row = table.rowAtPoint(e.getPoint());
+                    if (row >= 0 && row < table.getRowCount()) {
+                        table.setRowSelectionInterval(row, row);
+                        show(e.getComponent(), e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+    }
+	
 }
 

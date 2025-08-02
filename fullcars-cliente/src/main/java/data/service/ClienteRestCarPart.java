@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import Utils.ServerException;
 import model.client.entities.CarPart;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -45,7 +46,7 @@ public class ClienteRestCarPart {
 	    }
 	}
 
-	public boolean save(CarPart carPart) {
+	public void save(CarPart carPart) throws ServerException, IOException, Exception {
 		try{
 			String json = mapper.writeValueAsString(carPart);
 	
@@ -55,23 +56,23 @@ public class ClienteRestCarPart {
 			try (Response response = client.newCall(request).execute()) {
 				if (response.isSuccessful()) {
 					System.out.println("CarPart posted successfully");
-					return true;
 				} else {
+					String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
 					System.err.println("Failed to post CarPart. Code: " + response.code());
-					System.err.println("Response: " + response.body().string());
-					return false;
+					System.err.println("Response: " + errorBody);
+					throw new ServerException(errorBody);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-				return false;
+				throw new IOException("No se pudo guardar, hubo una falla en conectar al servidor");
 			}
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
-			return false;
+			throw new Exception("No se pudo guardar");
 		}
     }
 
-	public boolean delete(Long id) {        
+	public void delete(Long id) throws ServerException, IOException{        
         Request request = new Request.Builder()
             .url(ADDRESS + "/" + id)
             .delete()
@@ -80,16 +81,16 @@ public class ClienteRestCarPart {
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
                 System.out.println("CarPart deleted successfully (ID: " + id + ")");
-                return true;
             } else {
-                System.err.println("Failed to delete CarPart. Code: " + response.code());
-                System.err.println("Response: " + response.body().string());
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to delete CarPart. Code: " + response.code());
+                System.err.println("Response: " + errorBody);
+                throw new ServerException(errorBody);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
+        }catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo eliminar el movimiento de stock, falla en conexion a servidor");
+		}	
     }
 
 	public CarPart getCarPart(Long id) {

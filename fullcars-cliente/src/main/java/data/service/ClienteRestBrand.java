@@ -1,17 +1,21 @@
 package data.service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import model.client.entities.Brand;
-import model.client.entities.CarPart;
+import model.client.entities.Category;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class ClienteRestBrand {
@@ -41,4 +45,70 @@ public class ClienteRestBrand {
 	        return new ArrayList<>();
 	    }
 	}
+	
+	public Brand getBrand(Long id) {
+		String uri = ADDRESS +"/"+ URLEncoder.encode(id.toString(), StandardCharsets.UTF_8);
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<Brand>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return null;
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
+
+	public boolean save(Brand m) {
+		try{
+			String json = mapper.writeValueAsString(m);
+	
+			RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
+			Request request = new Request.Builder().url(ADDRESS).post(body).build();
+	
+			try (Response response = client.newCall(request).execute()) {
+				if (response.isSuccessful()) {
+					System.out.println("brand posted successfully");
+					return true;
+				} else {
+					System.err.println("Failed to post brand. Code: " + response.code());
+					System.err.println("Response: " + response.body().string());
+					return false;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public void delete(Long id) throws IOException {
+		Request request = new Request.Builder()
+	            .url(ADDRESS + "/" + id)
+	            .delete()
+	            .build();
+
+	        try (Response response = client.newCall(request).execute()) {
+	            if (response.isSuccessful()) {
+	                System.out.println("brand deleted successfully (ID: " + id + ")");
+	            } else {
+	                System.err.println("Failed to delete brand. Code: " + response.code());
+	                System.err.println("Response: " + response.body().string());
+	            }
+	        } 
+	}
+	
+	
 }

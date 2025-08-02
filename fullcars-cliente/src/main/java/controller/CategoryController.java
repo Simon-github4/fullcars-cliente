@@ -1,5 +1,6 @@
 package controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import data.service.ClienteRestCategory;
@@ -12,6 +13,23 @@ public class CategoryController {
 	//@Override
 	public List<Category> getCategories() {
 		return categoryService.getCategories();
+	}
+
+	public Category getCategory(Long id) {
+		return categoryService.getCategory(id);
+	}
+
+	public boolean save(Category m) {
+		return categoryService.save(m);
+	}
+
+	public void delete(Long id) throws IOException {
+		try {
+			categoryService.delete(id);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo eliminar la categoria");
+		}
 	}
 
 	

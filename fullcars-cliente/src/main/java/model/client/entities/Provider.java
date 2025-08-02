@@ -20,4 +20,8 @@ public class Provider {
     private String adress;
     //private String condicionIva;
 
+    @Override
+    public String toString() {
+    	return companyName;
+    }
 }

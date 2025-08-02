@@ -5,30 +5,21 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.FontFormatException;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -44,49 +35,43 @@ import javax.swing.table.TableRowSorter;
 import com.formdev.flatlaf.FlatClientProperties;
 
 import Utils.Icons;
-import Utils.LightTheme;
-import Utils.TypedComboBox;
-import controller.CarPartController;
-import controller.CategoryController;
-import interfaces.IBrandProvider;
-import model.client.entities.Brand;
-import model.client.entities.CarPart;
-import model.client.entities.Category;
+import controller.CustomerController;
+import interfaces.Refreshable;
+import model.client.entities.Customer;
+import views.components.JPopupMenuModifyDelete;
+import views.components.LightTheme;
+import views.components.NewModifyButton;
 
-
-public class FormCarPart extends JPanel{
+public class CustomerForm extends JPanel implements Refreshable{
 	
 private static final long serialVersionUID = 1L;
 	
-	private final CarPartController controller;
-	private final IBrandProvider brandProvider;
-	private final CategoryController categoryProvider;
+	private final CustomerController controller;
 	
 	private JPanel inputPanel;
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Stock", "Marca", "Categoria", "id"};
+	private static final Object[] COLUMNS = {"Nombre completo", "D.N.I", "CUIT / CUIL", "Email", "Telefono", "Direccion", "id"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
 	private JButton toggleButton = new JButton("Mostrar formulario");
 	
 	private JTextField nameTextField = new JTextField("", 29);
-	private JTextField stockTextField = new JTextField("", 29);
-	private TypedComboBox<Brand> comboBoxBrands = new TypedComboBox<Brand>();
-	private TypedComboBox<Category> comboBoxCategory = new TypedComboBox<Category>();
-	private JTextField descriptionTextField = new JTextField("", 29);
-	private JTextField skuTextField = new JTextField(29);
+	private JTextField dniTextField = new JTextField(29);
+	private JTextField cuitTextField = new JTextField("", 29);
+	private JTextField adressTextField = new JTextField("", 29);
+	private JTextField phoneTextField = new JTextField("", 29);
+	private JTextField mailTextField = new JTextField("", 29);
+	private NewModifyButton confirmButton = new NewModifyButton();
 	
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18,18));
-	private JTextField skuSearchTextField = new JTextField("", 15);
+	private JTextField dniSearchTextField = new JTextField("", 15);
 	private JTextField nameSearchTextField = new JTextField("",15);  // Agregado
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
 
-		public FormCarPart(CarPartController controller, IBrandProvider brand, CategoryController category) {
+		public CustomerForm(CustomerController controller) {
 		    this.controller = controller;
-		    this.brandProvider = brand;
-		    this.categoryProvider = category;
 
 		    setLayout(new BorderLayout(0, 0));
 		    createInputPanel();	
@@ -95,8 +80,6 @@ private static final long serialVersionUID = 1L;
 		    createMessageLabel();
 		    initUI();
 			
-			comboBoxBrands.fill(brandProvider.getBrands(), new Brand(null, "Seleccione una Marca")); 
-			comboBoxCategory.fill(categoryProvider.getCategories(), new Category(null, "Seleccione una Categoria"));
 			sorter = new TableRowSorter<>(tableModel);
 	        table.setRowSorter(sorter);
 	        setupLiveFilterListeners();
@@ -104,30 +87,32 @@ private static final long serialVersionUID = 1L;
 	        loadTable();
 		}
 		
-		private void save() {			  //TO-DO : Personalize
-			CarPart m = CarPart.builder()
-					.brand(comboBoxBrands.getSelectedItem())
-					.category(comboBoxCategory.getSelectedItem())
-					.name(nameTextField.getText())
-					.description(descriptionTextField.getText())
-					.sku(skuTextField.getText())
+		private void save() {			  
+			Customer c = Customer.builder()
+					.fullName(nameTextField.getText())
+					.dni(dniTextField.getText())
+					.adress(adressTextField.getText())
+					.cuit(cuitTextField.getText())
+					.email(mailTextField.getText())
+					.phone(phoneTextField.getText())
 					.build();
 
-			if(! skuTextField.getText().isBlank()) {
-				long id = controller.getCarPart(skuTextField.getText()).getId();//(Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
-				m.setId(id);
+			if(confirmButton.isInModifyMode()) {
+				Long id = confirmButton.getIdToModify();
+				c.setId(id);
 			}
-			if(controller.save(m)) {	
+			
+			if(controller.save(c)) {	
 				clearFields();
 				loadTable();
 			}else
 				setMessage("No se pudo Guardar");
 		}
 		
-		private void delete() {			  //TO-DO : Personalize
-			String sku = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"SKU"));
+		private void delete() {			
+			String name = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"Nombre completo"));
 			try {
-				if(JOptionPane.showConfirmDialog(null, "Desea eliminar al producto con el sku: "+sku,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+				if(JOptionPane.showConfirmDialog(null, "Desea eliminar al cliente "+ name,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
 					Long id = (Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
 					controller.delete(id);
 					clearFields();
@@ -138,31 +123,31 @@ private static final long serialVersionUID = 1L;
 			}
 		}
 		
-		private void loadTable() {		  //TO-DO : Personalize
+		private void loadTable() {		  
 	        tableModel.setRowCount(0);
 	        sorter.setSortKeys(null);//resets column order
 	        
-			List<CarPart> carParts = controller.getCarParts();
-			for(CarPart c : carParts) {
-				Object[] row = {c.getName(), c.getDescription(), c.getSku(), c.getStock(), c.getBrand(), c.getCategory(), c.getId()};
+			List<Customer> customers = controller.getCustomers();
+			for(Customer c : customers) {
+				Object[] row = {c.getFullName(), c.getDni(), c.getCuit(), c.getEmail(), c.getPhone(), c.getAdress(), c.getId()};
 				tableModel.addRow(row);
 			}
 		}
 
-		private void initUI() {	   		  //TO-DO : Personalize
+		private void initUI() {	   		 
 		    searchButton.addActionListener(e -> loadTable());
 		    
 		    JPanel north = new JPanel(new BorderLayout());
-			JLabel titulo = LightTheme.createTitle("Gestion de AutoPartes");
+		    JPanel titulo = LightTheme.createTitle("Clientes");
 
 			JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-			filterPanel.add(new JLabel("Sku: ", JLabel.RIGHT));
-			filterPanel.add(skuSearchTextField);
+			filterPanel.add(new JLabel("Dni: ", JLabel.RIGHT));
+			filterPanel.add(dniSearchTextField);
 			filterPanel.add(new JLabel("Nombre: ", JLabel.RIGHT));
 			filterPanel.add(nameSearchTextField);
 			nameSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-			skuSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+			dniSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 			filterPanel.add(searchButton);
 			filterPanel.add(toggleButton);
 			LightTheme.aplicarEstiloPrimario(searchButton);
@@ -186,6 +171,7 @@ private static final long serialVersionUID = 1L;
 			JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tablePanel, inputPanel);
 	        splitPane.setResizeWeight(1); // El panel de arriba no se estira al redimensionar
 
+	        toggleButton.setPreferredSize(new Dimension(170, 26));
 	        toggleButton.addActionListener(e -> {
 	            if (inputPanel.isVisible()) {
 	                inputPanel.setVisible(false);
@@ -205,7 +191,7 @@ private static final long serialVersionUID = 1L;
 //--------------------------------------------------------CENTER PANEL------------------------------------------------------------
 		}
 
-		private void createInputPanel() { //TO-DO : Personalize
+		private void createInputPanel() { 
 			inputPanel = new JPanel();
 			inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
 			inputPanel.setVisible(false);
@@ -213,48 +199,40 @@ private static final long serialVersionUID = 1L;
 			inputPanel.setMinimumSize(new Dimension(380, HEIGHT));
 			inputPanel.setPreferredSize(size);
 
-			skuTextField.setEnabled(false);
-			skuTextField.setToolTipText("Codigo interno generado Automaticamente");
-			stockTextField.setToolTipText("Stock disponible (solo lectura)");
-			stockTextField.setEnabled(false);
-	
-			JPanel horizontalPanel = new JPanel(new GridLayout(0,1));
+			JPanel rowsPanel = new JPanel(new GridLayout(0,1));
 
-			horizontalPanel.add(new JLabel("  Nombre", JLabel.LEFT));
-			horizontalPanel.add(nameTextField);
-			horizontalPanel.add(new JLabel("  Descripcion", JLabel.LEFT));
-			horizontalPanel.add(descriptionTextField);
+			rowsPanel.add(new JLabel("  Nombre", JLabel.LEFT));
+			rowsPanel.add(nameTextField);
+			rowsPanel.add(new JLabel("  Documento (DNI)", JLabel.LEFT));
+			rowsPanel.add(dniTextField);
+			rowsPanel.add(new JLabel("  CUIT / CUIL", JLabel.LEFT));
+			rowsPanel.add(cuitTextField);
+			rowsPanel.add(new JLabel("  Direccion", JLabel.LEFT));
+			rowsPanel.add(adressTextField);
 			
-			JPanel grid = new JPanel(new GridLayout(1,0));
-			grid.add(new JLabel("  Sku", JLabel.LEFT));
-			grid.add(new JLabel("  Stock", JLabel.LEFT));
-			horizontalPanel.add(grid);
+			JPanel columnPanel = new JPanel(new GridLayout(1,0));
+			columnPanel.add(new JLabel("  Mail", JLabel.LEFT));
+			columnPanel.add(new JLabel("  Telefono", JLabel.LEFT));
+			rowsPanel.add(columnPanel);
 			
-			grid = new JPanel(new GridLayout(1,0));
-			grid.add(skuTextField);		
-			grid.add(stockTextField);
-			horizontalPanel.add(grid);
+			columnPanel = new JPanel(new GridLayout(1,0));
+			columnPanel.add(mailTextField);		
+			columnPanel.add(phoneTextField);
+			rowsPanel.add(columnPanel);
 			
-			horizontalPanel.add(new JLabel("  Marca", JLabel.LEFT));
-			horizontalPanel.add(comboBoxBrands);
-			horizontalPanel.add(new JLabel("  Categoria", JLabel.LEFT));
-			horizontalPanel.add(comboBoxCategory);		
-			//categoryTextField.putClientProperty(FlatClientProperties.STYLE, "showRevealButton:true");
-			
-			inputPanel.add(horizontalPanel);
+			inputPanel.add(rowsPanel);
 			
 			JPanel buttonsPanel = new JPanel(new BorderLayout());
 			buttonsPanel.setMaximumSize(new Dimension(500, 160));
 			JPanel firsts = new JPanel(new GridLayout());
 
-			JButton confirm = new JButton("Confirmar");
-			confirm.addActionListener(e ->{
+			confirmButton.addActionListener(e ->{
 				if(validateFields())
 					save();
 			});
-			LightTheme.aplicarEstiloPrimario(confirm);
-			confirm.setPreferredSize(new Dimension(120, 70));
-			firsts.add(confirm);
+			LightTheme.aplicarEstiloPrimario(confirmButton);
+			confirmButton.setPreferredSize(new Dimension(120, 70));
+			firsts.add(confirmButton);
 
 			JButton cancel = new JButton("Cancelar");
 			cancel.addActionListener(e -> clearFields());
@@ -267,7 +245,7 @@ private static final long serialVersionUID = 1L;
 		}
 
 		@SuppressWarnings("serial")
-		private void createTablePanel() { //TO-DO : Personalize getColumnClass()
+		private void createTablePanel() { 
 			tableModel = new DefaultTableModel(COLUMNS, 0){
 				@Override
 	            public boolean isCellEditable(int row, int column) {
@@ -276,7 +254,7 @@ private static final long serialVersionUID = 1L;
 				@Override
 	            public Class<?> getColumnClass(int column) {
 	                switch (column) {
-	                    case 3: return Long.class;
+	                    case 3: return String.class;
 	                    case 6: return Long.class;
 	                    default:return Object.class;
 	                }
@@ -303,57 +281,61 @@ private static final long serialVersionUID = 1L;
 			tablePanel.add(new JScrollPane(table));				
 		}
 
-		private void setRowToEdit() {	  //TO-DO : Personalize
-           	int modelRow = table.getSelectedRow();
-           	if(modelRow != -1){
-           	    int row = table.convertRowIndexToModel(modelRow);
-				Long id = (Long) tableModel.getValueAt(row, table.getColumnModel().getColumnIndex((String)"id"));
-				CarPart part = controller.getCarPart(id);
-				
-				nameTextField.setText(part.getName());
-				descriptionTextField.setText(part.getDescription());
-				skuTextField.setText(part.getSku());
-				stockTextField.setText(String.valueOf(part.getStock()));
-				comboBoxCategory.setSelectedItem(part.getCategory());
-				comboBoxBrands.setSelectedItem(part.getBrand());
+		private void setRowToEdit() {	  
+				int modelRow = table.getSelectedRow();
+	           	if(modelRow != -1){
+	           	    int row = table.convertRowIndexToModel(modelRow);
+					Long id = (Long) tableModel.getValueAt(row, table.getColumnModel().getColumnIndex((String)"id"));
+					Customer c = controller.getCustomer(id);
 					
-				if(!inputPanel.isVisible())
-					toggleButton.doClick();
-            }
+					nameTextField.setText(c.getFullName());
+					cuitTextField.setText(c.getCuit());
+					dniTextField.setText(c.getDni());
+					adressTextField.setText(c.getAdress());
+					phoneTextField.setText(c.getPhone());
+					mailTextField.setText(c.getEmail());
+						
+					if(!inputPanel.isVisible())
+						toggleButton.doClick();
+					
+					confirmButton.toModify(id);
+	            }
+           		
 		}
 		
-		private boolean validateFields() {//TO-DO : Personalize
+		private boolean validateFields() {
 			if(nameTextField.getText().isBlank()) {
 				setMessage("El nombre no puede estar vacio");
 				return false;
 			}
-			if(nameTextField.getText().length() > 45) {
-				setMessage("El nombre no puede superar los 45 caracteres");
+			if(dniTextField.getText().isBlank()) {
+				setMessage("El DNI no puede estar vacio");
 				return false;
 			}
 			return true;	
 		}
 
-		private void clearFields() {	  //TO-DO : Personalize
+		private void clearFields() {	
 			table.clearSelection();
 			nameTextField.setText("");
-			descriptionTextField.setText("");
-			skuTextField.setText("");
-			stockTextField.setText("");
-			comboBoxBrands.setSelectedIndex(0);
-			comboBoxCategory.setSelectedIndex(0);
+			cuitTextField.setText("");
+			dniTextField.setText("");
+			adressTextField.setText("");
+			phoneTextField.setText("");
+			mailTextField.setText("");
+			confirmButton.toNew();
 			
 			messageLabel.setText("");
 	        messageLabel.setOpaque(false);
 		}
 		
-		private void applyCombinedFilters() {//TO-DO : Personalize			
-		    String skuText = skuSearchTextField.getText().trim();
+		private void applyCombinedFilters() {		
+		    String dniText = dniSearchTextField.getText().trim();
 		    String nameText = nameSearchTextField.getText();
 		    List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-		    if (!skuText.isEmpty()) 
-		        filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 2)); // Columna SKU
+		    if (!dniText.isEmpty()) 
+		        filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(dniText), 1)); // Columna DNI
 
 		    if (!nameText.isEmpty()) 
 		        filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(nameText), 0)); // Columna Nombre
@@ -380,12 +362,18 @@ private static final long serialVersionUID = 1L;
 		            }
 		        }
 		    };
-		    skuSearchTextField.getDocument().addDocumentListener(debounceListener);
+		    dniSearchTextField.getDocument().addDocumentListener(debounceListener);
 		    nameSearchTextField.getDocument().addDocumentListener(debounceListener);
 		}
 
 		private void createJPopupMenu() {
 			new JPopupMenuModifyDelete(table, this::setRowToEdit, this::delete );
+		}
+
+		@Override
+		public void refresh() {
+			clearFields();
+			loadTable();
 		}
 		
 		private void createMessageLabel() {
