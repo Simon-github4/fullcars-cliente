@@ -82,8 +82,8 @@ private static final long serialVersionUID = 1L;
 	private JTextField skuSearchTextField = new JTextField("", 15);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField(); 
 	private DatePicker dpFilter = new DatePicker();
-	private JRadioButton exits;
-	private JRadioButton entries;
+	private JRadioButton exits = new JRadioButton("Entradas  ");
+	private JRadioButton entries = new JRadioButton("Salidas  ");
 
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
@@ -158,11 +158,11 @@ private static final long serialVersionUID = 1L;
 		}
 		
 		private void loadTable() {		  
-	        tableModel.setRowCount(0);
-	        sorter.setSortKeys(null);//resets column order
 	        if(!entries.isSelected() && !exits.isSelected())
 	        	setMessage("para buscar debe seleccionar minimo un Tipo (entrada o salida)");
 	        else{
+	        	sorter.setSortKeys(null);//resets column order
+	        	tableModel.setRowCount(0);
 	        	List<StockMovement> stockMovements = controller.getStockMovements(dpFilter.getSelectedDateRange(), entries.isSelected(), exits.isSelected());
 				for(StockMovement sm : stockMovements) {
 					Object[] row = {sm.getCarPart().getSku(), sm.getQuantity(), sm.getReference(), sm.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), sm.getObservations(), sm.getType(), sm.getId()};
@@ -184,6 +184,8 @@ private static final long serialVersionUID = 1L;
 				}
 			});
 			dpFilter.setEditor(dateSearchTextField);
+			entries.addActionListener(e -> loadTable());
+			exits.addActionListener(e -> loadTable());
 		    
 		    JPanel north = new JPanel(new BorderLayout());
 		    JPanel titulo = LightTheme.createTitle("Movimientos de Stock");
@@ -196,8 +198,6 @@ private static final long serialVersionUID = 1L;
 			filterPanel.add(dateSearchTextField);
 			dateSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 			skuSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-			entries = new JRadioButton("Entradas  ");
-			exits = new JRadioButton("Salidas  ");
 			entries.setSelected(true);
 			exits.setSelected(true);
 			filterPanel.add(entries);
@@ -444,9 +444,17 @@ private static final long serialVersionUID = 1L;
 		}
 
 		private void setMessage(String message) {
-			messageLabel.setText(message);
-	        messageLabel.setOpaque(true);
+		    messageLabel.setText(message);
+		    messageLabel.setOpaque(true);
+
+		    Timer timer = new Timer(3500, e -> {
+		        messageLabel.setText("");
+		        messageLabel.setOpaque(false); 
+		    });
+		    timer.setRepeats(false); 
+		    timer.start();
 		}
+
 		
 }
 

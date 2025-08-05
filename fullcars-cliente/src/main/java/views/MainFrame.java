@@ -67,12 +67,21 @@ public class MainFrame extends JFrame{
         
         JMenu menuVentas = new JMenu("VENTAS");
         
-        JMenuItem history = new JMenuItem("HISTORIAL");
-        history.addMouseListener(new ClickAdapter("HISTORIAL"));
-        menuVentas.add(history);
-        JMenuItem form = new JMenuItem("NUEVA VENTA");
-        form.addMouseListener(new ClickAdapter("NUEVA VENTA"));
-        menuVentas.add(form);
+        JMenuItem historySales = new JMenuItem("HISTORIAL VENTAS");
+        historySales.addMouseListener(new ClickAdapter("HISTORIAL VENTAS"));
+        menuVentas.add(historySales);
+        JMenuItem formSales = new JMenuItem("NUEVA VENTA");
+        formSales.addMouseListener(new ClickAdapter("NUEVA VENTA"));
+        menuVentas.add(formSales);
+        
+        JMenu menuPurchases = new JMenu("COMPRAS");
+        
+        JMenuItem historyPurchases = new JMenuItem("HISTORIAL COMPRAS");
+        historyPurchases.addMouseListener(new ClickAdapter("HISTORIAL COMPRAS"));
+        menuPurchases.add(historyPurchases);
+        JMenuItem formPurchases = new JMenuItem("NUEVA COMPRA");
+        formPurchases.addMouseListener(new ClickAdapter("NUEVA COMPRA"));
+        menuPurchases.add(formPurchases);
         
         menuBar.add(menuProductos);
         menuBar.add(menuClientes);
@@ -81,6 +90,7 @@ public class MainFrame extends JFrame{
         menuBar.add(menuCategorias);
         menuBar.add(menuMarcas);
         menuBar.add(menuVentas);
+        menuBar.add(menuPurchases);
         
         cardLayout = new CardLayout();
         
@@ -93,8 +103,10 @@ public class MainFrame extends JFrame{
         cardPanels.add(FormFactory.createCustomerForm(), "CLIENTES");
         cardPanels.add(FormFactory.createProviderForm(), "PROVEEDORES");
         cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
-        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL");
+        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
         cardPanels.add(FormFactory.createSalesForm(), "NUEVA VENTA");
+        cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
+        cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
         
     }
 

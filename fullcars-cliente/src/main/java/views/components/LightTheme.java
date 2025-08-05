@@ -86,7 +86,7 @@ public class LightTheme extends FlatLightLaf {
     
     public static JPanel createTitle(String text) {
     	JPanel panel = new JPanel(new BorderLayout());
-    	JLabel title = new JLabel(text, JLabel.CENTER);
+    	JLabel title = new JLabel(text+"             ", JLabel.CENTER);
     	title.setFont(TITLE_FONT);
     	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 96));
     	JLabel logo = new JLabel(Icons.LOGO.create(96, 96));

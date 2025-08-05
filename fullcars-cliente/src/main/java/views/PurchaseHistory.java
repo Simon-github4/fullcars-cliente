@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +24,6 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -41,12 +39,13 @@ import com.formdev.flatlaf.FlatClientProperties;
 
 import Utils.Icons;
 import Utils.ServerException;
-import controller.CustomerController;
-import controller.SaleController;
+import controller.ProviderController;
+import controller.PurchaseController;
 import interfaces.Refreshable;
 import model.client.entities.Customer;
-import model.client.entities.Sale;
-import model.client.entities.SaleDetail;
+import model.client.entities.Provider;
+import model.client.entities.Purchase;
+import model.client.entities.PurchaseDetail;
 import raven.datetime.DatePicker;
 import raven.datetime.event.DateSelectionEvent;
 import raven.datetime.event.DateSelectionListener;
@@ -54,25 +53,25 @@ import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.TypedComboBox;
 
-public class SalesHistory extends JPanel implements Refreshable{
+public class PurchaseHistory extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
 
-	private final SaleController controller;
-	private final CustomerController customerController;
-	private List<Sale> salesList = new ArrayList<>();
+	private final PurchaseController controller;
+	private final ProviderController customerController;
+	private List<Purchase> purchasesList = new ArrayList<>();
 
 	private JPanel detailsTablePanel;
 	private static final Object[] DETAILS_COLUMNS = {"Autoparte", "Cantidad", "Precio unitario", "SubTotal", "id" };
 	private JTable detailsTable;
 	private DefaultTableModel detailsTableModel;
 	
-	private JPanel saleTablePanel;
-	private static final Object[] SALE_COLUMNS = {"Fecha", "Cliente", "Total", "Nro. Venta" };
-	private JTable saleTable;
-	private DefaultTableModel saleTableModel;
+	private JPanel purchaseeTablePanel;
+	private static final Object[] PURCHASE_COLUMNS = {"Fecha", "Proveedor", "Total", "Nro. Compra" };
+	private JTable purchaseTable;
+	private DefaultTableModel purchaseTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
-	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(customer -> customer.getFullName());
+	private TypedComboBox<Provider> providerComboBox = new TypedComboBox<>(provider -> provider.getCompanyName());
 	private JTextField idSearchTextField = new JTextField("", 10);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePicker();
@@ -82,36 +81,34 @@ private static final long serialVersionUID = 1L;
 	private Timer filtroTimer;
 	private JLabel messageLabel;
 
-
-
-	public SalesHistory(SaleController controller, CustomerController customerController) {
+	public PurchaseHistory(PurchaseController controller, ProviderController providerController) {
 		this.controller = controller;
-		this.customerController = customerController;
+		this.customerController = providerController;
 
 		setLayout(new BorderLayout(0, 0));
-		customerComboBox.fill(customerController.getCustomers(), Customer.builder().id(null).fullName("Seleccione un cliente").build());
+		providerComboBox.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
 		
 		createDetailsTablePanel();
-		createSaleTablePanel();
+		createPurchaseTablePanel();
 		createJPopupMenu();
 		createMessageLabel();
 		initUI();
 
-		sorter = new TableRowSorter<>(saleTableModel);
-		saleTable.setRowSorter(sorter);
+		sorter = new TableRowSorter<>(purchaseTableModel);
+		purchaseTable.setRowSorter(sorter);
 		setupLiveFilterListeners();
 		
-		loadSaleTable();
+		loadPurchaseTable();
 	}
 
 	private void delete() {			
 		try {
-			Long idSale = (Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1);
+			Long idSale = (Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1);
 			
-			if(JOptionPane.showConfirmDialog(null, "Desea eliminar la venta Numero: "+ idSale.toString(),  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+			if(JOptionPane.showConfirmDialog(null, "Desea eliminar la compra Numero: "+ idSale.toString(),  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
 				controller.delete(idSale);
 				clearFields();
-				loadSaleTable();
+				loadPurchaseTable();
 			}
 		}catch(ServerException se) {
 			setMessage(se.getMessage());
@@ -120,31 +117,31 @@ private static final long serialVersionUID = 1L;
 		}
 	}
 	
-	private void loadSaleTable() {
-		saleTableModel.setRowCount(0);
+	private void loadPurchaseTable() {
+		purchaseTableModel.setRowCount(0);
 		detailsTableModel.setRowCount(0);
 		sorter.setSortKeys(null);// resets column order
 		
-		salesList = controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
+		purchasesList = controller.getPurchases(providerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
 		long totalSold = 0;
-		for (Sale s : salesList) {
+		for (Purchase s : purchasesList) {
 			totalSold += s.getTotal();
-			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), s.getTotal(), s.getId() };
-			saleTableModel.addRow(row);
+			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getTotal(), s.getId() };
+			purchaseTableModel.addRow(row);
 		}
 		totalTextField.setText("$"+String.valueOf(totalSold));
 	}
 	private void loadDetailsTable(int idSale) {
-		Sale sale = salesList.get(idSale);
+		Purchase purchase = purchasesList.get(idSale);
 		detailsTableModel.setRowCount(0);
-    	for(SaleDetail d : sale.getDetails()) {
+    	for(PurchaseDetail d : purchase.getDetails()) {
     		Object[] row = {d.getProduct().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}
 	
 	private void initUI() {
-		searchButton.addActionListener(e -> loadSaleTable());
+		searchButton.addActionListener(e -> loadPurchaseTable());
 		dpFilter.setDateSelectionMode(DatePicker.DateSelectionMode.BETWEEN_DATE_SELECTED);
 		dpFilter.setUsePanelOption(true);
 		dpFilter.setBackground(Color.GRAY); // Color de fondo oscuro
@@ -152,26 +149,26 @@ private static final long serialVersionUID = 1L;
 		dpFilter.addDateSelectionListener(new DateSelectionListener() {
 			@Override
 			public void dateSelected(DateSelectionEvent dateSelectionEvent) {
-				loadSaleTable();
+				loadPurchaseTable();
 			}
 		});
 		dpFilter.setEditor(dateSearchTextField);
-		customerComboBox.addActionListener(e -> loadSaleTable());
+		providerComboBox.addActionListener(e -> loadPurchaseTable());
 		totalTextField.setForeground(LightTheme.COLOR_GREEN_MONEY);
 		totalTextField.setEditable(false);
 		
 		JPanel north = new JPanel(new BorderLayout());
-		JPanel titulo = LightTheme.createTitle("Ventas");
+		JPanel titulo = LightTheme.createTitle("Compras");
 
 		JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-		filterPanel.add(new JLabel("Nro Venta: ", JLabel.RIGHT));
+		filterPanel.add(new JLabel("Nro Compra: ", JLabel.RIGHT));
 		filterPanel.add(idSearchTextField);
-		filterPanel.add(new JLabel("Cliente ", JLabel.RIGHT));
-		filterPanel.add(customerComboBox);
+		filterPanel.add(new JLabel("Proveedor ", JLabel.RIGHT));
+		filterPanel.add(providerComboBox);
 		filterPanel.add(new JLabel("Desde/Hasta ", JLabel.RIGHT));
 		filterPanel.add(dateSearchTextField);
-		filterPanel.add(new JLabel("  Total Vendido", JLabel.RIGHT));
+		filterPanel.add(new JLabel("  Total Gastado", JLabel.RIGHT));
 		filterPanel.add(totalTextField);		
 		dateSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		idSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
@@ -193,7 +190,7 @@ private static final long serialVersionUID = 1L;
 
 		add(north, BorderLayout.NORTH);
 //------------------------------------------------CENTER PANEL-----------------------------(NO se personaliza)
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, saleTablePanel, detailsTablePanel);
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, purchaseeTablePanel, detailsTablePanel);
 		splitPane.setResizeWeight(1); // El panel de arriba no se estira al redimensionar
 		splitPane.setDividerSize(8);
 		splitPane.setDividerLocation(splitPane.getWidth() - detailsTablePanel.getPreferredSize().width);
@@ -242,8 +239,8 @@ private static final long serialVersionUID = 1L;
 	}
 
 	@SuppressWarnings("serial")
-	private void createSaleTablePanel() {
-		saleTableModel = new DefaultTableModel(SALE_COLUMNS, 0) {
+	private void createPurchaseTablePanel() {
+		purchaseTableModel = new DefaultTableModel(PURCHASE_COLUMNS, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return false;
@@ -260,40 +257,40 @@ private static final long serialVersionUID = 1L;
 				}
 			}
 		};
-		saleTable = new JTable(saleTableModel);
-		saleTable.setToolTipText("Click Derecho para Eliminar ; Click izquierdo para ver detalles");
-		saleTable.setShowGrid(true);
-		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setMaxWidth(90);
-		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setMinWidth(90);
-		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setPreferredWidth(90);
-		saleTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+		purchaseTable = new JTable(purchaseTableModel);
+		purchaseTable.setToolTipText("Click Derecho para Eliminar ; Click izquierdo para ver detalles");
+		purchaseTable.setShowGrid(true);
+		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setMaxWidth(90);
+		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setMinWidth(90);
+		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setPreferredWidth(90);
+		purchaseTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                	int idSale = saleTable.getSelectedRow();
+                	int idSale = purchaseTable.getSelectedRow();
                 	if(idSale != -1)
-                		loadDetailsTable(saleTable.convertRowIndexToModel(idSale));
+                		loadDetailsTable(purchaseTable.convertRowIndexToModel(idSale));
                 }
 			}
 		});
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-		for (int i = 0; i < saleTable.getColumnCount(); i++) {
-			Class<?> columnClass = saleTableModel.getColumnClass(i);
+		for (int i = 0; i < purchaseTable.getColumnCount(); i++) {
+			Class<?> columnClass = purchaseTableModel.getColumnClass(i);
 			if (Number.class.isAssignableFrom(columnClass))
-				saleTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+				purchaseTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
 
-		saleTablePanel = new JPanel(new BorderLayout());
-		saleTablePanel.add(LightTheme.createSubTitle("Historial Ventas"), BorderLayout.NORTH);
-		saleTablePanel.add(new JScrollPane(saleTable), BorderLayout.CENTER);
-		saleTablePanel.add(totalTextField, BorderLayout.SOUTH);
+		purchaseeTablePanel = new JPanel(new BorderLayout());
+		purchaseeTablePanel.add(LightTheme.createSubTitle("Historial Compras"), BorderLayout.NORTH);
+		purchaseeTablePanel.add(new JScrollPane(purchaseTable), BorderLayout.CENTER);
+		purchaseeTablePanel.add(totalTextField, BorderLayout.SOUTH);
 	}
 
 	private void clearFields() {
-		saleTable.clearSelection();
+		purchaseTable.clearSelection();
 		detailsTableModel.setRowCount(0);
-		customerComboBox.setSelectedIndex(0);
+		providerComboBox.setSelectedIndex(0);
 		dpFilter.clearSelectedDate();
 		idSearchTextField.setText("");
 		totalTextField.setText("");
@@ -307,7 +304,7 @@ private static final long serialVersionUID = 1L;
 		List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
 		if (!skuText.isEmpty())
-			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 3)); // Columna SKU
+			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 3)); // Columna Nro Compra
 
 		if (filters.isEmpty())
 			sorter.setRowFilter(null); // Sin filtro
@@ -343,24 +340,24 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createJPopupMenu() {
-		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta");
+		new JPopupMenuModifyDelete(purchaseTable, this::delete, "Eliminar Venta");
 	}
 
 	@Override
 	public void refresh() {
-		ActionListener[] listeners = customerComboBox.getActionListeners();
+		ActionListener[] listeners = providerComboBox.getActionListeners();
 		for (ActionListener l : listeners) 
-		    customerComboBox.removeActionListener(l);
+		    providerComboBox.removeActionListener(l);
 		
-		Customer c = customerComboBox.getSelectedItem();
-		customerComboBox.fill(customerController.getCustomers(), Customer.builder().id(null).fullName("Seleccione un cliente").build());
-		customerComboBox.setSelectedItem(c);
+		Provider c = providerComboBox.getSelectedItem();
+		providerComboBox.fill(customerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
+		providerComboBox.setSelectedItem(c);
 
 		for (ActionListener l : listeners) 
-		    customerComboBox.addActionListener(l);
+		    providerComboBox.addActionListener(l);
 		
 		clearFields();
-		loadSaleTable();
+		loadPurchaseTable();
 	}
 
 	private void createMessageLabel() {

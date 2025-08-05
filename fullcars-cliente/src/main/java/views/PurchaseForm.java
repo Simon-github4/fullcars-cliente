@@ -3,10 +3,7 @@ package views;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,7 +20,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -31,11 +27,14 @@ import javax.swing.table.DefaultTableModel;
 
 import Utils.ServerException;
 import controller.CarPartController;
-import controller.CustomerController;
-import controller.SaleController;
+import controller.ProviderController;
+import controller.PurchaseController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Customer;
+import model.client.entities.Provider;
+import model.client.entities.Purchase;
+import model.client.entities.PurchaseDetail;
 import model.client.entities.Sale;
 import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
@@ -44,33 +43,32 @@ import views.components.LightTheme;
 import views.components.NewModifyButton;
 import views.components.TypedComboBox;
 
-public class SaleForm extends JPanel implements Refreshable{
+public class PurchaseForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
 	
-	private final SaleController controller;
+	private final PurchaseController controller;
 	private final CarPartController carpartController;
-	private final CustomerController customerController;
+	private final ProviderController providerController;
 	
 	private JPanel mainPanel;
 	private JPanel tablePanel;
 	private static final Object[] COLUMNS = {"Autoparte", "Cantidad", "Precio unitario", "SubTotal"};
 	private JTable table;
 	private DefaultTableModel tableModel;
-	private List<SaleDetail> detailsList = new ArrayList<>();
+	private List<PurchaseDetail> detailsList = new ArrayList<>();
 	private JLabel messageLabel;
 	
 	private TypedComboBox<CarPart> carpartComboBox = new TypedComboBox<>(c -> c.getSku());
-	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(c -> c.getFullName());
+	private TypedComboBox<Provider> providerComboBox = new TypedComboBox<>(c -> c.getCompanyName());
 	private DatePicker dpInput = new DatePicker();
 
 	private JTextField quantityTextField = new JTextField(29);
 	private NewModifyButton confirmButton = new NewModifyButton();
 	
-
-	public SaleForm(SaleController controller, CarPartController cpController, CustomerController custController) {
+	public PurchaseForm(PurchaseController controller, CarPartController cpController, ProviderController custController) {
 		this.controller = controller;
 		this.carpartController = cpController;
-		this.customerController = custController;
+		this.providerController = custController;
 		
 		setLayout(new BorderLayout(0, 0));
 		createTablePanel();
@@ -79,25 +77,24 @@ private static final long serialVersionUID = 1L;
 		createMessageLabel();
 
 		carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
-		customerComboBox.fill(customerController.getCustomers(), Customer.builder().fullName("Seleccione un Cliente").build());
+		providerComboBox.fill(providerController.getProviders(), Provider.builder().companyName("Seleccione un Proveedor").build());
 	}
 
 	private void save() {
-		Sale sale = Sale.builder()
+		Purchase purchase = Purchase.builder()
 				.id(null)
 			    .date(dpInput.getSelectedDate())
-			    .customer(customerComboBox.getSelectedItem())
-			    .saleNumber("")
+			    .provider(providerComboBox.getSelectedItem())
 			    .taxes(new BigDecimal(0))
 			    .build();
 		
 		detailsList.forEach(d -> {
-		    d.setSale(sale);
+		    d.setPurchase(purchase);
 		});
-		sale.setDetails(detailsList);
+		purchase.setDetails(detailsList);
 			
 		try {
-			controller.save(sale);
+			controller.save(purchase);
 			clearFields();
 		} catch (ServerException se) {
 			setMessage(se.getMessage());
@@ -112,10 +109,10 @@ private static final long serialVersionUID = 1L;
         if(validateDetailFields()) {
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
 			CarPart cp = carpartComboBox.getSelectedItem();
-			SaleDetail sd = new SaleDetail(quantity, cp.getBasePrice(), cp);
+			PurchaseDetail purchaseDetail = new PurchaseDetail(quantity, cp.getBasePrice(), cp);
 			
-			detailsList.add(sd);
-	        tableModel.addRow(new Object[]{ cp.getSku(), quantity, sd.getUnitPrice(), sd.getSubTotal() });
+			detailsList.add(purchaseDetail);
+	        tableModel.addRow(new Object[]{ cp.getSku(), quantity, purchaseDetail.getUnitPrice(), purchaseDetail.getSubTotal() });
 
 	        quantityTextField.setText("");
 	        carpartComboBox.setSelectedIndex(0);
@@ -130,7 +127,7 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createInputPanel() {
-		add(LightTheme.createTitle("Nueva Venta"), BorderLayout.NORTH);
+		add(LightTheme.createTitle("Nueva Compra"), BorderLayout.NORTH);
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		Dimension size = new Dimension(600, Integer.MAX_VALUE);
@@ -138,13 +135,13 @@ private static final long serialVersionUID = 1L;
 		JPanel fieldsPanel = new JPanel(new GridLayout(0, 1));
 		fieldsPanel.setMaximumSize(size);
 
-		fieldsPanel.add(new JLabel("Cliente", JLabel.LEFT));
-		fieldsPanel.add(customerComboBox);
+		fieldsPanel.add(new JLabel("Proveedor", JLabel.LEFT));
+		fieldsPanel.add(providerComboBox);
 		fieldsPanel.add(new JLabel("Fecha", JLabel.LEFT));
 		JFormattedTextField dateInputTextField = new JFormattedTextField();
 		dpInput.setEditor(dateInputTextField);
 		dpInput.setUsePanelOption(true);
-		dpInput.setBackground(Color.GRAY); // Color de fondo oscuro
+		dpInput.setBackground(Color.GRAY); 
 		dpInput.setDateFormat("dd/MM/yyyy");
 		fieldsPanel.add(dateInputTextField);
 		
@@ -154,7 +151,7 @@ private static final long serialVersionUID = 1L;
 		JPanel buttonsPanel = new JPanel(new GridLayout(1,0));
 		buttonsPanel.setMaximumSize(new Dimension(500, 160));
 
-		confirmButton.setText("Confirmar Venta");
+		confirmButton.setText("Confirmar Compra");
 		confirmButton.addActionListener(e -> {
 			if (validateSaleFields())
 				save();
@@ -265,8 +262,8 @@ private static final long serialVersionUID = 1L;
 			setMessage("Debe seleccionar una fecha");
 			return false;
 		}
-		if (customerComboBox.getSelectedIndex() == 0) {
-			setMessage("Debe seleccionar un cliente");
+		if (providerComboBox.getSelectedIndex() == 0) {
+			setMessage("Debe seleccionar un proveedor");
 			return false;
 		}
 
@@ -279,7 +276,7 @@ private static final long serialVersionUID = 1L;
 
 	private void clearFields() {
 		tableModel.setRowCount(0);;
-		customerComboBox.setSelectedIndex(0);
+		providerComboBox.setSelectedIndex(0);
 		dpInput.setSelectedDate(LocalDate.now());
 
 		detailsList = new ArrayList<>();
@@ -298,7 +295,7 @@ private static final long serialVersionUID = 1L;
 	public void refresh() {
 		clearFields();
 		carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
-		customerComboBox.fill(customerController.getCustomers(), Customer.builder().fullName("Seleccione un Cliente").build());
+		providerComboBox.fill(providerController.getProviders(), Provider.builder().companyName("Seleccione un Proveedor").build());
 	}
 
 	private void createMessageLabel() {
