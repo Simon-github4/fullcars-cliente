@@ -138,7 +138,7 @@ public class ClienteRestStockMovement {
 	                System.out.println("StockMovement deleted successfully (ID: " + id + ")");
 	            } else {
 					String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
-					System.err.println("Failed to delete Provider. Code: " + response.code());
+					System.err.println("Failed to delete StockMovement. Code: " + response.code());
 	                System.err.println("Response: " + errorBody);
 	                throw new ServerException(errorBody);
 	            }

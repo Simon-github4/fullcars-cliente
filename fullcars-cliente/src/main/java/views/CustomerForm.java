@@ -28,6 +28,8 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -84,7 +86,7 @@ private static final long serialVersionUID = 1L;
 	        table.setRowSorter(sorter);
 	        setupLiveFilterListeners();
 	        
-	        loadTable();
+	        //loadTable();
 		}
 		
 		private void save() {			  
@@ -261,12 +263,20 @@ private static final long serialVersionUID = 1L;
 	            }
 	        };
 			table = new JTable(tableModel);
-			table.setToolTipText("Click Derecho para Eliminar o Modificar");
+			table.setToolTipText("Click Derecho para Eliminar o Modificar, selecciona un cliente(click izquierdo) para ver su saldo");
 			table.setShowGrid(true);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMaxWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMinWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setPreferredWidth(0);
-
+			table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+				@Override
+				public void valueChanged(ListSelectionEvent e) {
+					int row = table.getSelectedRow();
+					if(row != -1)
+						controller.setCustomerSelectedId((Long) tableModel.getValueAt(table.convertRowIndexToModel(row),
+															table.getColumnModel().getColumnIndex((String)"id")));
+				}});
+			
 			DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 	        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 	        for (int i = 0; i < table.getColumnCount(); i++) {
@@ -317,6 +327,7 @@ private static final long serialVersionUID = 1L;
 
 		private void clearFields() {	
 			table.clearSelection();
+			controller.setCustomerSelectedId(null);
 			nameTextField.setText("");
 			cuitTextField.setText("");
 			dniTextField.setText("");

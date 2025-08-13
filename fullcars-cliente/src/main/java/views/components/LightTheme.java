@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -72,7 +73,7 @@ public class LightTheme extends FlatLightLaf {
 		}
 		return font;
     }
-    private static Font getSubTitleFont() {
+    public static Font getSubTitleFont() {
     	Font font=null;
     	try {
 			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/fonts/Montserrat-Bold.ttf")).deriveFont(25f);
@@ -143,6 +144,19 @@ public class LightTheme extends FlatLightLaf {
         UIManager.put("Panel.background", new Color(225,225,225));
         //UIManager.put("SplitPane.dividerColor", new Color(52, 58, 64)); // Color del divisor
 
+        UIManager.put("TabbedPane.tabType", "card");
+        UIManager.put("TabbedPane.tabsOverlapBorder", true);
+        UIManager.put("TabbedPane.hasFullBorder", true);
+        UIManager.put("TabbedPane.selectedBackground", Color.WHITE);
+        UIManager.put("TabbedPane.selectedForeground", Color.BLACK);
+        UIManager.put("TabbedPane.foreground", Color.DARK_GRAY);
+        UIManager.put("TabbedPane.hoverColor", new Color(240, 240, 240));
+        UIManager.put("TabbedPane.tabInsets", new Insets(10, 20, 10, 20)); // padding
+        UIManager.put("TabbedPane.showTabSeparators", true);
+        UIManager.put("TabbedPane.tabSeparatorsFullHeight", true);
+        //UIManager.put("TabbedPane.tabAreaAlignment", "fill"); fill para que ocupe todo el ancho
+        UIManager.put("TabbedPane.tabAlignment", "center");
+        UIManager.put("TabbedPane.tabWidthMode", "equal");
     }
 
 }

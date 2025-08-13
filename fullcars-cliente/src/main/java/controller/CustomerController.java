@@ -3,12 +3,20 @@ package controller;
 import java.io.IOException;
 import java.util.List;
 
+import Utils.ServerException;
 import data.service.ClienteRestCustomer;
+import dtos.CustomerSummaryDTO;
+import lombok.Getter;
+import lombok.Setter;
 import model.client.entities.Customer;
+import views.CustomerSummaryHistory;
 
 public class CustomerController {
 
 private final ClienteRestCustomer serviceCustomer = new ClienteRestCustomer();
+	@Getter
+	@Setter
+	private Long customerSelectedId;
 	
 	public Customer getCustomer(Long id){
 		return serviceCustomer.getCustomer(id);
@@ -26,13 +34,12 @@ private final ClienteRestCustomer serviceCustomer = new ClienteRestCustomer();
 		return serviceCustomer.save(c);
 	}
 
-	public void delete(Long id) throws IOException  {
-		try {
-			serviceCustomer.delete(id);
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new IOException("No se pudo eliminar el cliente");
-		}	
+	public void delete(Long id) throws IOException, ServerException {
+		serviceCustomer.delete(id);
 	}
 	
+	public CustomerSummaryDTO getCustomerSummary(Long id){
+		return serviceCustomer.getCustomerSummary(id);
+	}
+
 }

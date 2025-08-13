@@ -120,7 +120,7 @@ public class MainFrame extends JFrame{
         @Override
         public void mousePressed(MouseEvent e) {
         	cardLayout.show(cardPanels, panelNombre);
-            
+
             for (Component comp : cardPanels.getComponents()) 
                 if (comp.isVisible() && comp instanceof Refreshable )
                 	((Refreshable)comp).refresh();

@@ -84,7 +84,7 @@ private static final long serialVersionUID = 1L;
 	        table.setRowSorter(sorter);
 	        setupLiveFilterListeners();
 	        
-	        loadTable();
+	        //loadTable();
 		}
 		
 		private void save() {			  

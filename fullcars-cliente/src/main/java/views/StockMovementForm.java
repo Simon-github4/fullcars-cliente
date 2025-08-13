@@ -99,14 +99,14 @@ private static final long serialVersionUID = 1L;
 		    createMessageLabel();
 		    initUI();
 			
-		    carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku( "Seleccione una autoparte").build());
+		    //carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku( "Seleccione una autoparte").build());
 		    movementComboBox.addItem(MovementType.ENTRADA_AJUSTE);
 		    movementComboBox.addItem(MovementType.SALIDA_AJUSTE);
 			sorter = new TableRowSorter<>(tableModel);
 	        table.setRowSorter(sorter);
 	        setupLiveFilterListeners();
 	        
-	        loadTable();
+	        //loadTable();
 		}
 		
 		private void save() {			  

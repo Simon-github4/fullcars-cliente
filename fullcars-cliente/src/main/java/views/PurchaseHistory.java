@@ -86,7 +86,7 @@ private static final long serialVersionUID = 1L;
 		this.customerController = providerController;
 
 		setLayout(new BorderLayout(0, 0));
-		providerComboBox.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
+		//providerComboBox.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
 		
 		createDetailsTablePanel();
 		createPurchaseTablePanel();
@@ -98,7 +98,7 @@ private static final long serialVersionUID = 1L;
 		purchaseTable.setRowSorter(sorter);
 		setupLiveFilterListeners();
 		
-		loadPurchaseTable();
+		//loadPurchaseTable();
 	}
 
 	private void delete() {			

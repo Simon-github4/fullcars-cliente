@@ -15,7 +15,7 @@ public class Pay {
     private Long id;
     private int amount;
     private LocalDate date;
-    private String payMethod;
+    private String paymentMethod;
     
     private Customer customer;
     

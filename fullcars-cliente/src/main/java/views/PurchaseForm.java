@@ -76,8 +76,8 @@ private static final long serialVersionUID = 1L;
 		createJPopupMenu();
 		createMessageLabel();
 
-		carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
-		providerComboBox.fill(providerController.getProviders(), Provider.builder().companyName("Seleccione un Proveedor").build());
+		//carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
+		//providerComboBox.fill(providerController.getProviders(), Provider.builder().companyName("Seleccione un Proveedor").build());
 	}
 
 	private void save() {
@@ -293,9 +293,9 @@ private static final long serialVersionUID = 1L;
 
 	@Override
 	public void refresh() {
-		clearFields();
 		carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
 		providerComboBox.fill(providerController.getProviders(), Provider.builder().companyName("Seleccione un Proveedor").build());
+		clearFields();
 	}
 
 	private void createMessageLabel() {

@@ -9,21 +9,31 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import model.client.entities.Brand;
+import Utils.ServerException;
+import dtos.CustomerSummaryDTO;
 import model.client.entities.Customer;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import views.CustomerSummaryHistory;
 
 public class ClienteRestCustomer {
 	
 	private static final String ADDRESS = "http://localhost:8080/customers";
 	private final OkHttpClient client = new OkHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
 
+    public ClienteRestCustomer() {
+    	this.mapper = new ObjectMapper();
+    	this.mapper.registerModule(new JavaTimeModule());
+        this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+    
 	public List<Customer> getCustomers() {
 	    String uri = ADDRESS;
 
@@ -116,20 +126,48 @@ public class ClienteRestCustomer {
 		}
 	}
 
-	public void delete(Long id) throws IOException {
+	public void delete(Long id) throws IOException, ServerException {
 		Request request = new Request.Builder()
 	            .url(ADDRESS + "/" + id)
 	            .delete()
 	            .build();
+		
+		try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                System.out.println("Customer deleted successfully (ID: " + id + ")");
+            } else {
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to delete Customer. Code: " + response.code());
+                System.err.println("Response: " + errorBody);
+                throw new ServerException(errorBody);
+            }
+        }catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo eliminar el cliente, falla en conexion a servidor");
+		}	
+	}
 
-	        try (Response response = client.newCall(request).execute()) {
-	            if (response.isSuccessful()) {
-	                System.out.println("Customer deleted successfully (ID: " + id + ")");
-	            } else {
-	                System.err.println("Failed to delete Customer. Code: " + response.code());
-	                System.err.println("Response: " + response.body().string());
-	            }
-	        } 
+	
+	public CustomerSummaryDTO getCustomerSummary(Long id) {
+		String uri = ADDRESS +"/"+ URLEncoder.encode(id.toString(), StandardCharsets.UTF_8)+"/summary";
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<CustomerSummaryDTO>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return null;
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
 	}
 	
 }

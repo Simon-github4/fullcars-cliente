@@ -1,12 +1,7 @@
 package InitClass;
 
 import javax.swing.SwingUtilities;
-
-import com.formdev.flatlaf.FlatLaf;
-
 import views.MainFrame;
-import views.components.LightTheme;
-
 
 public class Initializr {
 

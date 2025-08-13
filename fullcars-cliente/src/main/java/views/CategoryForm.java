@@ -76,7 +76,7 @@ private static final long serialVersionUID = 1L;
 		createMessageLabel();
 		initUI();
 		
-		loadTable();
+		//loadTable();
 	}
 	
 	private void save() { 
