@@ -361,7 +361,6 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 			sorter.setRowFilter(RowFilter.andFilter(filters));
 	}
 	
-
 	private void setupLiveFilterListeners() {
 		DocumentListener debounceListener = new DocumentListener() {
 			@Override
@@ -399,7 +398,6 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		refreshFromDB();
 	}
 	
-
 	private void createMessageLabel() {
 		messageLabel = LightTheme.createMessageLabel();
 		JPanel horizontalPanel = new JPanel(new GridLayout());

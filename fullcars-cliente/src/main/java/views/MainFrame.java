@@ -129,6 +129,6 @@ public class MainFrame extends JFrame{
     
     private void setStyling() {
     	LightTheme.setup();
-    	setIconImage(new ImageIcon(getClass().getResource(Icons.LOGO.getPath())).getImage());
+    	//setIconImage(new ImageIcon(this.getClass().getResource(Icons.LOGO.getPath())).getImage());
 	}
 }

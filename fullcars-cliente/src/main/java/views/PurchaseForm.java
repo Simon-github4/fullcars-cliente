@@ -2,6 +2,7 @@ package views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.io.IOException;
@@ -22,6 +23,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -31,12 +34,9 @@ import controller.ProviderController;
 import controller.PurchaseController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
-import model.client.entities.Customer;
 import model.client.entities.Provider;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
-import model.client.entities.Sale;
-import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
@@ -56,14 +56,17 @@ private static final long serialVersionUID = 1L;
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private List<PurchaseDetail> detailsList = new ArrayList<>();
+	private CarPart detailCarpart = null;
 	private JLabel messageLabel;
 	
-	private TypedComboBox<CarPart> carpartComboBox = new TypedComboBox<>(c -> c.getSku());
+	private JTextField carpartTextField = new JTextField(29);
 	private TypedComboBox<Provider> providerComboBox = new TypedComboBox<>(c -> c.getCompanyName());
 	private DatePicker dpInput = new DatePicker();
 
 	private JTextField quantityTextField = new JTextField(29);
 	private NewModifyButton confirmButton = new NewModifyButton();
+
+	private JLabel carpartNameLabel = new JLabel("", JLabel.LEFT);
 	
 	public PurchaseForm(PurchaseController controller, CarPartController cpController, ProviderController custController) {
 		this.controller = controller;
@@ -108,15 +111,15 @@ private static final long serialVersionUID = 1L;
 	private void addDetail() {
         if(validateDetailFields()) {
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
-			CarPart cp = carpartComboBox.getSelectedItem();
+			CarPart cp = detailCarpart;
 			PurchaseDetail purchaseDetail = new PurchaseDetail(quantity, cp.getBasePrice(), cp);
 			
 			detailsList.add(purchaseDetail);
 	        tableModel.addRow(new Object[]{ cp.getSku(), quantity, purchaseDetail.getUnitPrice(), purchaseDetail.getSubTotal() });
 
 	        quantityTextField.setText("");
-	        carpartComboBox.setSelectedIndex(0);
-	        carpartComboBox.requestFocus();
+	        carpartTextField.setText("");
+	        carpartTextField.requestFocus();
         }
     }
 	
@@ -214,14 +217,41 @@ private static final long serialVersionUID = 1L;
 
 		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
-		fieldsDetailsRow.add(new JLabel("  AutoParte", JLabel.LEFT));
-		fieldsDetailsRow.add(new JLabel("  Cantidad", JLabel.LEFT));
+		fieldsDetailsRow.add(new JLabel("AutoParte: ", JLabel.LEFT));
+		fieldsDetailsRow.add(carpartNameLabel);
+		fieldsDetailsRow.add(new JLabel("  Cantidad", JLabel.RIGHT));
 		fieldsDetails.add(fieldsDetailsRow);
 		
 		fieldsDetailsRow = new JPanel(new GridLayout(0,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
-		fieldsDetailsRow.add(carpartComboBox);
-		carpartComboBox.addActionListener(e-> quantityTextField.requestFocus());
+		fieldsDetailsRow.add(carpartTextField);
+		carpartTextField.putClientProperty("JTextField.placeholderText", "ENTER para buscar autoparte");
+		carpartTextField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				detailCarpart = null;
+				carpartNameLabel.setText("");
+			}
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				detailCarpart = null;
+				carpartNameLabel.setText("");
+			}
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				detailCarpart = null;
+				carpartNameLabel.setText("");
+			}
+		});
+		carpartTextField.addActionListener(e-> {
+			detailCarpart = carpartController.getCarPart(carpartTextField.getText());
+			if(detailCarpart == null)
+				setMessage("No se escontro autoparte con ese sku");
+			else {
+				carpartNameLabel.setText(detailCarpart.getName());
+				quantityTextField.requestFocus();
+			}			
+		});
 		fieldsDetailsRow.add(quantityTextField);
 		quantityTextField.addActionListener(e -> addDetail());
 		quantityTextField.putClientProperty("JTextField.placeholderText", "ENTER para agregar detalle");
@@ -242,7 +272,7 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private boolean validateDetailFields() {
-		if (carpartComboBox.getSelectedIndex() == 0) {
+		if (detailCarpart == null) {
 			setMessage("Debe seleccionar una autoparte");
 			return false;
 		}
@@ -280,7 +310,7 @@ private static final long serialVersionUID = 1L;
 		dpInput.setSelectedDate(LocalDate.now());
 
 		detailsList = new ArrayList<>();
-		carpartComboBox.setSelectedIndex(0);
+		carpartTextField.setText("");
 		quantityTextField.setText("");
 
 		messageLabel.setText("");
@@ -293,7 +323,6 @@ private static final long serialVersionUID = 1L;
 
 	@Override
 	public void refresh() {
-		carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
 		providerComboBox.fill(providerController.getProviders(), Provider.builder().companyName("Seleccione un Proveedor").build());
 		clearFields();
 	}
