@@ -21,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
@@ -111,11 +112,10 @@ private static final long serialVersionUID = 1L;
 	private void addDetail() {
         if(validateDetailFields()) {
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
-			CarPart cp = detailCarpart;
-			PurchaseDetail purchaseDetail = new PurchaseDetail(quantity, cp.getBasePrice(), cp);
+			PurchaseDetail purchaseDetail = new PurchaseDetail(quantity, detailCarpart.getBasePrice(), detailCarpart);
 			
 			detailsList.add(purchaseDetail);
-	        tableModel.addRow(new Object[]{ cp.getSku(), quantity, purchaseDetail.getUnitPrice(), purchaseDetail.getSubTotal() });
+	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity, purchaseDetail.getUnitPrice(), purchaseDetail.getSubTotal() });
 
 	        quantityTextField.setText("");
 	        carpartTextField.setText("");
@@ -337,6 +337,12 @@ private static final long serialVersionUID = 1L;
 	private void setMessage(String message) {
 		messageLabel.setText(message);
 		messageLabel.setOpaque(true);
+		Timer timer = new Timer(3500, e -> {
+	        messageLabel.setText("");
+	        messageLabel.setOpaque(false); 
+	    });
+	    timer.setRepeats(false); 
+	    timer.start();
 	}
 
 }

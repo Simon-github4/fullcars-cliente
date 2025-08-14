@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -23,9 +24,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -57,15 +61,16 @@ private static final long serialVersionUID = 1L;
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private List<SaleDetail> detailsList = new ArrayList<>();
-	private JLabel messageLabel;
-	
-	private TypedComboBox<CarPart> carpartComboBox = new TypedComboBox<>(c -> c.getSku());
+	private CarPart detailCarpart = null;
+	private JLabel carpartNameLabel = new JLabel("", JLabel.LEFT);
+
+	private JTextField carpartTextField = new JTextField(19);
 	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(c -> c.getFullName());
 	private DatePicker dpInput = new DatePicker();
 
 	private JTextField quantityTextField = new JTextField(29);
 	private NewModifyButton confirmButton = new NewModifyButton();
-	
+	private JLabel messageLabel;	
 
 	public SaleForm(SaleController controller, CarPartController cpController, CustomerController custController) {
 		this.controller = controller;
@@ -111,15 +116,14 @@ private static final long serialVersionUID = 1L;
 	private void addDetail() {
         if(validateDetailFields()) {
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
-			CarPart cp = carpartComboBox.getSelectedItem();
-			SaleDetail sd = new SaleDetail(quantity, cp.getBasePrice(), cp);
+			SaleDetail sd = new SaleDetail(quantity, detailCarpart.getBasePrice(), detailCarpart);
 			
 			detailsList.add(sd);
-	        tableModel.addRow(new Object[]{ cp.getSku(), quantity, sd.getUnitPrice(), sd.getSubTotal() });
+	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity, sd.getUnitPrice(), sd.getSubTotal() });
 
 	        quantityTextField.setText("");
-	        carpartComboBox.setSelectedIndex(0);
-	        carpartComboBox.requestFocus();
+	        carpartTextField.setText("");
+	        carpartTextField.requestFocus();
         }
     }
 	
@@ -218,14 +222,40 @@ private static final long serialVersionUID = 1L;
 		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
 		fieldsDetailsRow.add(new JLabel("  AutoParte", JLabel.LEFT));
+		fieldsDetailsRow.add(carpartNameLabel);
 		fieldsDetailsRow.add(new JLabel("  Cantidad", JLabel.LEFT));
 		fieldsDetails.add(fieldsDetailsRow);
 		
 		fieldsDetailsRow = new JPanel(new GridLayout(0,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
-		fieldsDetailsRow.add(carpartComboBox);
-		carpartComboBox.addActionListener(e-> quantityTextField.requestFocus());
-		fieldsDetailsRow.add(quantityTextField);
+		fieldsDetailsRow.add(carpartTextField);
+		carpartTextField.putClientProperty("JTextField.placeholderText", "ENTER para buscar autoparte");
+		carpartTextField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				detailCarpart = null;
+				carpartNameLabel.setText("");
+			}
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				detailCarpart = null;
+				carpartNameLabel.setText("");
+			}
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				detailCarpart = null;
+				carpartNameLabel.setText("");
+			}
+		});
+		carpartTextField.addActionListener(e-> {
+			detailCarpart = carpartController.getCarPart(carpartTextField.getText());
+			if(detailCarpart == null)
+				setMessage("No se escontro autoparte con ese sku");
+			else {
+				carpartNameLabel.setText(detailCarpart.getName());
+				quantityTextField.requestFocus();
+			}			
+		});		fieldsDetailsRow.add(quantityTextField);
 		quantityTextField.addActionListener(e -> addDetail());
 		quantityTextField.putClientProperty("JTextField.placeholderText", "ENTER para agregar detalle");
 		fieldsDetails.add(fieldsDetailsRow);
@@ -245,7 +275,7 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private boolean validateDetailFields() {
-		if (carpartComboBox.getSelectedIndex() == 0) {
+		if (detailCarpart == null) {
 			setMessage("Debe seleccionar una autoparte");
 			return false;
 		}
@@ -283,7 +313,7 @@ private static final long serialVersionUID = 1L;
 		dpInput.setSelectedDate(LocalDate.now());
 
 		detailsList = new ArrayList<>();
-		carpartComboBox.setSelectedIndex(0);
+		carpartTextField.setText("");
 		quantityTextField.setText("");
 
 		messageLabel.setText("");
@@ -296,7 +326,6 @@ private static final long serialVersionUID = 1L;
 
 	@Override
 	public void refresh() {
-		carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku("Seleccione una autoparte").build());
 		customerComboBox.fill(customerController.getCustomers(), Customer.builder().fullName("Seleccione un Cliente").build());
 		clearFields();
 	}
@@ -311,6 +340,12 @@ private static final long serialVersionUID = 1L;
 	private void setMessage(String message) {
 		messageLabel.setText(message);
 		messageLabel.setOpaque(true);
+		Timer timer = new Timer(3500, e -> {
+	        messageLabel.setText("");
+	        messageLabel.setOpaque(false); 
+	    });
+	    timer.setRepeats(false); 
+	    timer.start();
 	}
 
 }

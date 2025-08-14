@@ -129,11 +129,12 @@ public class ClienteRestCarPart {
 	            return mapper.readValue(json, new TypeReference<CarPart>() {});
 	        } else {
 	            System.err.println("Error HTTP: " + response.code());
-	            return new CarPart();
+	            return null;
 	        }
 	    } catch (IOException e) {
 	        e.printStackTrace(); // Manejo de error de conexión o de lectura
-	        return new CarPart();
-	    }	}
+            return null;
+	    }	
+	}
 
 }
