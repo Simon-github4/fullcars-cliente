@@ -85,12 +85,12 @@ public class MainFrame extends JFrame{
         
         menuBar.add(menuProductos);
         menuBar.add(menuClientes);
+        menuBar.add(menuVentas);
         menuBar.add(menuProveedores);
+        menuBar.add(menuPurchases);
         menuBar.add(menuMovimientosStock);
         menuBar.add(menuCategorias);
         menuBar.add(menuMarcas);
-        menuBar.add(menuVentas);
-        menuBar.add(menuPurchases);
         
         cardLayout = new CardLayout();
         

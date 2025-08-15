@@ -2,6 +2,7 @@ package views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -17,6 +18,7 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -67,10 +69,11 @@ private static final long serialVersionUID = 1L;
 	private JTextField carpartTextField = new JTextField(19);
 	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(c -> c.getFullName());
 	private DatePicker dpInput = new DatePicker();
+	private JTextField siniestroTextField = new JTextField("Nro. siniestro");	
 
 	private JTextField quantityTextField = new JTextField(29);
 	private NewModifyButton confirmButton = new NewModifyButton();
-	private JLabel messageLabel;	
+	private JLabel messageLabel;
 
 	public SaleForm(SaleController controller, CarPartController cpController, CustomerController custController) {
 		this.controller = controller;
@@ -92,7 +95,7 @@ private static final long serialVersionUID = 1L;
 				.id(null)
 			    .date(dpInput.getSelectedDate())
 			    .customer(customerComboBox.getSelectedItem())
-			    .saleNumber("")
+			    .saleNumber((siniestroTextField.getText().isBlank())?null : siniestroTextField.getText())
 			    .taxes(new BigDecimal(0))
 			    .build();
 		
@@ -151,6 +154,9 @@ private static final long serialVersionUID = 1L;
 		dpInput.setBackground(Color.GRAY); // Color de fondo oscuro
 		dpInput.setDateFormat("dd/MM/yyyy");
 		fieldsPanel.add(dateInputTextField);
+		fieldsPanel.add(new JLabel("Numero de Siniestro (dejar en blanco si es a particular)", JLabel.LEFT));
+		fieldsPanel.add(siniestroTextField);
+		siniestroTextField.putClientProperty("JTextField.placeholderText", "Venta a particular ✅  \u2705 ");
 		
 		mainPanel.add(fieldsPanel);
 		mainPanel.add(tablePanel);
@@ -308,14 +314,15 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void clearFields() {
-		tableModel.setRowCount(0);;
+		tableModel.setRowCount(0);
 		customerComboBox.setSelectedIndex(0);
 		dpInput.setSelectedDate(LocalDate.now());
 
 		detailsList = new ArrayList<>();
 		carpartTextField.setText("");
 		quantityTextField.setText("");
-
+		siniestroTextField.setText("");
+		
 		messageLabel.setText("");
 		messageLabel.setOpaque(false);
 	}

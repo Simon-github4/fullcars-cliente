@@ -6,6 +6,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -38,11 +40,11 @@ import javax.swing.table.TableRowSorter;
 import com.formdev.flatlaf.FlatClientProperties;
 
 import Utils.Icons;
+import Utils.NumberFormatArg;
 import Utils.ServerException;
 import controller.ProviderController;
 import controller.PurchaseController;
 import interfaces.Refreshable;
-import model.client.entities.Customer;
 import model.client.entities.Provider;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
@@ -66,7 +68,7 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel detailsTableModel;
 	
 	private JPanel purchaseeTablePanel;
-	private static final Object[] PURCHASE_COLUMNS = {"Fecha", "Proveedor", "Total", "Nro. Compra" };
+	private static final Object[] PURCHASE_COLUMNS = {"Fecha", "Proveedor", "Total", "Esta Pago", "Nro. Compra" };
 	private JTable purchaseTable;
 	private DefaultTableModel purchaseTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
@@ -126,13 +128,13 @@ private static final long serialVersionUID = 1L;
 		long totalSold = 0;
 		for (Purchase s : purchasesList) {
 			totalSold += s.getTotal();
-			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getTotal(), s.getId() };
+			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getTotal(), (s.isPayed())?"Si":"No", s.getId() };
 			purchaseTableModel.addRow(row);
 		}
-		totalTextField.setText("$"+String.valueOf(totalSold));
+		totalTextField.setText("$"+ NumberFormatArg.format(totalSold));
 	}
-	private void loadDetailsTable(int idSale) {
-		Purchase purchase = purchasesList.get(idSale);
+	private void loadDetailsTable(int idPurch) {
+		Purchase purchase = purchasesList.get(idPurch);
 		detailsTableModel.setRowCount(0);
     	for(PurchaseDetail d : purchase.getDetails()) {
     		Object[] row = {d.getProduct().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
@@ -252,6 +254,8 @@ private static final long serialVersionUID = 1L;
 					return Long.class;
 				case 3:
 					return Long.class;
+				case 4:
+					return Long.class;
 				default:
 					return Object.class;
 				}
@@ -263,6 +267,7 @@ private static final long serialVersionUID = 1L;
 		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setMaxWidth(90);
 		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setMinWidth(90);
 		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setPreferredWidth(90);
+		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 2).setPreferredWidth(90);
 		purchaseTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
@@ -304,7 +309,7 @@ private static final long serialVersionUID = 1L;
 		List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
 		if (!skuText.isEmpty())
-			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 3)); // Columna Nro Compra
+			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), purchaseTable.getColumnCount() - 1)); // Columna Nro Compra
 
 		if (filters.isEmpty())
 			sorter.setRowFilter(null); // Sin filtro
@@ -340,7 +345,36 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createJPopupMenu() {
-		new JPopupMenuModifyDelete(purchaseTable, this::delete, "Eliminar Venta");
+		new JPopupMenuModifyDelete(purchaseTable, this::delete, "Eliminar Compra").addMenuItem("Agregar Archivo", this::uploadFile)
+		.addMenuItem("Abrir Archivo", this::downloadFile).addMenuItem("Confirmar Pago",	this::confirmPay);
+	}
+	private void confirmPay() {
+        try {
+			controller.confirmPay((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1));
+			loadPurchaseTable();
+        } catch (Exception e) {
+			e.printStackTrace();
+			setMessage(e.getMessage());
+		}
+	}
+	private void uploadFile() {
+		JFileChooser fileChooser = new JFileChooser();
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try {
+                controller.uploadBill((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1), file);
+                JOptionPane.showMessageDialog(null, "Archivo subido correctamente");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                setMessage("Error al subir archivo: " + ex.getMessage());
+            } catch (ServerException e) {
+				e.printStackTrace();
+                setMessage("Error al subir archivo: " + e.getMessage());
+			}
+        }
+	}
+	private void downloadFile() {
+		controller.downloadAndOpenFile((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1));
 	}
 
 	@Override
@@ -368,8 +402,15 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void setMessage(String message) {
-		messageLabel.setText(message);
-		messageLabel.setOpaque(true);
+	    messageLabel.setText(message);
+	    messageLabel.setOpaque(true);
+
+	    Timer timer = new Timer(3500, e -> {
+	        messageLabel.setText("");
+	        messageLabel.setOpaque(false); 
+	    });
+	    timer.setRepeats(false); 
+	    timer.start();
 	}
 
 }

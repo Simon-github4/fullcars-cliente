@@ -13,8 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -23,9 +26,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -40,6 +43,7 @@ import javax.swing.table.TableRowSorter;
 import com.formdev.flatlaf.FlatClientProperties;
 
 import Utils.Icons;
+import Utils.NumberFormatArg;
 import Utils.ServerException;
 import controller.CustomerController;
 import controller.SaleController;
@@ -67,7 +71,7 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel detailsTableModel;
 	
 	private JPanel saleTablePanel;
-	private static final Object[] SALE_COLUMNS = {"Fecha", "Cliente", "Total", "Nro. Venta" };
+	private static final Object[] SALE_COLUMNS = {"Fecha", "Cliente", "Nro. Siniestro", "Total", "Nro. Venta" };
 	private JTable saleTable;
 	private DefaultTableModel saleTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
@@ -77,12 +81,11 @@ private static final long serialVersionUID = 1L;
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePicker();
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));
+	private JCheckBox hidenCheckBox = new JCheckBox("Mostrar Todo");//, Icons.CONFIRM.create(18, 18));
 
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
 	private JLabel messageLabel;
-
-
 
 	public SalesHistory(SaleController controller, CustomerController customerController) {
 		this.controller = controller;
@@ -101,6 +104,18 @@ private static final long serialVersionUID = 1L;
 		saleTable.setRowSorter(sorter);
 		setupLiveFilterListeners();
 		
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+        .put(KeyStroke.getKeyStroke("control A"), "mostrarCheckbox");
+
+		getActionMap().put("mostrarCheckbox", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				hidenCheckBox.setVisible(!hidenCheckBox.isVisible());
+				revalidate();
+				repaint();
+				loadSaleTable();
+			}
+		});
 		//loadSaleTable();
 	}
 
@@ -128,15 +143,22 @@ private static final long serialVersionUID = 1L;
 		salesList = controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
 		long totalSold = 0;
 		for (Sale s : salesList) {
-			totalSold += s.getTotal();
-			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), s.getTotal(), s.getId() };
-			saleTableModel.addRow(row);
+			if(hidenCheckBox.isSelected() || (s.getSaleNumber()!=null && !s.getSaleNumber().isBlank())) {
+				totalSold += s.getTotal();
+				Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), 
+							   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
+								, s.getTotal(), s.getId() };
+				saleTableModel.addRow(row);
+			}
 		}
-		totalTextField.setText("$"+String.valueOf(totalSold));
+		totalTextField.setText("$"+ NumberFormatArg.format(totalSold));
 	}
-	private void loadDetailsTable(int idSale) {
-		Sale sale = salesList.get(idSale);
+	private void loadDetailsTable(Long idSale) {
+		int i = 0;
 		detailsTableModel.setRowCount(0);
+		Sale sale = salesList.get(i);
+		while(sale.getId() != idSale) 
+			sale = salesList.get(++i);
     	for(SaleDetail d : sale.getDetails()) {
     		Object[] row = {d.getProduct().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
     		detailsTableModel.addRow(row);
@@ -159,6 +181,8 @@ private static final long serialVersionUID = 1L;
 		customerComboBox.addActionListener(e -> loadSaleTable());
 		totalTextField.setForeground(LightTheme.COLOR_GREEN_MONEY);
 		totalTextField.setEditable(false);
+		hidenCheckBox.setVisible(false);
+		hidenCheckBox.setSelected(false);
 		
 		JPanel north = new JPanel(new BorderLayout());
 		JPanel titulo = LightTheme.createTitle("Ventas");
@@ -176,6 +200,7 @@ private static final long serialVersionUID = 1L;
 		dateSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		idSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		filterPanel.add(searchButton);
+		filterPanel.add(hidenCheckBox);
 		LightTheme.aplicarEstiloPrimario(searchButton);
 		filterPanel.setBorder(BorderFactory.createCompoundBorder(
 			    BorderFactory.createEmptyBorder(0, 10, 10, 10),  
@@ -255,6 +280,8 @@ private static final long serialVersionUID = 1L;
 					return Long.class;
 				case 3:
 					return Long.class;
+				case 4:
+					return Long.class;	
 				default:
 					return Object.class;
 				}
@@ -270,9 +297,9 @@ private static final long serialVersionUID = 1L;
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                	int idSale = saleTable.getSelectedRow();
-                	if(idSale != -1)
-                		loadDetailsTable(saleTable.convertRowIndexToModel(idSale));
+                	int row = saleTable.getSelectedRow();
+                	if(row != -1)
+                		loadDetailsTable((Long)saleTableModel.getValueAt(saleTable.convertRowIndexToModel(row), saleTable.getColumnCount()-1));
                 }
 			}
 		});
@@ -302,12 +329,24 @@ private static final long serialVersionUID = 1L;
 		messageLabel.setOpaque(false);
 	}
 
+	private void openRemito() {
+		try {
+			controller.getAndOpenRemito((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
+		} catch (ServerException e) {
+			e.printStackTrace();
+			setMessage(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
+			setMessage("Hubo un error al obtener el remito "+e.getMessage());
+		}
+	}
+	
 	private void applyCombinedFilters() {
 		String skuText = idSearchTextField.getText().trim();
 		List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
 		if (!skuText.isEmpty())
-			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 3)); // Columna SKU
+			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), saleTable.getColumnCount()-1)); // Columna Nroventa
 
 		if (filters.isEmpty())
 			sorter.setRowFilter(null); // Sin filtro
@@ -343,7 +382,7 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createJPopupMenu() {
-		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta");
+		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta").addMenuItem("Abrir Remito de Venta", this::openRemito);
 	}
 
 	@Override
@@ -372,7 +411,14 @@ private static final long serialVersionUID = 1L;
 
 	private void setMessage(String message) {
 		messageLabel.setText(message);
-		messageLabel.setOpaque(true);
+	    messageLabel.setOpaque(true);
+
+	    Timer timer = new Timer(3500, e -> {
+	        messageLabel.setText("");
+	        messageLabel.setOpaque(false); 
+	    });
+	    timer.setRepeats(false); 
+	    timer.start();
 	}
 
 }

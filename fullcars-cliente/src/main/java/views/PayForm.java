@@ -55,7 +55,7 @@ public class PayForm extends JDialog {
         datePicker = new DatePicker();
         datePicker.setDateSelectionMode(DateSelectionMode.SINGLE_DATE_SELECTED);
         datePicker.setSelectedDate(LocalDate.now());
-        datePicker.setBackground(Color.DARK_GRAY);
+        datePicker.setBackground(Color.GRAY);
         payMethodCombo = new JComboBox<>(new String[]{"Efectivo", "Tarjeta", "Transferencia"});
         saveButton = new JButton("Guardar");
         cancelButton = new JButton("Cancelar");

@@ -18,7 +18,6 @@ public class StockMovement {
     private Integer quantity;
     private LocalDate date;
     private String reference;//EJ: Sale #155
-    private String observations;
     
     private CarPart carPart;
 

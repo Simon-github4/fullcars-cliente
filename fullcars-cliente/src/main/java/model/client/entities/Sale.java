@@ -23,6 +23,7 @@ public class Sale {
     
     //en vez de poner customer, plasmar los atributos de el customer en ESE MOMENTO ?
     private Customer customer;
+    private String remitoPath;
     private List<SaleDetail> details;
     
     //private char type;

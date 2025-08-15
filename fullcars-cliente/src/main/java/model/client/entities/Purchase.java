@@ -22,8 +22,8 @@ public class Purchase {
     private BigDecimal taxes;
 
     private String observations;
-    //private boolean isReceiptSigned;
-    //private boolean isPayed;
+    private String filePath;
+    private boolean isPayed;
     
     private Provider provider;
     private List<PurchaseDetail> details = new ArrayList<>();

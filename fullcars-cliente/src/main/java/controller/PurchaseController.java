@@ -1,11 +1,13 @@
 package controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
 import Utils.ServerException;
 import data.service.ClienteRestPurchase;
+import dtos.ConfirmPurchasePayDTO;
 import model.client.entities.Provider;
 import model.client.entities.Purchase;
 
@@ -31,5 +33,18 @@ public class PurchaseController {
 
 	public void delete(Long id) throws ServerException, IOException {
 		servicePurchase.delete(id);
+	}
+
+	
+	public void uploadBill(Long purchaseId, File file) throws IOException, ServerException {
+		servicePurchase.uploadFile(purchaseId, file);
+	}
+
+	public void downloadAndOpenFile(Long purchaseId) {
+		servicePurchase.downloadAndOpenFile(purchaseId);
+	}
+
+	public void confirmPay(Long purchaseId) throws Exception {
+		servicePurchase.confirmPay(purchaseId, new ConfirmPurchasePayDTO(true));
 	}
 }

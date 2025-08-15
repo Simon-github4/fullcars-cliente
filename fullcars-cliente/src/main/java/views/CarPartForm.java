@@ -217,6 +217,7 @@ private static final long serialVersionUID = 1L;
 	            }
 	            splitPane.revalidate();
 	        });
+	        toggleButton.doClick();
 	        add(splitPane, BorderLayout.CENTER);
 //--------------------------------------------------------CENTER PANEL------------------------------------------------------------
 		}

@@ -3,7 +3,6 @@ package views;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -17,6 +16,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -65,7 +65,7 @@ private static final long serialVersionUID = 1L;
 	
 	private JPanel inputPanel;
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"AutoParte(SKU)", "Cantidad", "Referencia", "Fecha", "Observaciones", "Tipo", "id"};
+	private static final Object[] COLUMNS = {"AutoParte(SKU)", "Cantidad", "Referencia", "Fecha", "Tipo", "id"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -82,8 +82,8 @@ private static final long serialVersionUID = 1L;
 	private JTextField skuSearchTextField = new JTextField("", 15);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField(); 
 	private DatePicker dpFilter = new DatePicker();
-	private JRadioButton exits = new JRadioButton("Entradas  ");
-	private JRadioButton entries = new JRadioButton("Salidas  ");
+	private JCheckBox exits = new JCheckBox("Salidas  ");
+	private JCheckBox entries = new JCheckBox("Entradas  ");
 
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
@@ -113,7 +113,7 @@ private static final long serialVersionUID = 1L;
 			StockMovement c = StockMovement.builder()
 					.carPart(carpartComboBox.getSelectedItem())
 					.date(dpInput.getSelectedDate())
-					.observations(observationsTextField.getText())
+					.reference(observationsTextField.getText())
 					.quantity(Integer.parseInt(quantityTextField.getText()))
 					.type((MovementType) movementComboBox.getSelectedItem())
 					.purchaseDetail(null)
@@ -141,7 +141,7 @@ private static final long serialVersionUID = 1L;
 			try {
 				String type = ((MovementType)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex("Tipo"))).toString();
 				if(type.equalsIgnoreCase("ENTRADA_COMPRA") || type.equalsIgnoreCase("SALIDA_VENTA"))
-					setMessage("No se pueden eliminar movimientos de compras o ventas, unicamente de Ajustes");//throw new Exception("No se pueden eliminar movimientos de compras o ventas, unicamente de Ajustes");
+					throw new ServerException("No se pueden eliminar movimientos de compras o ventas, unicamente de Ajustes");//throw new Exception("No se pueden eliminar movimientos de compras o ventas, unicamente de Ajustes");
 
 				String reference = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"Referencia"));
 				if(JOptionPane.showConfirmDialog(null, "Desea eliminar el movimiento "+ reference,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
@@ -165,7 +165,7 @@ private static final long serialVersionUID = 1L;
 	        	tableModel.setRowCount(0);
 	        	List<StockMovement> stockMovements = controller.getStockMovements(dpFilter.getSelectedDateRange(), entries.isSelected(), exits.isSelected());
 				for(StockMovement sm : stockMovements) {
-					Object[] row = {sm.getCarPart().getSku(), sm.getQuantity(), sm.getReference(), sm.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), sm.getObservations(), sm.getType(), sm.getId()};
+					Object[] row = {sm.getCarPart().getSku(), sm.getQuantity(), sm.getReference(), sm.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), sm.getType(), sm.getId()};
 					tableModel.addRow(row);
 				}
 	        }
@@ -268,7 +268,7 @@ private static final long serialVersionUID = 1L;
 			dpInput.setBackground(Color.GRAY); // Color de fondo oscuro
 			dpInput.setDateFormat("dd/MM/yyyy");
 			rowsPanel.add(dateInputTextField);		
-			rowsPanel.add(new JLabel("  Observaciones", JLabel.LEFT));
+			rowsPanel.add(new JLabel("  Referencia / Observaciones", JLabel.LEFT));
 			rowsPanel.add(observationsTextField);
 			
 			inputPanel.add(rowsPanel);
@@ -344,7 +344,7 @@ private static final long serialVersionUID = 1L;
 						carpartComboBox.setSelectedItem(sm.getCarPart());
 						quantityTextField.setText(sm.getQuantity().toString());
 						movementComboBox.setSelectedItem(sm.getType());
-						observationsTextField.setText(sm.getObservations());
+						observationsTextField.setText(sm.getReference());
 						dpInput.setSelectedDate(sm.getDate());
 						if(!inputPanel.isVisible())
 							toggleButton.doClick();					
