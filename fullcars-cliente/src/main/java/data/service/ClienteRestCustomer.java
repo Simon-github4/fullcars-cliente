@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import InitClass.Initializr;
 import Utils.ServerException;
 import dtos.CustomerSummaryDTO;
 import model.client.entities.Customer;
@@ -24,7 +25,7 @@ import views.CustomerSummaryHistory;
 
 public class ClienteRestCustomer {
 	
-	private static final String ADDRESS = "http://localhost:8080/customers";
+	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/customers";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 

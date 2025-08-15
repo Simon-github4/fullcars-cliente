@@ -2,7 +2,6 @@ package views.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -24,7 +23,9 @@ import Utils.Icons;
 
 public class LightTheme extends FlatLightLaf {
 
-    public static final String NAME = "MiTemaClaro";
+	private static final long serialVersionUID = 150295267894992027L;
+	
+	public static final String NAME = "MiTemaClaro";
     public static final Color COLOR_PRIMARIO = new Color(26, 115, 232); // Azul Google
     public static final Color COLOR_SECUNDARIO = new Color(224, 224, 224); 
     public static final Color COLOR_TEXTO = Color.WHITE;
@@ -63,24 +64,32 @@ public class LightTheme extends FlatLightLaf {
     }
 
     private static Font getTitleFont() {
-    	Font font=null;
-    	try {
-			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/fonts/Montserrat-Bold.ttf")).deriveFont(40f);
-		} catch (FontFormatException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return font;
+        try (InputStream fontStream = LightTheme.class.getResourceAsStream("/resources/fonts/Montserrat-Bold.ttf")) {
+            
+            if (fontStream == null) {
+                System.err.println("No se encontró el archivo de fuente: /fonts/Montserrat-Bold.ttf");
+                return UIManager.getFont("Label.font").deriveFont(Font.BOLD, 40f);
+            }
+
+            Font customFont = Font.createFont(Font.TRUETYPE_FONT, fontStream).deriveFont(40f);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(customFont);
+            return customFont;
+
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+            return UIManager.getFont("Label.font").deriveFont(Font.BOLD, 40f);
+        }
     }
+
     public static Font getSubTitleFont() {
     	Font font=null;
     	try {
-			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/fonts/Montserrat-Bold.ttf")).deriveFont(25f);
+			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/resources/fonts/Montserrat-Bold.ttf")).deriveFont(25f);
 		} catch (FontFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+			return UIManager.getFont("Label.font").deriveFont(Font.BOLD, 40f);
 		}
 		return font;
     }
@@ -118,7 +127,7 @@ public class LightTheme extends FlatLightLaf {
     
     public LightTheme() {
         super();
-        InputStream is = getClass().getResourceAsStream("/fonts/Roboto-Medium.ttf");
+        InputStream is = getClass().getResourceAsStream("/resources/fonts/Roboto-Medium.ttf");
         Font roboto = null;
 		try {
 			roboto = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(14f);

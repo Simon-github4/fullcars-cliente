@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import InitClass.Initializr;
 import Utils.ServerException;
 import model.client.entities.CarPart;
 import okhttp3.MediaType;
@@ -20,7 +21,7 @@ import okhttp3.Response;
 
 public class ClienteRestCarPart {
 
-	private static final String ADDRESS = "http://localhost:8080/carparts";
+	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/carparts";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 

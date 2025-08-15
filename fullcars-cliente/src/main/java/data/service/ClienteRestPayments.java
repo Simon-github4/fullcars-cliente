@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import InitClass.Initializr;
 import Utils.ServerException;
 import model.client.entities.Pay;
 import model.client.entities.StockMovement;
@@ -21,7 +22,7 @@ import okhttp3.Response;
 
 public class ClienteRestPayments {
 
-	private static final String ADDRESS = "http://localhost:8080/payments";
+	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/payments";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 
