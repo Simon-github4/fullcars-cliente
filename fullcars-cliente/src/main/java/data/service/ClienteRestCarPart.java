@@ -21,7 +21,7 @@ import okhttp3.Response;
 
 public class ClienteRestCarPart {
 
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/carparts";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/carparts";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 

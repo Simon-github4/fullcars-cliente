@@ -32,7 +32,7 @@ import okhttp3.Response;
 
 public class ClienteRestSale {
 
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/sales";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/sales";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 

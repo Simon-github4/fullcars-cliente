@@ -22,7 +22,7 @@ import okhttp3.Response;
 
 public class ClienteRestPayments {
 
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/payments";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/payments";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 

@@ -98,7 +98,7 @@ private static final long serialVersionUID = 1L;
 
 		sorter = new TableRowSorter<>(purchaseTableModel);
 		purchaseTable.setRowSorter(sorter);
-		setupLiveFilterListeners();
+		setupDocumentListeners();
 		
 		//loadPurchaseTable();
 	}
@@ -122,17 +122,37 @@ private static final long serialVersionUID = 1L;
 	private void loadPurchaseTable() {
 		purchaseTableModel.setRowCount(0);
 		detailsTableModel.setRowCount(0);
-		sorter.setSortKeys(null);// resets column order
-		
-		purchasesList = controller.getPurchases(providerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
-		long totalSold = 0;
+		sorter.setSortKeys(null); // resets column order
+
+		purchasesList = new ArrayList<Purchase>();
+		long totalBuys = 0;
+
+		String nroCompraText = idSearchTextField.getText().trim();
+
+		if (!nroCompraText.isEmpty()) 
+			try {
+				Purchase p = controller.getPurchase(Long.parseLong(nroCompraText));
+				if(p == null)
+					throw new NullPointerException();
+				purchasesList.add(p);
+			} catch (NumberFormatException ex) {
+				setMessage("El número de compra no es válido");
+			}catch (NullPointerException ex) {
+				setMessage("No se encontro la compra: "+ nroCompraText);
+			}
+		 else 
+			purchasesList = controller.getPurchases(providerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
+
 		for (Purchase s : purchasesList) {
-			totalSold += s.getTotal();
-			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getTotal(), (s.isPayed())?"Si":"No", s.getId() };
+			totalBuys += s.getTotal();
+			Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(),
+					s.getTotal(), (s.isPayed()) ? "Si" : "No", s.getId() };
 			purchaseTableModel.addRow(row);
 		}
-		totalTextField.setText("$"+ NumberFormatArg.format(totalSold));
+		totalTextField.setText("$" + NumberFormatArg.format(totalBuys));
+
 	}
+
 	private void loadDetailsTable(int idPurch) {
 		Purchase purchase = purchasesList.get(idPurch);
 		detailsTableModel.setRowCount(0);
@@ -304,39 +324,32 @@ private static final long serialVersionUID = 1L;
 		messageLabel.setOpaque(false);
 	}
 
-	private void applyCombinedFilters() {
-		String skuText = idSearchTextField.getText().trim();
-		List<RowFilter<Object, Object>> filters = new ArrayList<>();
-
-		if (!skuText.isEmpty())
-			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), purchaseTable.getColumnCount() - 1)); // Columna Nro Compra
-
-		if (filters.isEmpty())
-			sorter.setRowFilter(null); // Sin filtro
-		else
-			sorter.setRowFilter(RowFilter.andFilter(filters));
-	}
-
-	private void setupLiveFilterListeners() {
+	private void setupDocumentListeners() {
 		DocumentListener debounceListener = new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				reiniciarTimer();
+				setFilters();
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				reiniciarTimer();
+				setFilters();
 			}
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				reiniciarTimer();
+				setFilters();
 			}
-			private void reiniciarTimer() {
+			private void setFilters() {
 				if (filtroTimer != null && filtroTimer.isRunning())
 					filtroTimer.restart();
 				else {
-					filtroTimer = new Timer(200, evt -> applyCombinedFilters());
-					filtroTimer.setRepeats(false); // Solo una vez
+					filtroTimer = new Timer(300, evt ->{
+						dpFilter.clearSelectedDate();
+						providerComboBox.setSelectedIndex(0);
+						dateSearchTextField.setEnabled(idSearchTextField.getText().isBlank());
+						providerComboBox.setEnabled(idSearchTextField.getText().isBlank());
+						loadPurchaseTable();
+					});
+					filtroTimer.setRepeats(false); 
 					filtroTimer.start();
 				}
 			}

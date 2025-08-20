@@ -49,6 +49,7 @@ import controller.CustomerController;
 import controller.SaleController;
 import interfaces.Refreshable;
 import model.client.entities.Customer;
+import model.client.entities.Purchase;
 import model.client.entities.Sale;
 import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
@@ -102,7 +103,7 @@ private static final long serialVersionUID = 1L;
 
 		sorter = new TableRowSorter<>(saleTableModel);
 		saleTable.setRowSorter(sorter);
-		setupLiveFilterListeners();
+		setupDocumentListeners();
 		
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
         .put(KeyStroke.getKeyStroke("control A"), "mostrarCheckbox");
@@ -111,6 +112,7 @@ private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				hidenCheckBox.setVisible(!hidenCheckBox.isVisible());
+				hidenCheckBox.setSelected(hidenCheckBox.isVisible());
 				revalidate();
 				repaint();
 				loadSaleTable();
@@ -140,16 +142,33 @@ private static final long serialVersionUID = 1L;
 		detailsTableModel.setRowCount(0);
 		sorter.setSortKeys(null);// resets column order
 		
-		salesList = controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
+		salesList = new ArrayList<>();//controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
 		long totalSold = 0;
-		for (Sale s : salesList) {
-			if(hidenCheckBox.isSelected() || (s.getSaleNumber()!=null && !s.getSaleNumber().isBlank())) {
-				totalSold += s.getTotal();
-				Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), 
-							   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
-								, s.getTotal(), s.getId() };
-				saleTableModel.addRow(row);
+		
+		String nroCompraText = idSearchTextField.getText().trim();
+
+		if (!nroCompraText.isEmpty()) 
+			try {
+				Sale s = controller.getSale(Long.parseLong(nroCompraText));
+				if(s == null)
+					throw new NullPointerException();
+				if(!hidenCheckBox.isSelected() && s.getFactura() == null)
+					throw new NullPointerException();					
+				salesList.add(s);
+			} catch (NumberFormatException ex) {
+				setMessage("El número de venta no es válido");
+			}catch (NullPointerException ex) {
+				setMessage("No se encontro la venta: "+ nroCompraText);
 			}
+		 else 
+			 salesList = controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
+		
+		for (Sale s : salesList) {
+			totalSold += s.getTotal();
+			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), 
+						   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
+							, s.getTotal(), s.getId() };
+			saleTableModel.addRow(row);
 		}
 		totalTextField.setText("$"+ NumberFormatArg.format(totalSold));
 	}
@@ -183,6 +202,7 @@ private static final long serialVersionUID = 1L;
 		totalTextField.setEditable(false);
 		hidenCheckBox.setVisible(false);
 		hidenCheckBox.setSelected(false);
+		hidenCheckBox.addActionListener(e-> loadSaleTable());
 		
 		JPanel north = new JPanel(new BorderLayout());
 		JPanel titulo = LightTheme.createTitle("Ventas");
@@ -340,40 +360,33 @@ private static final long serialVersionUID = 1L;
 			setMessage("Hubo un error al obtener el remito "+e.getMessage());
 		}
 	}
-	
-	private void applyCombinedFilters() {
-		String skuText = idSearchTextField.getText().trim();
-		List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-		if (!skuText.isEmpty())
-			filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), saleTable.getColumnCount()-1)); // Columna Nroventa
-
-		if (filters.isEmpty())
-			sorter.setRowFilter(null); // Sin filtro
-		else
-			sorter.setRowFilter(RowFilter.andFilter(filters));
-	}
-
-	private void setupLiveFilterListeners() {
+	private void setupDocumentListeners() {
 		DocumentListener debounceListener = new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				reiniciarTimer();
+				setFilters();
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				reiniciarTimer();
+				setFilters();
 			}
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				reiniciarTimer();
+				setFilters();
 			}
-			private void reiniciarTimer() {
+			private void setFilters() {
 				if (filtroTimer != null && filtroTimer.isRunning())
 					filtroTimer.restart();
 				else {
-					filtroTimer = new Timer(200, evt -> applyCombinedFilters());
-					filtroTimer.setRepeats(false); // Solo una vez
+					filtroTimer = new Timer(300, evt ->{
+						dpFilter.clearSelectedDate();
+						customerComboBox.setSelectedIndex(0);
+						dateSearchTextField.setEnabled(idSearchTextField.getText().isBlank());
+						customerComboBox.setEnabled(idSearchTextField.getText().isBlank());
+						loadSaleTable();
+					});
+					filtroTimer.setRepeats(false); 
 					filtroTimer.start();
 				}
 			}

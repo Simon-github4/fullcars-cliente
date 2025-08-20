@@ -21,7 +21,7 @@ import okhttp3.Response;
 
 public class ClienteRestBrand {
 	
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/brands";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/brands";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 

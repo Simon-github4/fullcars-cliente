@@ -30,25 +30,30 @@ public class MainFrame extends JFrame{
    
     public MainFrame() {
     	setStyling();
+        Thread t = new Thread(()->createForms());
+        t.setPriority(Thread.MAX_PRIORITY);
+        t.start();
+        
         setTitle("Full Cars");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         int width = gd.getDisplayMode().getWidth();
         int height = gd.getDisplayMode().getHeight();
         setSize(width - 450, height - 400);
+        //setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         
-        setLocationRelativeTo(null);
         setBackground(new Color(220, 220, 220));
+        setVisible(true);
 
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(Color.white);
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(WIDTH, 50));
         setJMenuBar(menuBar);
-
-        JMenu menuProductos = new JMenu("PRODUCTOS");//en vex de eomji icono
-        menuProductos.addMouseListener(new ClickAdapter("PRODUCTOS"));
+ 
+        JMenu menuProductos = new JMenu("AUTOPARTES");//en vex de eomji icono
+        menuProductos.addMouseListener(new ClickAdapter("AUTOPARTES"));
 
         JMenu menuCategorias = new JMenu("CATEGORIAS");
         menuCategorias.addMouseListener(new ClickAdapter("CATEGORIAS"));
@@ -92,25 +97,28 @@ public class MainFrame extends JFrame{
         menuBar.add(menuCategorias);
         menuBar.add(menuMarcas);
         
-        cardLayout = new CardLayout();
+    }
+
+    private void createForms() {
+    	cardLayout = new CardLayout();
         
         cardPanels = new JPanel(cardLayout);
         add(cardPanels, BorderLayout.CENTER);
         
-        cardPanels.add(FormFactory.createFormCarPart(), "PRODUCTOS");
-        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
-        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
+        cardPanels.add(FormFactory.createFormCarPart(), "AUTOPARTES");
+        cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
+        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
         cardPanels.add(FormFactory.createCustomerForm(), "CLIENTES");
         cardPanels.add(FormFactory.createProviderForm(), "PROVEEDORES");
         cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
-        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
         cardPanels.add(FormFactory.createSalesForm(), "NUEVA VENTA");
-        cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
         cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
+        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
+        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
         
-    }
+	}
 
-    private class ClickAdapter extends MouseAdapter {
+	private class ClickAdapter extends MouseAdapter {
         private final String panelNombre;
 
         public ClickAdapter(String panelNombre) {

@@ -33,7 +33,7 @@ import okhttp3.Response;
 
 public class ClienteRestPurchase {
 
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/purchases";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/purchases";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 

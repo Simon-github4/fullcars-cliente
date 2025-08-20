@@ -26,15 +26,22 @@ public class SaleController {
 		return serviceSale.getSales();
 	}
 
-	public List<Sale> getSales(Customer c, LocalDate[] dates){
-		return serviceSale.getSales(dates, c.getId());
+	public List<Sale> getSales(Customer c, LocalDate[] dates, boolean showAll){
+		List<Sale> sales = serviceSale.getSales(dates, c.getId());
+		if(!showAll)
+			sales = sales.stream().filter(s-> s.getFactura() != null).toList();
+		return sales;
 	}
 	
 	public void save(Sale c) throws ServerException, IOException, Exception {
 		Sale savedSale = serviceSale.save(c);
 		
 		Thread t = new Thread(() ->{ 
-			byte[] file = PdfUtils.generateSalePdf(c);
+			byte[] file;
+			if(savedSale.getSaleNumber() == null)
+				file = PdfUtils.generatePresupuestoPdf(savedSale);
+			else
+				file = PdfUtils.generateRemitoPdf(savedSale);
 			
 			if(file != null && savedSale != null) {
 	            File tempFile = null;

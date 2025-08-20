@@ -25,7 +25,7 @@ import okhttp3.Response;
 
 public class ClienteRestStockMovement {
 
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/stockmovements";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/stockmovements";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 

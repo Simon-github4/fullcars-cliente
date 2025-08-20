@@ -25,7 +25,7 @@ import views.CustomerSummaryHistory;
 
 public class ClienteRestCustomer {
 	
-	private static final String ADDRESS = "http://"+Initializr.getIpAndPort()+"/customers";
+	private static final String ADDRESS = Initializr.getServerUrl()+"/customers";
 	private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper;
 

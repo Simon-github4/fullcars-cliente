@@ -64,7 +64,7 @@ public class LightTheme extends FlatLightLaf {
     }
 
     private static Font getTitleFont() {
-        try (InputStream fontStream = LightTheme.class.getResourceAsStream("/resources/fonts/Montserrat-Bold.ttf")) {
+        try (InputStream fontStream = LightTheme.class.getResourceAsStream("/resources/imgs/Montserrat-Bold.ttf")) {
             
             if (fontStream == null) {
                 System.err.println("No se encontró el archivo de fuente: /fonts/Montserrat-Bold.ttf");
@@ -84,7 +84,7 @@ public class LightTheme extends FlatLightLaf {
     public static Font getSubTitleFont() {
     	Font font=null;
     	try {
-			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/resources/fonts/Montserrat-Bold.ttf")).deriveFont(25f);
+			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/resources/imgs/Montserrat-Bold.ttf")).deriveFont(25f);
 		} catch (FontFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -127,7 +127,7 @@ public class LightTheme extends FlatLightLaf {
     
     public LightTheme() {
         super();
-        InputStream is = getClass().getResourceAsStream("/resources/fonts/Roboto-Medium.ttf");
+        InputStream is = getClass().getResourceAsStream("/resources/imgs/Roboto-Medium.ttf");
         Font roboto = null;
 		try {
 			roboto = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(14f);

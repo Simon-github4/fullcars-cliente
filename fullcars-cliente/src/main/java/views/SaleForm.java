@@ -156,7 +156,7 @@ private static final long serialVersionUID = 1L;
 		fieldsPanel.add(dateInputTextField);
 		fieldsPanel.add(new JLabel("Numero de Siniestro (dejar en blanco si es a particular)", JLabel.LEFT));
 		fieldsPanel.add(siniestroTextField);
-		siniestroTextField.putClientProperty("JTextField.placeholderText", "Venta a particular ✅  \u2705 ");
+		siniestroTextField.putClientProperty("JTextField.placeholderText", "Venta a particular ");
 		
 		mainPanel.add(fieldsPanel);
 		mainPanel.add(tablePanel);
