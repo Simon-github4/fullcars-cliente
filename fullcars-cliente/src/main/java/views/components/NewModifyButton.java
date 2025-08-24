@@ -22,7 +22,7 @@ public class NewModifyButton extends JButton{
 	
 	public void toNew() {
 		setText("Agregar");
-		setIcon(Icons.NEW.create());
+		setIcon(Icons.CONFIRM.create());
 		idToModify = null;
 	}
 

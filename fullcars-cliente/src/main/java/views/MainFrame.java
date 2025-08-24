@@ -54,7 +54,11 @@ public class MainFrame extends JFrame{
         menuBar.setPreferredSize(new Dimension(WIDTH, 50));
         setJMenuBar(menuBar);
  
-        JMenu menuProductos = new JMenu("AUTOPARTES");//en vex de eomji icono
+        JMenu full = new JMenu("FULLCARS");
+        full.setIcon(Icons.LOGO_ST.create());
+        full.addMouseListener(new ClickAdapter("FULLCARS"));
+        
+        JMenu menuProductos = new JMenu("AUTOPARTES");
         menuProductos.setIcon(Icons.CAR.create());
         menuProductos.addMouseListener(new ClickAdapter("AUTOPARTES"));
 
@@ -63,7 +67,7 @@ public class MainFrame extends JFrame{
         menuCategorias.addMouseListener(new ClickAdapter("CATEGORIAS"));
 
         JMenu menuMarcas  = new JMenu("MARCAS");
-        menuMarcas.setIcon(Icons.TOYOTA.create());
+        menuMarcas.setIcon(Icons.BRAND.create());
         menuMarcas.addMouseListener(new ClickAdapter("MARCAS"));
 
         JMenu menuClientes  = new JMenu("CLIENTES");
@@ -98,6 +102,7 @@ public class MainFrame extends JFrame{
         formPurchases.addMouseListener(new ClickAdapter("NUEVA COMPRA"));
         menuPurchases.add(formPurchases);
         
+        menuBar.add(full);
         menuBar.add(menuProductos);
         menuBar.add(menuClientes);
         menuBar.add(menuVentas);

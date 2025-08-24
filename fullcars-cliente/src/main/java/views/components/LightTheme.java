@@ -32,6 +32,7 @@ public class LightTheme extends FlatLightLaf {
     public static final Color COLOR_HEADER_TABLE = new Color(64, 152, 215);//celestito  
     public static final Color COLOR_GREEN_MONEY = new Color(85, 187, 101);     
     public static final Color COLOR_AZUL_CLARITO = new Color(84, 173, 253 );//alsinaApp botones     
+    public static final Color COLOR_AZUL_FIRME = new Color(12,81,169);//boceto benja     
 
 	public static final Font TITLE_FONT = getTitleFont();
 	public static final Font SUBTITLE_FONT = getSubTitleFont();
@@ -41,9 +42,10 @@ public class LightTheme extends FlatLightLaf {
     }
 
     public static void aplicarEstiloPrimario(JButton boton) {
+        boton.setOpaque(true);
+        boton.setFocusPainted(false);
         boton.setBackground(COLOR_PRIMARIO);
         boton.setForeground(COLOR_TEXTO);
-        boton.setFocusPainted(false);
         //boton.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
         boton.setFont(boton.getFont().deriveFont(Font.BOLD));
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -51,7 +53,8 @@ public class LightTheme extends FlatLightLaf {
 
     public static void aplicarEstiloSecundario(JButton boton) {
         boton.setBackground(Color.white);
-        boton.setForeground(COLOR_PRIMARIO);
+        boton.setForeground(Color.DARK_GRAY);
+        boton.setOpaque(true);
         boton.setFocusPainted(false);
         //boton.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         boton.setFont(boton.getFont().deriveFont(Font.PLAIN));
@@ -64,7 +67,7 @@ public class LightTheme extends FlatLightLaf {
     }
 
     private static Font getTitleFont() {
-        try (InputStream fontStream = LightTheme.class.getResourceAsStream("/resources/imgs/Montserrat-Bold.ttf")) {
+        try (InputStream fontStream = LightTheme.class.getResourceAsStream("/resources/imgs/fonts/Montserrat-Bold.ttf")) {
             
             if (fontStream == null) {
                 System.err.println("No se encontró el archivo de fuente: /fonts/Montserrat-Bold.ttf");
@@ -84,7 +87,7 @@ public class LightTheme extends FlatLightLaf {
     public static Font getSubTitleFont() {
     	Font font=null;
     	try {
-			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/resources/imgs/Montserrat-Bold.ttf")).deriveFont(25f);
+			 font = Font.createFont(Font.TRUETYPE_FONT, LightTheme.class.getResourceAsStream("/resources/imgs/fonts/Montserrat-Bold.ttf")).deriveFont(25f);
 		} catch (FontFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -96,13 +99,13 @@ public class LightTheme extends FlatLightLaf {
     
     public static JPanel createTitle(String text) {
     	JPanel panel = new JPanel(new BorderLayout());
-    	JLabel title = new JLabel("             "+text, JLabel.CENTER);
+    	JLabel title = new JLabel(text, JLabel.CENTER);
     	title.setFont(TITLE_FONT);
     	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 96));
     	JLabel logo = new JLabel(Icons.LOGO.create(96, 96));
     	logo.setPreferredSize(new Dimension(96, 96));
     	
-    	panel.add(logo, BorderLayout.EAST);
+    	//panel.add(logo, BorderLayout.EAST);
     	panel.add(title, BorderLayout.CENTER);
     	return panel;
     }
@@ -127,7 +130,7 @@ public class LightTheme extends FlatLightLaf {
     
     public LightTheme() {
         super();
-        InputStream is = getClass().getResourceAsStream("/resources/imgs/Roboto-Medium.ttf");
+        InputStream is = getClass().getResourceAsStream("/resources/imgs/fonts/Roboto-Medium.ttf");
         Font roboto = null;
 		try {
 			roboto = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(14f);
@@ -144,7 +147,7 @@ public class LightTheme extends FlatLightLaf {
         UIManager.put("TableHeader.foreground", Color.WHITE);
 		UIManager.put("Button.arc", 15);		
 		UIManager.put("Button.foreground", Color.WHITE);		
-		UIManager.put("Button.background", COLOR_PRIMARIO);	//new Color(157, 201, 255)	
+		UIManager.put("Button.background", COLOR_AZUL_FIRME);	//new Color(157, 201, 255)	
 		//UIManager.put("Button.borderColor", COLOR_HEADER_TABLE);	//new Color(157, 201, 255)	
 		UIManager.put("TextComponent.arc", 10);		
 		UIManager.put("Component.arc", 10);		
@@ -152,7 +155,7 @@ public class LightTheme extends FlatLightLaf {
 		UIManager.put("Table.alternateRowColor", COLOR_SECUNDARIO);
         UIManager.put("Panel.background", COLOR_SECUNDARIO);
         //UIManager.put("SplitPane.dividerColor", new Color(52, 58, 64)); // Color del divisor
-
+        
         UIManager.put("TabbedPane.tabType", "card");
         UIManager.put("TabbedPane.tabsOverlapBorder", true);
         UIManager.put("TabbedPane.hasFullBorder", true);
@@ -167,9 +170,12 @@ public class LightTheme extends FlatLightLaf {
         UIManager.put("TabbedPane.tabAlignment", "center");
         UIManager.put("TabbedPane.tabWidthMode", "equal");
         
-        UIManager.put("MenuBar.background", COLOR_SECUNDARIO);
-        UIManager.put("MenuItem.background", COLOR_SECUNDARIO);
-        UIManager.put("PopupMenu.background", COLOR_SECUNDARIO);
+        UIManager.put("MenuBar.background", COLOR_AZUL_FIRME);
+        UIManager.put("MenuBar.foreground", Color.white);
+        UIManager.put("MenuItem.background", COLOR_AZUL_FIRME);
+        UIManager.put("MenuItem.foreground", Color.white);
+        UIManager.put("PopupMenu.background", COLOR_AZUL_FIRME);
+        UIManager.put("PopupMenu.foreground", Color.white);
         //UIManager.put("MenuItem.selectionBackground", java.awt.Color.decode("#eeeeee"));
         //UIManager.put("MenuItem.selectionForeground", java.awt.Color.decode("#000000"));
 

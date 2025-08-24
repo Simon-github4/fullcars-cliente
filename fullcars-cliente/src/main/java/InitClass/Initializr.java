@@ -24,8 +24,8 @@ public class Initializr {
     }
     
     public static String getServerUrl() {
-    	//return properties.getProperty("server.url");
-    	return SERVER_PATH;
+    	return properties.getProperty("server.url", SERVER_PATH);
+    	//return SERVER_PATH;
     }
 
     public static String getApiKey() {

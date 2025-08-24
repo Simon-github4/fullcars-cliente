@@ -16,6 +16,7 @@ import java.util.List;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -138,10 +139,12 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createInputPanel() {
+		carpartNameLabel.setForeground(LightTheme.COLOR_AZUL_FIRME);
+		
 		add(LightTheme.createTitle("Nueva Venta"), BorderLayout.NORTH);
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		Dimension size = new Dimension(600, Integer.MAX_VALUE);
+		Dimension size = new Dimension(700, Integer.MAX_VALUE);
 
 		JPanel fieldsPanel = new JPanel(new GridLayout(0, 1));
 		fieldsPanel.setMaximumSize(size);
@@ -220,21 +223,32 @@ private static final long serialVersionUID = 1L;
 				table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
 
-		tablePanel = new JPanel(new BorderLayout(0,8));
-		tablePanel.add(new JScrollPane(table), BorderLayout.CENTER);
+		//tablePanel = new JPanel(new BorderLayout(0,8));
+		//tablePanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
-		JPanel fieldsDetails = new JPanel();
-		fieldsDetails.setLayout(new BoxLayout(fieldsDetails, BoxLayout.Y_AXIS));
-
+		tablePanel = new JPanel();
+		tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.Y_AXIS));
+		tablePanel.setBorder(BorderFactory.createCompoundBorder(
+			    BorderFactory.createEmptyBorder(),  
+			    BorderFactory.createTitledBorder(
+			        BorderFactory.createEtchedBorder(),
+			        "Detalles",
+			        TitledBorder.CENTER,
+			        TitledBorder.TOP,
+			        LightTheme.SUBTITLE_FONT,
+			        Color.BLACK
+			    )
+		));
+		
 		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,2));
-		fieldsDetailsRow.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
-		fieldsDetailsRow.add(new JLabel("  AutoParte", JLabel.LEFT));
+		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
+		fieldsDetailsRow.add(new JLabel("  AutoParte:", JLabel.CENTER));
 		fieldsDetailsRow.add(carpartNameLabel);
 		fieldsDetailsRow.add(new JLabel("  Cantidad", JLabel.LEFT));
-		fieldsDetails.add(fieldsDetailsRow);
+		tablePanel.add(fieldsDetailsRow);
 		
 		fieldsDetailsRow = new JPanel(new GridLayout(0,2));
-		fieldsDetailsRow.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
+		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
 		fieldsDetailsRow.add(carpartTextField);
 		carpartTextField.putClientProperty("JTextField.placeholderText", "ENTER para buscar autoparte");
 		carpartTextField.getDocument().addDocumentListener(new DocumentListener() {
@@ -265,20 +279,13 @@ private static final long serialVersionUID = 1L;
 		});		fieldsDetailsRow.add(quantityTextField);
 		quantityTextField.addActionListener(e -> addDetail());
 		quantityTextField.putClientProperty("JTextField.placeholderText", "ENTER para agregar detalle");
-		fieldsDetails.add(fieldsDetailsRow);
+		tablePanel.add(fieldsDetailsRow);
 		
-		tablePanel.add(fieldsDetails, BorderLayout.NORTH);
-		tablePanel.setBorder(BorderFactory.createCompoundBorder(
-			    BorderFactory.createEmptyBorder(0, 10, 0, 10),  
-			    BorderFactory.createTitledBorder(
-			        BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),
-			        "Detalles",
-			        TitledBorder.LEFT,
-			        TitledBorder.TOP,
-			        LightTheme.SUBTITLE_FONT,
-			        Color.BLACK
-			    )
-		));
+		fieldsDetailsRow = new JPanel(new GridLayout(1,0,0,8));
+		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
+		fieldsDetailsRow.setBorder(BorderFactory.createEmptyBorder(8,0,7,0));
+		fieldsDetailsRow.add(new JScrollPane(table), BorderLayout.CENTER);
+		tablePanel.add(fieldsDetailsRow);
 	}
 
 	private boolean validateDetailFields() {
