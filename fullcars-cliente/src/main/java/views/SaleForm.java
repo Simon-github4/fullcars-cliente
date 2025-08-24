@@ -35,6 +35,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import Utils.Icons;
 import Utils.ServerException;
 import controller.CarPartController;
 import controller.CustomerController;
@@ -172,7 +173,7 @@ private static final long serialVersionUID = 1L;
 		LightTheme.aplicarEstiloPrimario(confirmButton);
 		confirmButton.setPreferredSize(new Dimension(120, 70));
 		buttonsPanel.add(confirmButton);
-		JButton cancel = new JButton("Cancelar");
+		JButton cancel = new JButton("Cancelar", Icons.CLEAN.create());
 		cancel.addActionListener(e -> clearFields());
 		LightTheme.aplicarEstiloSecundario(cancel);
 		cancel.setPreferredSize(new Dimension(250, 70));

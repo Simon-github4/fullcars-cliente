@@ -17,6 +17,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+
 import Utils.Icons;
 import interfaces.Refreshable;
 import views.components.FormFactory;
@@ -47,30 +49,37 @@ public class MainFrame extends JFrame{
         setVisible(true);
 
         JMenuBar menuBar = new JMenuBar();
-        menuBar.setBackground(Color.white);
+        //menuBar.setForeground(Color.WHITE);
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(WIDTH, 50));
         setJMenuBar(menuBar);
  
         JMenu menuProductos = new JMenu("AUTOPARTES");//en vex de eomji icono
+        menuProductos.setIcon(Icons.CAR.create());
         menuProductos.addMouseListener(new ClickAdapter("AUTOPARTES"));
 
         JMenu menuCategorias = new JMenu("CATEGORIAS");
+        menuCategorias.setIcon(Icons.CATEGORY.create());
         menuCategorias.addMouseListener(new ClickAdapter("CATEGORIAS"));
 
         JMenu menuMarcas  = new JMenu("MARCAS");
+        menuMarcas.setIcon(Icons.TOYOTA.create());
         menuMarcas.addMouseListener(new ClickAdapter("MARCAS"));
 
         JMenu menuClientes  = new JMenu("CLIENTES");
+        menuClientes.setIcon(Icons.CUSTOMER.create());
         menuClientes.addMouseListener(new ClickAdapter("CLIENTES"));
         
         JMenu menuProveedores = new JMenu("PROVEEDORES");
+        menuProveedores.setIcon(Icons.PROVIDER.create());
         menuProveedores.addMouseListener(new ClickAdapter("PROVEEDORES"));
         
         JMenu menuMovimientosStock = new JMenu("MOV. STOCK");
+        menuMovimientosStock.setIcon(Icons.STOCK.create());
         menuMovimientosStock.addMouseListener(new ClickAdapter("MOV. STOCK"));
         
         JMenu menuVentas = new JMenu("VENTAS");
+        menuVentas.setIcon(Icons.SALE.create());
         
         JMenuItem historySales = new JMenuItem("HISTORIAL VENTAS");
         historySales.addMouseListener(new ClickAdapter("HISTORIAL VENTAS"));
@@ -80,7 +89,8 @@ public class MainFrame extends JFrame{
         menuVentas.add(formSales);
         
         JMenu menuPurchases = new JMenu("COMPRAS");
-        
+        menuPurchases.setIcon(Icons.PURCHASE.create());
+
         JMenuItem historyPurchases = new JMenuItem("HISTORIAL COMPRAS");
         historyPurchases.addMouseListener(new ClickAdapter("HISTORIAL COMPRAS"));
         menuPurchases.add(historyPurchases);
@@ -137,6 +147,7 @@ public class MainFrame extends JFrame{
     
     private void setStyling() {
     	LightTheme.setup();
+    	//FlatDarkLaf.setup();
     	//setIconImage(new ImageIcon(this.getClass().getResource(Icons.LOGO.getPath())).getImage());
 	}
 }

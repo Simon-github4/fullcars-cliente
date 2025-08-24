@@ -56,7 +56,7 @@ private static final long serialVersionUID = 1L;
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
-	private JButton toggleButton = new JButton("Mostrar formulario");
+	private JButton toggleButton = new JButton("Mostrar formulario", Icons.EYE.create());
 	
 	private JTextField nameTextField = new JTextField("", 29);
 	private JTextField dniTextField = new JTextField(29);
@@ -236,7 +236,7 @@ private static final long serialVersionUID = 1L;
 			confirmButton.setPreferredSize(new Dimension(120, 70));
 			firsts.add(confirmButton);
 
-			JButton cancel = new JButton("Cancelar");
+			JButton cancel = new JButton("Cancelar", Icons.CLEAN.create());
 			cancel.addActionListener(e -> clearFields());
 			LightTheme.aplicarEstiloSecundario(cancel);
 			cancel.setPreferredSize(new Dimension(250, 70));

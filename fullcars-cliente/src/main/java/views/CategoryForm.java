@@ -161,7 +161,7 @@ private static final long serialVersionUID = 1L;
 		confirmButton.setPreferredSize(new Dimension(250, 40));
 		buttonsPanel.add(confirmButton);
 	
-		JButton cancel = new JButton("Cancelar");
+		JButton cancel = new JButton("Cancelar", Icons.CLEAN.create());
 		cancel.addActionListener(e -> clearFields());
 		LightTheme.aplicarEstiloSecundario(cancel);
 		cancel.setPreferredSize(new Dimension(250, 40));

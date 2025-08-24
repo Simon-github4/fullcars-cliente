@@ -27,11 +27,11 @@ public class LightTheme extends FlatLightLaf {
 	
 	public static final String NAME = "MiTemaClaro";
     public static final Color COLOR_PRIMARIO = new Color(26, 115, 232); // Azul Google
-    public static final Color COLOR_SECUNDARIO = new Color(224, 224, 224); 
+    public static final Color COLOR_SECUNDARIO = new Color(224, 224, 224); //gris fondo
     public static final Color COLOR_TEXTO = Color.WHITE;
-    public static final Color COLOR_TEXTO_SEC = new Color(26, 115, 232);
-    public static final Color COLOR_HEADER_TABLE = new Color(64, 152, 215);     
+    public static final Color COLOR_HEADER_TABLE = new Color(64, 152, 215);//celestito  
     public static final Color COLOR_GREEN_MONEY = new Color(85, 187, 101);     
+    public static final Color COLOR_AZUL_CLARITO = new Color(84, 173, 253 );//alsinaApp botones     
 
 	public static final Font TITLE_FONT = getTitleFont();
 	public static final Font SUBTITLE_FONT = getSubTitleFont();
@@ -51,7 +51,7 @@ public class LightTheme extends FlatLightLaf {
 
     public static void aplicarEstiloSecundario(JButton boton) {
         boton.setBackground(Color.white);
-        boton.setForeground(COLOR_TEXTO_SEC);
+        boton.setForeground(COLOR_PRIMARIO);
         boton.setFocusPainted(false);
         //boton.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         boton.setFont(boton.getFont().deriveFont(Font.PLAIN));
@@ -149,8 +149,8 @@ public class LightTheme extends FlatLightLaf {
 		UIManager.put("TextComponent.arc", 10);		
 		UIManager.put("Component.arc", 10);		
 		//UIManager.put("Component.innerFocusWidth", 0.001f);		
-		UIManager.put("Table.alternateRowColor", new Color(225,225,225));
-        UIManager.put("Panel.background", new Color(225,225,225));
+		UIManager.put("Table.alternateRowColor", COLOR_SECUNDARIO);
+        UIManager.put("Panel.background", COLOR_SECUNDARIO);
         //UIManager.put("SplitPane.dividerColor", new Color(52, 58, 64)); // Color del divisor
 
         UIManager.put("TabbedPane.tabType", "card");
@@ -166,6 +166,13 @@ public class LightTheme extends FlatLightLaf {
         //UIManager.put("TabbedPane.tabAreaAlignment", "fill"); fill para que ocupe todo el ancho
         UIManager.put("TabbedPane.tabAlignment", "center");
         UIManager.put("TabbedPane.tabWidthMode", "equal");
+        
+        UIManager.put("MenuBar.background", COLOR_SECUNDARIO);
+        UIManager.put("MenuItem.background", COLOR_SECUNDARIO);
+        UIManager.put("PopupMenu.background", COLOR_SECUNDARIO);
+        //UIManager.put("MenuItem.selectionBackground", java.awt.Color.decode("#eeeeee"));
+        //UIManager.put("MenuItem.selectionForeground", java.awt.Color.decode("#000000"));
+
     }
 
 }

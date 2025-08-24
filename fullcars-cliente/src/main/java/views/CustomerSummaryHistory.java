@@ -78,7 +78,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 	private DatePicker dpFilter = new DatePicker();
 	private JButton refreshButton = new JButton("Actualizar Datos", Icons.REFRESH.create(18, 18));
 	private JButton addPayButton = new JButton("Agregar Nuevo Pago", Icons.NEW.create(18, 18));
-	private JButton showAllButton = new JButton("Mostrar Todos los Pagos");
+	private JButton showAllButton = new JButton("Mostrar Todos los Pagos", Icons.EYE.create());
 
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
