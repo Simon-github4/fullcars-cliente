@@ -50,6 +50,7 @@ import model.client.entities.Sale;
 import raven.datetime.DatePicker;
 import raven.datetime.event.DateSelectionEvent;
 import raven.datetime.event.DateSelectionListener;
+import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 
@@ -75,7 +76,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 
 	private JTextField idSearchTextField = new JTextField("", 10);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
-	private DatePicker dpFilter = new DatePicker();
+	private DatePicker dpFilter = new DatePickerS();
 	private JButton refreshButton = new JButton("Actualizar Datos", Icons.REFRESH.create(18, 18));
 	private JButton addPayButton = new JButton("Agregar Nuevo Pago", Icons.NEW.create(18, 18));
 	private JButton showAllButton = new JButton("Mostrar Todos los Pagos", Icons.EYE.create());

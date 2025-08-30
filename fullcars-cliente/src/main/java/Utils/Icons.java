@@ -12,24 +12,27 @@ import javax.swing.ImageIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public enum Icons {
-	LENS("lupa.png"),
+	LENS("lupaB.png"),
+	NEW("nuevo.png"),
 	CONFIRM("confirmar2.png"),
 	DELETE("eliminar.png"),
 	CLEAN("cancelar.png"),
-	BILL("factura.png"),
 	MODIFY("modificar.png"),
 	REFRESH("actualizar.png"),
-	NEW("nuevo.png"),
+	BILL("factura.png"),
+	CALENDAR("calendario (3).png"),
 	EYE("ojo.png"),
-	CAR("auto.png"),
-	BRAND("marcasfrente.png"),
-	PROVIDER("proveedor.png"),
-	CUSTOMER("cliente.png"),
-	PURCHASE("compra.png"),
-	SALE("venta.png"),
+	EXCEL("excel.png"),
+	CAR("carpart.png"),
+	BRAND("brand.png"),
+	PROVIDER("provider.png"),
+	CUSTOMER("cliente(1).png"),
+	PURCHASE("purchase.png"),
+	SALE("sale.png"),
 	STOCK("stock.png"),
-	CATEGORY("barras.png"),
+	CATEGORY("category.png"),
 	LOGO_ST("logoS-T.png"),
+	LOGO_TEXTO_BLANCO("logotextoblanco.png"),
 	LOGO("fullcarsLOGO.jpg");
 	
 	private static final String SRC = "/resources/imgs/";

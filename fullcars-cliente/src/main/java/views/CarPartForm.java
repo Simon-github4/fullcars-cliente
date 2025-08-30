@@ -6,7 +6,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -14,6 +16,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -29,6 +32,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -68,6 +72,7 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
 	private JButton toggleButton = new JButton("Mostrar formulario", Icons.EYE.create());
+	private JButton csvExportButton = new JButton(Icons.EXCEL.create());
 	
 	private JTextField nameTextField = new JTextField("", 29);
 	private JTextField descriptionTextField = new JTextField("", 29);
@@ -84,6 +89,7 @@ private static final long serialVersionUID = 1L;
 	private JTextField nameSearchTextField = new JTextField("",15);  // Agregado
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
+
 
 		public CarPartForm(CarPartController controller, IBrandProvider brand, CategoryController category, ProviderController pc) {
 		    this.controller = controller;
@@ -172,7 +178,7 @@ private static final long serialVersionUID = 1L;
 
 			JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-			filterPanel.add(new JLabel("Sku: ", JLabel.RIGHT));
+			filterPanel.add(new JLabel("SKU: ", JLabel.RIGHT));
 			filterPanel.add(skuSearchTextField);
 			filterPanel.add(new JLabel("Nombre: ", JLabel.RIGHT));
 			filterPanel.add(nameSearchTextField);
@@ -182,6 +188,9 @@ private static final long serialVersionUID = 1L;
 			filterPanel.add(toggleButton);
 			LightTheme.aplicarEstiloPrimario(searchButton);
 			LightTheme.aplicarEstiloSecundario(toggleButton);
+			filterPanel.add(csvExportButton);
+			csvExportButton.addActionListener(e->exportCsv());
+			LightTheme.aplicarEstiloSecundario(csvExportButton);
 			filterPanel.setBorder(BorderFactory.createCompoundBorder(
 				    BorderFactory.createEmptyBorder(0, 10, 10, 10),  
 				    BorderFactory.createTitledBorder(
@@ -353,7 +362,35 @@ private static final long serialVersionUID = 1L;
 				confirmButton.toModify(id);
             }
 		}
-		
+
+		private void exportCsv() {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setDialogTitle("Guardar reporte de autopartes");
+
+			File downloadsDir = new File(System.getProperty("user.home"), "Downloads");
+			fileChooser.setCurrentDirectory(downloadsDir);
+			fileChooser.setSelectedFile(new File(downloadsDir, "reporte_autopartes_"+LocalDate.now()+".csv"));
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Archivos CSV", "csv"));
+
+			
+		    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+		        File file = fileChooser.getSelectedFile();
+		        if (!file.getName().toLowerCase().endsWith(".csv")) {
+		            file = new File(file.getAbsolutePath() + ".csv");
+		        }
+
+		        try {
+		            controller.exportCarPartsToCsv(file);
+
+		            JOptionPane.showMessageDialog(this,
+		                    "Reporte guardado en:\n" + file.getAbsolutePath(),
+		                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+		        } catch (IOException ex) {
+		            setMessage("Error al guardar el archivo:\n" + ex.getMessage());
+		        }
+		    }
+		}
+
 		private boolean validateFields() {//TO-DO : Personalize
 			if(nameTextField.getText().isBlank()) {
 				setMessage("El nombre no puede estar vacio");

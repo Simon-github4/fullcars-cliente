@@ -19,6 +19,7 @@ import controller.PurchaseController;
 import controller.SaleController;
 import controller.StockMovementController;
 import interfaces.Refreshable;
+import views.AutopartsDashboard;
 import views.BrandForm;
 import views.CarPartForm;
 import views.CategoryForm;
@@ -109,6 +110,10 @@ public class FormFactory {
 
 	public static JPanel createPurchaseHistory() {
 		return new PurchaseHistory(PURCHASE_CONTROLLER, PROVIDER_CONTROLLER);
+	}
+
+	public static JPanel createDashboard() {
+		return new AutopartsDashboard();
 	}
 
 }

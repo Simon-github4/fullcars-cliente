@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -11,13 +12,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-
-import com.formdev.flatlaf.FlatDarkLaf;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 
 import Utils.Icons;
 import interfaces.Refreshable;
@@ -31,10 +33,8 @@ public class MainFrame extends JFrame{
     private JPanel cardPanels;
    
     public MainFrame() {
+    	setIconImage(new ImageIcon(getClass().getResource(Icons.LOGO.getPath())).getImage());
     	setStyling();
-        Thread t = new Thread(()->createForms());
-        t.setPriority(Thread.MAX_PRIORITY);
-        t.start();
         
         setTitle("Full Cars");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -52,11 +52,27 @@ public class MainFrame extends JFrame{
         //menuBar.setForeground(Color.WHITE);
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(WIDTH, 50));
+        menuBar.setLayout(null);
         setJMenuBar(menuBar);
  
-        JMenu full = new JMenu("FULLCARS");
-        full.setIcon(Icons.LOGO_ST.create());
-        full.addMouseListener(new ClickAdapter("FULLCARS"));
+        JButton full = new JButton(Icons.LOGO_TEXTO_BLANCO.create(120,28));
+        full.addMouseListener(new ClickAdapter("DASHBOARD"));
+        full.setFocusPainted(false);
+        full.setBorderPainted(false); 
+        full.setOpaque(true);
+        full.setBackground(new Color(0,0,0,0));
+        full.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        full.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                full.setBackground(new Color(0, 50, 100)); // gris hover tipo JMenu
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                full.setBackground(new Color(0,0,0,0)); // vuelve transparente
+            }
+        });
+        menuBar.add(full);
         
         JMenu menuProductos = new JMenu("AUTOPARTES");
         menuProductos.setIcon(Icons.CAR.create());
@@ -112,6 +128,7 @@ public class MainFrame extends JFrame{
         menuBar.add(menuCategorias);
         menuBar.add(menuMarcas);
         
+        createForms();
     }
 
     private void createForms() {
@@ -119,17 +136,26 @@ public class MainFrame extends JFrame{
         
         cardPanels = new JPanel(cardLayout);
         add(cardPanels, BorderLayout.CENTER);
-        
-        cardPanels.add(FormFactory.createFormCarPart(), "AUTOPARTES");
-        cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
-        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
-        cardPanels.add(FormFactory.createCustomerForm(), "CLIENTES");
-        cardPanels.add(FormFactory.createProviderForm(), "PROVEEDORES");
-        cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
-        cardPanels.add(FormFactory.createSalesForm(), "NUEVA VENTA");
-        cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
-        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
-        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
+
+        cardPanels.add(FormFactory.createDashboard(), "DASHBOARD");
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                // precarga sin bloquear la UI
+            	cardPanels.add(FormFactory.createFormCarPart(), "AUTOPARTES");
+     	        cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
+     	        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
+     	        cardPanels.add(FormFactory.createCustomerForm(), "CLIENTES");
+     	        cardPanels.add(FormFactory.createProviderForm(), "PROVEEDORES");
+     	        cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
+     	        cardPanels.add(FormFactory.createSalesForm(), "NUEVA VENTA");
+     	        cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
+     	        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
+     	        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
+                return null;
+            }
+        }.execute();
+
         
 	}
 
@@ -152,7 +178,5 @@ public class MainFrame extends JFrame{
     
     private void setStyling() {
     	LightTheme.setup();
-    	//FlatDarkLaf.setup();
-    	//setIconImage(new ImageIcon(this.getClass().getResource(Icons.LOGO.getPath())).getImage());
 	}
 }

@@ -99,9 +99,9 @@ public class LightTheme extends FlatLightLaf {
     
     public static JPanel createTitle(String text) {
     	JPanel panel = new JPanel(new BorderLayout());
-    	JLabel title = new JLabel(text, JLabel.CENTER);
+    	JLabel title = new JLabel(text.toUpperCase(), JLabel.CENTER);
     	title.setFont(TITLE_FONT);
-    	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 96));
+    	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 80));
     	JLabel logo = new JLabel(Icons.LOGO.create(96, 96));
     	logo.setPreferredSize(new Dimension(96, 96));
     	
@@ -111,7 +111,7 @@ public class LightTheme extends FlatLightLaf {
     }
 
 	public static JLabel createSubTitle(String text) {
-		JLabel title = new JLabel(text, JLabel.CENTER);
+		JLabel title = new JLabel(text.toUpperCase(), JLabel.CENTER);
     	title.setFont(SUBTITLE_FONT);
     	title.setPreferredSize(new Dimension(1, 40));
     	

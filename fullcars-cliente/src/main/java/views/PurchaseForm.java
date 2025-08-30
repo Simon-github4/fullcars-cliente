@@ -2,7 +2,6 @@ package views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.io.IOException;
@@ -22,7 +21,6 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
-import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -40,6 +38,7 @@ import model.client.entities.Provider;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
 import raven.datetime.DatePicker;
+import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.NewModifyButton;
@@ -63,7 +62,7 @@ private static final long serialVersionUID = 1L;
 	
 	private JTextField carpartTextField = new JTextField(29);
 	private TypedComboBox<Provider> providerComboBox = new TypedComboBox<>(c -> c.getCompanyName());
-	private DatePicker dpInput = new DatePicker();
+	private DatePicker dpInput = new DatePickerS();
 
 	private JTextField quantityTextField = new JTextField(29);
 	private NewModifyButton confirmButton = new NewModifyButton();
@@ -228,7 +227,7 @@ private static final long serialVersionUID = 1L;
 		
 		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
-		fieldsDetailsRow.add(new JLabel("  AutoParte:", JLabel.CENTER));
+		fieldsDetailsRow.add(new JLabel("  SKU:", JLabel.CENTER));
 		fieldsDetailsRow.add(carpartNameLabel);
 		fieldsDetailsRow.add(new JLabel("  Cantidad", JLabel.LEFT));
 		tablePanel.add(fieldsDetailsRow);
@@ -257,7 +256,7 @@ private static final long serialVersionUID = 1L;
 		carpartTextField.addActionListener(e-> {
 			detailCarpart = carpartController.getCarPart(carpartTextField.getText());
 			if(detailCarpart == null)
-				setMessage("No se escontro autoparte con ese sku");
+				setMessage("No se escontro autoparte con ese SKU");
 			else {
 				carpartNameLabel.setText(detailCarpart.getName());
 				quantityTextField.requestFocus();
