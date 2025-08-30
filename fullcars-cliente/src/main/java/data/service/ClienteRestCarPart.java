@@ -47,31 +47,33 @@ public class ClienteRestCarPart {
 	    }
 	}
 
-	public void save(CarPart carPart) throws ServerException, IOException, Exception {
-		try{
-			String json = mapper.writeValueAsString(carPart);
-	
-			RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
-			Request request = new Request.Builder().url(ADDRESS).post(body).build();
-	
-			try (Response response = client.newCall(request).execute()) {
-				if (response.isSuccessful()) {
-					System.out.println("CarPart posted successfully");
-				} else {
-					String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
-					System.err.println("Failed to post CarPart. Code: " + response.code());
-					System.err.println("Response: " + errorBody);
-					throw new ServerException(errorBody);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new IOException("No se pudo guardar, hubo una falla en conectar al servidor");
-			}
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-			throw new Exception("No se pudo guardar");
-		}
-    }
+	public CarPart save(CarPart carPart) throws ServerException, IOException, Exception {
+	    try {
+	        String json = mapper.writeValueAsString(carPart);
+
+	        RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
+	        Request request = new Request.Builder().url(ADDRESS).post(body).build();
+
+	        try (Response response = client.newCall(request).execute()) {
+	            if (response.isSuccessful()) {
+	                System.out.println("CarPart posted successfully");
+	                String responseBody = response.body().string();
+	                return mapper.readValue(responseBody, CarPart.class);
+	            } else {
+	                String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+	                System.err.println("Failed to post CarPart. Code: " + response.code());
+	                System.err.println("Response: " + errorBody);
+	                throw new ServerException(errorBody);
+	            }
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	            throw new IOException("No se pudo guardar, hubo una falla en conectar al servidor");
+	        }
+	    } catch (JsonProcessingException e) {
+	        e.printStackTrace();
+	        throw new Exception("No se pudo guardar");
+	    }
+	}
 
 	public void delete(Long id) throws ServerException, IOException{        
         Request request = new Request.Builder()

@@ -21,16 +21,16 @@ import controller.StockMovementController;
 import interfaces.Refreshable;
 import views.AutopartsDashboard;
 import views.BrandForm;
-import views.CarPartForm;
 import views.CategoryForm;
 import views.CustomerForm;
 import views.CustomerSummaryHistory;
 import views.ProviderForm;
-import views.PurchaseForm;
-import views.PurchaseHistory;
-import views.SaleForm;
-import views.SalesHistory;
 import views.StockMovementForm;
+import views.carpart.CarPartForm;
+import views.transactions.PurchaseForm;
+import views.transactions.PurchaseHistory;
+import views.transactions.SaleForm;
+import views.transactions.SalesHistory;
 
 public class FormFactory {
 

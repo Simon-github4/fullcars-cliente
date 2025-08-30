@@ -53,6 +53,7 @@ import raven.datetime.event.DateSelectionListener;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
+import views.transactions.PayForm;
 
 public class CustomerSummaryHistory extends JPanel implements Refreshable{
 	private static final long serialVersionUID = 1L;

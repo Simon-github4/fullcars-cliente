@@ -28,8 +28,8 @@ public class CarPartController {
 		return serviceCarPart.getCarParts();
 	}
 
-	public void save(CarPart c) throws ServerException, IOException, Exception {
-		serviceCarPart.save(c);
+	public CarPart save(CarPart c) throws ServerException, IOException, Exception {
+		return serviceCarPart.save(c);
 	}
 
 	public void delete(Long id) throws ServerException, IOException {

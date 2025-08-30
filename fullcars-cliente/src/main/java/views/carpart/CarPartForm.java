@@ -1,4 +1,4 @@
-package views;
+package views.carpart;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -65,7 +65,6 @@ private static final long serialVersionUID = 1L;
 	private final CategoryController categoryProvider;
 	private final ProviderController providerController;
 	
-	private JPanel inputPanel;
 	private JPanel tablePanel;
 	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Stock", "Precio venta", "Marca", "Categoria", "Proveedor", "id"};
 	private JTable table;
@@ -74,14 +73,7 @@ private static final long serialVersionUID = 1L;
 	private JButton toggleButton = new JButton("Mostrar formulario", Icons.EYE.create());
 	private JButton csvExportButton = new JButton(Icons.EXCEL.create());
 	
-	private JTextField nameTextField = new JTextField("", 29);
-	private JTextField descriptionTextField = new JTextField("", 29);
-	private JTextField skuTextField = new JTextField(29);
-	private JTextField stockTextField = new JTextField("", 29);
-	private JTextField sellPriceTextField = new JTextField("", 29);
-	private TypedComboBox<Provider> comboBoxProviders = new TypedComboBox<Provider>(p -> p.getCompanyName());
-	private TypedComboBox<Brand> comboBoxBrands = new TypedComboBox<>(b->b.getName());
-	private TypedComboBox<Category> comboBoxCategory = new TypedComboBox<>(c->c.getName());
+	private CarPartInputPanel inputPanel;
 	private NewModifyButton confirmButton = new NewModifyButton();
 
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18,18));
@@ -104,26 +96,16 @@ private static final long serialVersionUID = 1L;
 		    createMessageLabel();
 		    initUI();
 			
-		    comboBoxProviders.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione una Proveedor").build()); 
-			comboBoxBrands.fill(brandProvider.getBrands(), new Brand(null, "Seleccione una Marca")); 
-			comboBoxCategory.fill(categoryProvider.getCategories(), new Category(null, "Seleccione una Categoria"));
 			sorter = new TableRowSorter<>(tableModel);
 	        table.setRowSorter(sorter);
 	        setupLiveFilterListeners();
 	        
+	        refresh();
 	        loadTable();
 		}
 		
 		private void save() {			  //TO-DO : Personalize
-			CarPart m = CarPart.builder()
-					.brand(comboBoxBrands.getSelectedItem())
-					.category(comboBoxCategory.getSelectedItem())
-					.name(nameTextField.getText())
-					.description(descriptionTextField.getText())
-					.sku(skuTextField.getText())
-					.basePrice(Long.parseLong(sellPriceTextField.getText()))
-					.provider(comboBoxProviders.getSelectedItem())
-					.build();
+			CarPart m = inputPanel.toCarPart();
 
 			if(confirmButton.isInModifyMode()) {
 				Long id = confirmButton.getIdToModify();
@@ -232,60 +214,16 @@ private static final long serialVersionUID = 1L;
 		}
 
 		private void createInputPanel() { //TO-DO : Personalize
-			inputPanel = new JPanel();
-			inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
+			inputPanel = new CarPartInputPanel();
 			inputPanel.setVisible(false);
-			Dimension size = new Dimension(450, HEIGHT);
-			inputPanel.setMinimumSize(new Dimension(380, HEIGHT));
-			inputPanel.setPreferredSize(size);
+			inputPanel.setPreferredSize(new Dimension(450, HEIGHT));
 
-			skuTextField.setEnabled(false);
-			skuTextField.setToolTipText("Codigo interno generado Automaticamente");
-			stockTextField.setToolTipText("Stock disponible (solo lectura)");
-			stockTextField.setEnabled(false);
-	
-			JPanel rowsPanel = new JPanel(new GridLayout(0,1));
-
-			rowsPanel.add(new JLabel("  Nombre", JLabel.LEFT));
-			rowsPanel.add(nameTextField);
-			rowsPanel.add(new JLabel("  Descripcion", JLabel.LEFT));
-			rowsPanel.add(descriptionTextField);
-			
-			JPanel columnPanel = new JPanel(new GridLayout(1,0));
-			columnPanel.add(new JLabel("  Sku", JLabel.LEFT));
-			columnPanel.add(new JLabel("  Stock", JLabel.LEFT));
-			rowsPanel.add(columnPanel);
-			
-			columnPanel = new JPanel(new GridLayout(1,0));
-			columnPanel.add(skuTextField);		
-			columnPanel.add(stockTextField);
-			rowsPanel.add(columnPanel);
-			
-			rowsPanel.add(new JLabel("  Precio venta", JLabel.LEFT));
-			rowsPanel.add(sellPriceTextField);
-
-			columnPanel = new JPanel(new GridLayout(1,0));
-			columnPanel.add(new JLabel("  Marca", JLabel.LEFT));
-			columnPanel.add(new JLabel("  Categoria", JLabel.LEFT));
-			rowsPanel.add(columnPanel);
-			
-			columnPanel = new JPanel(new GridLayout(1,0));
-			columnPanel.add(comboBoxBrands);
-			columnPanel.add(comboBoxCategory);	
-			rowsPanel.add(columnPanel);
-			
-			rowsPanel.add(new JLabel("  Proveedor", JLabel.LEFT));
-			rowsPanel.add(comboBoxProviders);
-			//categoryTextField.putClientProperty(FlatClientProperties.STYLE, "showRevealButton:true");
-			
-			inputPanel.add(rowsPanel);
-			
 			JPanel buttonsPanel = new JPanel(new BorderLayout());
 			buttonsPanel.setMaximumSize(new Dimension(500, 160));
 			JPanel firsts = new JPanel(new GridLayout());
 
-			confirmButton.addActionListener(e ->{
-				if(validateFields())
+			confirmButton.addActionListener(e -> {
+				if (inputPanel.validateFields(this::setMessage)) 
 					save();
 			});
 			LightTheme.aplicarEstiloPrimario(confirmButton);
@@ -293,13 +231,13 @@ private static final long serialVersionUID = 1L;
 			firsts.add(confirmButton);
 
 			JButton cancel = new JButton("Cancelar", Icons.CLEAN.create());
-			cancel.addActionListener(e -> clearFields());
+			cancel.addActionListener(e -> inputPanel.clearFields());
 			LightTheme.aplicarEstiloSecundario(cancel);
 			cancel.setPreferredSize(new Dimension(250, 70));
 			firsts.add(cancel);
-			
+
 			buttonsPanel.add(firsts, BorderLayout.CENTER);
-			inputPanel.add(buttonsPanel);		
+			inputPanel.add(buttonsPanel);
 		}
 
 		@SuppressWarnings("serial")
@@ -346,16 +284,9 @@ private static final long serialVersionUID = 1L;
            	    int row = table.convertRowIndexToModel(modelRow);
 				Long id = (Long) tableModel.getValueAt(row, table.getColumnModel().getColumnIndex((String)"id"));
 				CarPart part = controller.getCarPart(id);
+
+				inputPanel.loadFrom(part);
 				
-				nameTextField.setText(part.getName());
-				descriptionTextField.setText(part.getDescription());
-				skuTextField.setText(part.getSku());
-				stockTextField.setText(String.valueOf(part.getStock()));
-				sellPriceTextField.setText(part.getBasePrice().toString());
-				comboBoxCategory.setSelectedItem(part.getCategory());
-				comboBoxBrands.setSelectedItem(part.getBrand());
-				comboBoxProviders.setSelectedItem(part.getProvider());
-					
 				if(!inputPanel.isVisible())
 					toggleButton.doClick();
 				
@@ -391,50 +322,13 @@ private static final long serialVersionUID = 1L;
 		    }
 		}
 
-		private boolean validateFields() {//TO-DO : Personalize
-			if(nameTextField.getText().isBlank()) {
-				setMessage("El nombre no puede estar vacio");
-				return false;
-			}
-			if(nameTextField.getText().length() > 45) {
-				setMessage("El nombre no puede superar los 45 caracteres");
-				return false;
-			}
-			try {
-				if(Long.parseLong(sellPriceTextField.getText()) < 0L){
-					setMessage("El precio no puede ser menor a 0");
-					return false;
-				}
-			}catch(NumberFormatException e) {
-				e.printStackTrace();
-				setMessage("Asegurese de introducir numeros en Precio venta");
-			}
-			if(comboBoxBrands.getSelectedIndex() == 0 || comboBoxCategory.getSelectedIndex() == 0) {
-				setMessage("Debe seleccionar Marca y Categoria validos");
-				return false;
-			}
-			if(comboBoxProviders.getSelectedIndex() == 0) {
-				setMessage("Debe seleccionar Proveedor valido");
-				return false;
-			}
-			return true;	
-		}
-
 		private void clearFields() {	  //TO-DO : Personalize
 			table.clearSelection();
-			nameTextField.setText("");
-			descriptionTextField.setText("");
-			skuTextField.setText("");
-			stockTextField.setText("");
-			sellPriceTextField.setText("");
-			comboBoxBrands.setSelectedIndex(0);
-			comboBoxCategory.setSelectedIndex(0);
-			comboBoxProviders.setSelectedIndex(0);
-			
 			confirmButton.toNew();
-			
 			messageLabel.setText("");
-	        messageLabel.setOpaque(false);
+			messageLabel.setOpaque(false);
+
+			inputPanel.clearFields();
 		}
 		
 		private void applyCombinedFilters() {//TO-DO : Personalize			
@@ -482,16 +376,12 @@ private static final long serialVersionUID = 1L;
 		public void refresh() {
 			//clearFields();
 			loadTable();
-			Brand selectedBrand = comboBoxBrands.getSelectedItem();
-			Category selectedCategory = comboBoxCategory.getSelectedItem();
-			Provider selectedProvider = comboBoxProviders.getSelectedItem();
 			
-			comboBoxBrands.fill(brandProvider.getBrands(), new Brand(null, "Selecione una Marca"));
-			comboBoxBrands.setSelectedItem(selectedBrand);
-			comboBoxCategory.fill(categoryProvider.getCategories(), new Category(null, "Seleccione una categoria"));
-			comboBoxCategory.setSelectedItem(selectedCategory);
-		    comboBoxProviders.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un Proveedor").build()); 
-		    comboBoxProviders.setSelectedItem(selectedProvider);
+		    inputPanel.fillCombos(
+		    	    brandProvider.getBrands(),
+		    	    categoryProvider.getCategories(),
+		    	    providerController.getProviders()
+		    	);
 		}
 		
 		private void createMessageLabel() {

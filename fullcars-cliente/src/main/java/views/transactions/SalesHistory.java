@@ -1,20 +1,22 @@
-package views;
+package views.transactions;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -23,6 +25,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
@@ -40,12 +43,12 @@ import com.formdev.flatlaf.FlatClientProperties;
 import Utils.Icons;
 import Utils.NumberFormatArg;
 import Utils.ServerException;
-import controller.ProviderController;
-import controller.PurchaseController;
+import controller.CustomerController;
+import controller.SaleController;
 import interfaces.Refreshable;
-import model.client.entities.Provider;
-import model.client.entities.Purchase;
-import model.client.entities.PurchaseDetail;
+import model.client.entities.Customer;
+import model.client.entities.Sale;
+import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
 import raven.datetime.event.DateSelectionEvent;
 import raven.datetime.event.DateSelectionListener;
@@ -54,62 +57,76 @@ import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.TypedComboBox;
 
-public class PurchaseHistory extends JPanel implements Refreshable{
+public class SalesHistory extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
 
-	private final PurchaseController controller;
-	private final ProviderController customerController;
-	private List<Purchase> purchasesList = new ArrayList<>();
+	private final SaleController controller;
+	private final CustomerController customerController;
+	private List<Sale> salesList = new ArrayList<>();
 
 	private JPanel detailsTablePanel;
 	private static final Object[] DETAILS_COLUMNS = {"Autoparte", "Cantidad", "Precio unitario", "SubTotal", "id" };
 	private JTable detailsTable;
 	private DefaultTableModel detailsTableModel;
 	
-	private JPanel purchaseeTablePanel;
-	private static final Object[] PURCHASE_COLUMNS = {"Fecha", "Proveedor", "Total", "Esta Pago", "Nro. Compra" };
-	private JTable purchaseTable;
-	private DefaultTableModel purchaseTableModel;
+	private JPanel saleTablePanel;
+	private static final Object[] SALE_COLUMNS = {"Fecha", "Cliente", "Nro. Siniestro", "Total", "Nro. Venta" };
+	private JTable saleTable;
+	private DefaultTableModel saleTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
-	private TypedComboBox<Provider> providerComboBox = new TypedComboBox<>(provider -> provider.getCompanyName());
+	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(customer -> customer.getFullName());
 	private JTextField idSearchTextField = new JTextField("", 10);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));
+	private JCheckBox hidenCheckBox = new JCheckBox("Mostrar Todo");//, Icons.CONFIRM.create(18, 18));
 
 	private TableRowSorter<DefaultTableModel> sorter;
 	private Timer filtroTimer;
 	private JLabel messageLabel;
 
-	public PurchaseHistory(PurchaseController controller, ProviderController providerController) {
+	public SalesHistory(SaleController controller, CustomerController customerController) {
 		this.controller = controller;
-		this.customerController = providerController;
+		this.customerController = customerController;
 
 		setLayout(new BorderLayout(0, 0));
-		//providerComboBox.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
+		//customerComboBox.fill(customerController.getCustomers(), Customer.builder().id(null).fullName("Seleccione un cliente").build());
 		
 		createDetailsTablePanel();
-		createPurchaseTablePanel();
+		createSaleTablePanel();
 		createJPopupMenu();
 		createMessageLabel();
 		initUI();
 
-		sorter = new TableRowSorter<>(purchaseTableModel);
-		purchaseTable.setRowSorter(sorter);
+		sorter = new TableRowSorter<>(saleTableModel);
+		saleTable.setRowSorter(sorter);
 		setupDocumentListeners();
 		
-		//loadPurchaseTable();
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+        .put(KeyStroke.getKeyStroke("control A"), "mostrarCheckbox");
+
+		getActionMap().put("mostrarCheckbox", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				hidenCheckBox.setVisible(!hidenCheckBox.isVisible());
+				hidenCheckBox.setSelected(hidenCheckBox.isVisible());
+				revalidate();
+				repaint();
+				loadSaleTable();
+			}
+		});
+		//loadSaleTable();
 	}
 
 	private void delete() {			
 		try {
-			Long idSale = (Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1);
+			Long idSale = (Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1);
 			
-			if(JOptionPane.showConfirmDialog(null, "Desea eliminar la compra Numero: "+ idSale.toString(),  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+			if(JOptionPane.showConfirmDialog(null, "Desea eliminar la venta Numero: "+ idSale.toString(),  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
 				controller.delete(idSale);
 				clearFields();
-				loadPurchaseTable();
+				loadSaleTable();
 			}
 		}catch(ServerException se) {
 			setMessage(se.getMessage());
@@ -118,51 +135,55 @@ private static final long serialVersionUID = 1L;
 		}
 	}
 	
-	private void loadPurchaseTable() {
-		purchaseTableModel.setRowCount(0);
+	private void loadSaleTable() {
+		saleTableModel.setRowCount(0);
 		detailsTableModel.setRowCount(0);
-		sorter.setSortKeys(null); // resets column order
-
-		purchasesList = new ArrayList<Purchase>();
-		long totalBuys = 0;
-
+		sorter.setSortKeys(null);// resets column order
+		
+		salesList = new ArrayList<>();//controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
+		long totalSold = 0;
+		
 		String nroCompraText = idSearchTextField.getText().trim();
 
 		if (!nroCompraText.isEmpty()) 
 			try {
-				Purchase p = controller.getPurchase(Long.parseLong(nroCompraText));
-				if(p == null)
+				Sale s = controller.getSale(Long.parseLong(nroCompraText));
+				if(s == null)
 					throw new NullPointerException();
-				purchasesList.add(p);
+				if(!hidenCheckBox.isSelected() && s.getFactura() == null)
+					throw new NullPointerException();					
+				salesList.add(s);
 			} catch (NumberFormatException ex) {
-				setMessage("El número de compra no es válido");
+				setMessage("El número de venta no es válido");
 			}catch (NullPointerException ex) {
-				setMessage("No se encontro la compra: "+ nroCompraText);
+				setMessage("No se encontro la venta: "+ nroCompraText);
 			}
 		 else 
-			purchasesList = controller.getPurchases(providerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
-
-		for (Purchase s : purchasesList) {
-			totalBuys += s.getTotal();
-			Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(),
-					s.getTotal(), (s.isPayed()) ? "Si" : "No", s.getId() };
-			purchaseTableModel.addRow(row);
+			 salesList = controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
+		
+		for (Sale s : salesList) {
+			totalSold += s.getTotal();
+			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), 
+						   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
+							, s.getTotal(), s.getId() };
+			saleTableModel.addRow(row);
 		}
-		totalTextField.setText("$" + NumberFormatArg.format(totalBuys));
-
+		totalTextField.setText("$"+ NumberFormatArg.format(totalSold));
 	}
-
-	private void loadDetailsTable(int idPurch) {
-		Purchase purchase = purchasesList.get(idPurch);
+	private void loadDetailsTable(Long idSale) {
+		int i = 0;
 		detailsTableModel.setRowCount(0);
-    	for(PurchaseDetail d : purchase.getDetails()) {
+		Sale sale = salesList.get(i);
+		while(sale.getId() != idSale) 
+			sale = salesList.get(++i);
+    	for(SaleDetail d : sale.getDetails()) {
     		Object[] row = {d.getProduct().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}
 	
 	private void initUI() {
-		searchButton.addActionListener(e -> loadPurchaseTable());
+		searchButton.addActionListener(e -> loadSaleTable());
 		dpFilter.setDateSelectionMode(DatePicker.DateSelectionMode.BETWEEN_DATE_SELECTED);
 		dpFilter.setUsePanelOption(true);
 		dpFilter.setBackground(Color.GRAY); // Color de fondo oscuro
@@ -170,30 +191,34 @@ private static final long serialVersionUID = 1L;
 		dpFilter.addDateSelectionListener(new DateSelectionListener() {
 			@Override
 			public void dateSelected(DateSelectionEvent dateSelectionEvent) {
-				loadPurchaseTable();
+				loadSaleTable();
 			}
 		});
 		dpFilter.setEditor(dateSearchTextField);
-		providerComboBox.addActionListener(e -> loadPurchaseTable());
+		customerComboBox.addActionListener(e -> loadSaleTable());
 		totalTextField.setForeground(LightTheme.COLOR_GREEN_MONEY);
 		totalTextField.setEditable(false);
+		hidenCheckBox.setVisible(false);
+		hidenCheckBox.setSelected(false);
+		hidenCheckBox.addActionListener(e-> loadSaleTable());
 		
 		JPanel north = new JPanel(new BorderLayout());
-		JPanel titulo = LightTheme.createTitle("Compras");
+		JPanel titulo = LightTheme.createTitle("Ventas");
 
 		JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-		filterPanel.add(new JLabel("Nro Compra: ", JLabel.RIGHT));
+		filterPanel.add(new JLabel("Nro Venta: ", JLabel.RIGHT));
 		filterPanel.add(idSearchTextField);
-		filterPanel.add(new JLabel("Proveedor ", JLabel.RIGHT));
-		filterPanel.add(providerComboBox);
+		filterPanel.add(new JLabel("Cliente ", JLabel.RIGHT));
+		filterPanel.add(customerComboBox);
 		filterPanel.add(new JLabel("Desde/Hasta ", JLabel.RIGHT));
 		filterPanel.add(dateSearchTextField);
-		filterPanel.add(new JLabel("  Total Gastado", JLabel.RIGHT));
+		filterPanel.add(new JLabel("  Total Vendido", JLabel.RIGHT));
 		filterPanel.add(totalTextField);		
 		dateSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		idSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		filterPanel.add(searchButton);
+		filterPanel.add(hidenCheckBox);
 		LightTheme.aplicarEstiloPrimario(searchButton);
 		filterPanel.setBorder(BorderFactory.createCompoundBorder(
 			    BorderFactory.createEmptyBorder(0, 10, 10, 10),  
@@ -211,7 +236,7 @@ private static final long serialVersionUID = 1L;
 
 		add(north, BorderLayout.NORTH);
 //------------------------------------------------CENTER PANEL-----------------------------(NO se personaliza)
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, purchaseeTablePanel, detailsTablePanel);
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, saleTablePanel, detailsTablePanel);
 		splitPane.setResizeWeight(1); // El panel de arriba no se estira al redimensionar
 		splitPane.setDividerSize(8);
 		splitPane.setDividerLocation(splitPane.getWidth() - detailsTablePanel.getPreferredSize().width);
@@ -260,8 +285,8 @@ private static final long serialVersionUID = 1L;
 	}
 
 	@SuppressWarnings("serial")
-	private void createPurchaseTablePanel() {
-		purchaseTableModel = new DefaultTableModel(PURCHASE_COLUMNS, 0) {
+	private void createSaleTablePanel() {
+		saleTableModel = new DefaultTableModel(SALE_COLUMNS, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return false;
@@ -274,53 +299,64 @@ private static final long serialVersionUID = 1L;
 				case 3:
 					return Long.class;
 				case 4:
-					return Long.class;
+					return Long.class;	
 				default:
 					return Object.class;
 				}
 			}
 		};
-		purchaseTable = new JTable(purchaseTableModel);
-		purchaseTable.setToolTipText("Click Derecho para Eliminar ; Click izquierdo para ver detalles");
-		purchaseTable.setShowGrid(true);
-		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setMaxWidth(90);
-		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setMinWidth(90);
-		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 1).setPreferredWidth(90);
-		purchaseTable.getColumnModel().getColumn(purchaseTable.getColumnCount() - 2).setPreferredWidth(90);
-		purchaseTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+		saleTable = new JTable(saleTableModel);
+		saleTable.setToolTipText("Click Derecho para Eliminar ; Click izquierdo para ver detalles");
+		saleTable.setShowGrid(true);
+		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setMaxWidth(90);
+		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setMinWidth(90);
+		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setPreferredWidth(90);
+		saleTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                	int idSale = purchaseTable.getSelectedRow();
-                	if(idSale != -1)
-                		loadDetailsTable(purchaseTable.convertRowIndexToModel(idSale));
+                	int row = saleTable.getSelectedRow();
+                	if(row != -1)
+                		loadDetailsTable((Long)saleTableModel.getValueAt(saleTable.convertRowIndexToModel(row), saleTable.getColumnCount()-1));
                 }
 			}
 		});
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-		for (int i = 0; i < purchaseTable.getColumnCount(); i++) {
-			Class<?> columnClass = purchaseTableModel.getColumnClass(i);
+		for (int i = 0; i < saleTable.getColumnCount(); i++) {
+			Class<?> columnClass = saleTableModel.getColumnClass(i);
 			if (Number.class.isAssignableFrom(columnClass))
-				purchaseTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+				saleTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
 
-		purchaseeTablePanel = new JPanel(new BorderLayout());
-		purchaseeTablePanel.add(LightTheme.createSubTitle("Historial Compras"), BorderLayout.NORTH);
-		purchaseeTablePanel.add(new JScrollPane(purchaseTable), BorderLayout.CENTER);
-		purchaseeTablePanel.add(totalTextField, BorderLayout.SOUTH);
+		saleTablePanel = new JPanel(new BorderLayout());
+		saleTablePanel.add(LightTheme.createSubTitle("Historial Ventas"), BorderLayout.NORTH);
+		saleTablePanel.add(new JScrollPane(saleTable), BorderLayout.CENTER);
+		saleTablePanel.add(totalTextField, BorderLayout.SOUTH);
 	}
 
 	private void clearFields() {
-		purchaseTable.clearSelection();
+		saleTable.clearSelection();
 		detailsTableModel.setRowCount(0);
-		providerComboBox.setSelectedIndex(0);
+		customerComboBox.setSelectedIndex(0);
 		dpFilter.clearSelectedDate();
 		idSearchTextField.setText("");
 		totalTextField.setText("");
 		
 		messageLabel.setText("");
 		messageLabel.setOpaque(false);
+	}
+
+	private void openRemito() {
+		try {
+			controller.getAndOpenRemito((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
+		} catch (ServerException e) {
+			e.printStackTrace();
+			setMessage(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
+			setMessage("Hubo un error al obtener el remito "+e.getMessage());
+		}
 	}
 
 	private void setupDocumentListeners() {
@@ -343,10 +379,10 @@ private static final long serialVersionUID = 1L;
 				else {
 					filtroTimer = new Timer(300, evt ->{
 						dpFilter.clearSelectedDate();
-						providerComboBox.setSelectedIndex(0);
+						customerComboBox.setSelectedIndex(0);
 						dateSearchTextField.setEnabled(idSearchTextField.getText().isBlank());
-						providerComboBox.setEnabled(idSearchTextField.getText().isBlank());
-						loadPurchaseTable();
+						customerComboBox.setEnabled(idSearchTextField.getText().isBlank());
+						loadSaleTable();
 					});
 					filtroTimer.setRepeats(false); 
 					filtroTimer.start();
@@ -357,53 +393,24 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createJPopupMenu() {
-		new JPopupMenuModifyDelete(purchaseTable, this::delete, "Eliminar Compra").addMenuItem("Agregar Archivo", this::uploadFile)
-		.addMenuItem("Abrir Archivo", this::downloadFile).addMenuItem("Confirmar Pago",	this::confirmPay);
-	}
-	private void confirmPay() {
-        try {
-			controller.confirmPay((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1));
-			loadPurchaseTable();
-        } catch (Exception e) {
-			e.printStackTrace();
-			setMessage(e.getMessage());
-		}
-	}
-	private void uploadFile() {
-		JFileChooser fileChooser = new JFileChooser();
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            try {
-                controller.uploadBill((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1), file);
-                JOptionPane.showMessageDialog(null, "Archivo subido correctamente");
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                setMessage("Error al subir archivo: " + ex.getMessage());
-            } catch (ServerException e) {
-				e.printStackTrace();
-                setMessage("Error al subir archivo: " + e.getMessage());
-			}
-        }
-	}
-	private void downloadFile() {
-		controller.downloadAndOpenFile((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1));
+		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta").addMenuItem("Abrir Remito de Venta", this::openRemito);
 	}
 
 	@Override
 	public void refresh() {
-		ActionListener[] listeners = providerComboBox.getActionListeners();
+		ActionListener[] listeners = customerComboBox.getActionListeners();
 		for (ActionListener l : listeners) 
-		    providerComboBox.removeActionListener(l);
+		    customerComboBox.removeActionListener(l);
 		
-		Provider c = providerComboBox.getSelectedItem();
-		providerComboBox.fill(customerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
-		providerComboBox.setSelectedItem(c);
+		Customer c = customerComboBox.getSelectedItem();
+		customerComboBox.fill(customerController.getCustomers(), Customer.builder().id(null).fullName("Seleccione un cliente").build());
+		customerComboBox.setSelectedItem(c);
 
 		for (ActionListener l : listeners) 
-		    providerComboBox.addActionListener(l);
+		    customerComboBox.addActionListener(l);
 		
 		clearFields();
-		loadPurchaseTable();
+		loadSaleTable();
 	}
 
 	private void createMessageLabel() {
@@ -414,7 +421,7 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void setMessage(String message) {
-	    messageLabel.setText(message);
+		messageLabel.setText(message);
 	    messageLabel.setOpaque(true);
 
 	    Timer timer = new Timer(3500, e -> {

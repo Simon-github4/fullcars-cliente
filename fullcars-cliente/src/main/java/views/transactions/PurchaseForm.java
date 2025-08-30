@@ -1,24 +1,36 @@
-package views;
+package views.transactions;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
@@ -38,6 +50,8 @@ import model.client.entities.Provider;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
 import raven.datetime.DatePicker;
+import views.carpart.CarPartDialog;
+import views.carpart.CarPartSearchDialog;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
@@ -77,6 +91,7 @@ private static final long serialVersionUID = 1L;
 		setLayout(new BorderLayout(0, 0));
 		createTablePanel();
 		createInputPanel();
+		createHelperPanel();
 		createJPopupMenu();
 		createMessageLabel();
 
@@ -253,15 +268,8 @@ private static final long serialVersionUID = 1L;
 				carpartNameLabel.setText("");
 			}
 		});
-		carpartTextField.addActionListener(e-> {
-			detailCarpart = carpartController.getCarPart(carpartTextField.getText());
-			if(detailCarpart == null)
-				setMessage("No se escontro autoparte con ese SKU");
-			else {
-				carpartNameLabel.setText(detailCarpart.getName());
-				quantityTextField.requestFocus();
-			}			
-		});		fieldsDetailsRow.add(quantityTextField);
+		carpartTextField.addActionListener(e-> setDetailCarPart());		
+		fieldsDetailsRow.add(quantityTextField);
 		quantityTextField.addActionListener(e -> addDetail());
 		quantityTextField.putClientProperty("JTextField.placeholderText", "ENTER para agregar detalle");
 		tablePanel.add(fieldsDetailsRow);
@@ -273,6 +281,83 @@ private static final long serialVersionUID = 1L;
 		tablePanel.add(fieldsDetailsRow);
 	}
 
+	private void setDetailCarPart() {
+		detailCarpart = carpartController.getCarPart(carpartTextField.getText());
+		if(detailCarpart == null) {
+			setMessage("No se escontro autoparte con ese SKU");
+		}else {
+			carpartNameLabel.setText(detailCarpart.getName());
+			quantityTextField.requestFocus();
+		}	
+	}
+	private void setDetailCarPart(String carpartSku) {
+		if(carpartSku == null) {
+			setMessage("No se escontro autoparte con ese SKU");
+		}else {
+			carpartTextField.setText(carpartSku);
+			for (ActionListener al : carpartTextField.getActionListeners()) 
+			    al.actionPerformed(new ActionEvent(carpartTextField, ActionEvent.ACTION_PERFORMED, null));
+			//Fire event and set namelabel and detailCarpart.
+		}	
+	}
+	
+	private void createHelperPanel() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // Definir atajo ALT B (buscar)
+        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK);
+        inputMap.put(ctrlS, "buscarCarpartAction");
+        actionMap.put("buscarCarpartAction", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	CarPartSearchDialog dialog = new CarPartSearchDialog(null); // ventana padre
+        	    dialog.setVisible(true);
+        	    String sku = dialog.getSelectedCarPartSku();
+        	    if(sku != null) {
+        	    	setDetailCarPart(sku);
+        	    }
+            }
+        });
+        // Atajo ALT A (Agregar)
+        KeyStroke f1 = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK);
+        inputMap.put(f1, "newCarpartAction");
+        actionMap.put("newCarpartAction", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	CarPartDialog dialog = new CarPartDialog(null); // ventana padre
+        	    dialog.setVisible(true);
+
+        	    CarPart nuevo = dialog.getCreatedPart();
+        	    if (nuevo != null) {
+        	        setDetailCarPart(nuevo.getSku());
+        	    }
+            }
+        });
+        
+        JPanel panelAyuda = new JPanel();
+        panelAyuda.setLayout(new BoxLayout(panelAyuda, BoxLayout.Y_AXIS));
+        panelAyuda.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelAyuda.setBackground(new Color(240, 240, 240));
+        panelAyuda.setPreferredSize(new Dimension(180,0));
+
+        JLabel titulo = new JLabel("Atajos de Teclado", JLabel.LEFT);
+        titulo.setFont(new Font("Arial", Font.BOLD, 14));
+        panelAyuda.add(titulo);
+        panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
+        panelAyuda.add(new JLabel("ALT + A",  JLabel.CENTER));
+        panelAyuda.add(new JLabel("Registrar AUTOPARTE", JLabel.LEFT));
+        panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
+        panelAyuda.add(new JLabel("ALT + B", JLabel.CENTER));
+        panelAyuda.add(new JLabel("Buscar AUTOPARTE", JLabel.LEFT));
+        
+        JPanel west = new JPanel();
+        west.setPreferredSize(panelAyuda.getPreferredSize());
+
+        add(panelAyuda, BorderLayout.EAST);
+        add(west, BorderLayout.WEST);
+	}
+	
 	private boolean validateDetailFields() {
 		if (detailCarpart == null) {
 			setMessage("Debe seleccionar una autoparte");

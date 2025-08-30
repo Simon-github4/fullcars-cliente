@@ -1,4 +1,4 @@
-package views;
+package views.carpart;
 
 import java.awt.GridLayout;
 import java.util.List;
@@ -76,9 +76,26 @@ public class CarPartInputPanel extends JPanel {
     // ---------------- Métodos útiles ----------------
 
     public void fillCombos(List<Brand> brands, List<Category> categories, List<Provider> providers) {
+    	Brand selectedBrand = comboBoxBrands.getSelectedItem();
+		Category selectedCategory = comboBoxCategory.getSelectedItem();
+		Provider selectedProvider = comboBoxProviders.getSelectedItem();
+		
         comboBoxBrands.fill(brands, new Brand(null, "Seleccione una Marca"));
         comboBoxCategory.fill(categories, new Category(null, "Seleccione una Categoría"));
         comboBoxProviders.fill(providers, Provider.builder().id(null).companyName("Seleccione un Proveedor").build());
+
+        if(selectedBrand != null)
+        	comboBoxBrands.setSelectedItem(selectedBrand);
+        else
+        	comboBoxBrands.setSelectedIndex(0);
+        if(selectedCategory != null)
+    		comboBoxCategory.setSelectedItem(selectedCategory);
+        else
+        	comboBoxCategory.setSelectedIndex(0);
+        if(selectedProvider != null)
+    	    comboBoxProviders.setSelectedItem(selectedProvider);
+        else
+        	comboBoxProviders.setSelectedIndex(0);
     }
 
     public CarPart toCarPart() {
