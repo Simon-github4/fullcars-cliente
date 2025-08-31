@@ -1,4 +1,22 @@
 package views;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.WeekFields;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -6,54 +24,27 @@ import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.Calendar;
 
-/**
- * Clase encapsulada para el gráfico de barras de ventas
- * Maneja automáticamente diferentes rangos de fechas y agrupaciones temporales
- */
+import dtos.SalesData;
+
 public class SalesBarChart {
-    
+
     // Enum para diferentes tipos de agrupación temporal
     public enum ChartTimeFrame {
         DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
     }
-    
-    // Clase para los datos de ventas
-    public static class SalesData {
-        private String period;
-        private double amount;
-        private Date date;
-        
-        public SalesData(String period, double amount, Date date) {
-            this.period = period;
-            this.amount = amount;
-            this.date = date;
-        }
-        
-        public String getPeriod() { return period; }
-        public double getAmount() { return amount; }
-        public Date getDate() { return date; }
-    }
-    
+
     // Configuración de colores
     private final Color primaryColor;
     private final Color cardColor;
     private final Color backgroundColor;
-    
+
     // Componentes UI
     private JPanel chartPanel;
     private JFreeChart chart;
     private DefaultCategoryDataset dataset;
     private ChartTimeFrame currentTimeFrame;
-    
+
     // Constructor con colores personalizados
     public SalesBarChart(Color primaryColor, Color cardColor, Color backgroundColor) {
         this.primaryColor = primaryColor;
@@ -62,20 +53,20 @@ public class SalesBarChart {
         this.currentTimeFrame = ChartTimeFrame.MONTHLY;
         initializeChart();
     }
-    
+
     // Constructor con colores por defecto
     public SalesBarChart() {
         this(new Color(41, 128, 185), Color.WHITE, new Color(236, 240, 241));
     }
-    
+
     /**
      * Inicializa el gráfico con datos de ejemplo
      */
     private void initializeChart() {
         createChartPanel();
-        loadSampleData();
+        //loadSampleData();
     }
-    
+
     /**
      * Crea el panel principal del gráfico
      */
@@ -89,172 +80,162 @@ public class SalesBarChart {
             new Font("Segoe UI", Font.BOLD, 14)
         ));
     }
-    
+
     /**
      * Método principal para actualizar el gráfico con un rango de fechas
      */
-    public void updateChart(Date startDate, Date endDate, List<SalesData> salesData) {
+    public void updateChart(LocalDate startDate, LocalDate endDate, List<SalesData> salesData) {
         SwingUtilities.invokeLater(() -> {
-            // Determinar el mejor timeframe según el rango de fechas
-            ChartTimeFrame optimalTimeFrame = determineTimeFrameByDateRange(startDate, endDate);
-            
-            // Agrupar datos según el timeframe
-            dataset = groupDataByTimeFrame(salesData, optimalTimeFrame);
-            
-            // Actualizar el título del panel
-            updatePanelTitle(optimalTimeFrame, startDate, endDate);
-            
-            // Recrear el gráfico
-            recreateChart(optimalTimeFrame);
+            currentTimeFrame = determineTimeFrameByDateRange(startDate, endDate);
+
+            dataset = groupDataByTimeFrame(salesData, currentTimeFrame, startDate, endDate);
+
+            updatePanelTitle(currentTimeFrame, startDate, endDate);
+            recreateChart();
         });
     }
-    
-    /**
-     * Actualiza el gráfico con un dataset ya preparado
-     */
-    public void updateChart(DefaultCategoryDataset newDataset, ChartTimeFrame timeFrame) {
-        SwingUtilities.invokeLater(() -> {
-            this.dataset = newDataset;
-            this.currentTimeFrame = timeFrame;
-            recreateChart(timeFrame);
-        });
-    }
-    
+
     /**
      * Carga datos de ejemplo para testing
      */
     public void loadSampleData() {
         dataset = createSampleDataset();
         currentTimeFrame = ChartTimeFrame.MONTHLY;
-        recreateChart(currentTimeFrame);
+        recreateChart();
     }
-    
+
     /**
      * Obtiene el panel del gráfico para agregar a la UI
      */
     public JPanel getChartPanel() {
         return chartPanel;
     }
-    
+
     /**
      * Determina el timeframe óptimo basado en el rango de fechas
      */
-    private ChartTimeFrame determineTimeFrameByDateRange(Date startDate, Date endDate) {
-        long daysDifference = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-        
+    private ChartTimeFrame determineTimeFrameByDateRange(LocalDate startDate, LocalDate endDate) {
+        long daysDifference = ChronoUnit.DAYS.between(startDate, endDate);
+
         if (daysDifference <= 31) {
             return ChartTimeFrame.DAILY;
         } else if (daysDifference <= 90) {
             return ChartTimeFrame.WEEKLY;
-        } else if (daysDifference <= 730) { // 2 años
+        } else if (daysDifference <= 730) {
             return ChartTimeFrame.MONTHLY;
-        } else if (daysDifference <= 1460) { // 4 años
+        } else if (daysDifference <= 1460) {
             return ChartTimeFrame.QUARTERLY;
         } else {
             return ChartTimeFrame.YEARLY;
         }
     }
-    
+
     /**
      * Agrupa los datos según el timeframe especificado
      */
-    private DefaultCategoryDataset groupDataByTimeFrame(List<SalesData> salesData, ChartTimeFrame timeFrame) {
+    private DefaultCategoryDataset groupDataByTimeFrame(
+            List<SalesData> salesData,
+            ChartTimeFrame timeFrame,
+            LocalDate startDate,
+            LocalDate endDate) {
+
         DefaultCategoryDataset groupedDataset = new DefaultCategoryDataset();
-        Map<String, Double> groupedData = new LinkedHashMap<>();
-        
+        Map<String, Long> groupedData = new LinkedHashMap<>();
+
+        // 1. Inicializar todas las categorías en el rango con 0
+        LocalDate cursor = startDate;
+        while (!cursor.isAfter(endDate)) {
+            String key = formatDateForTimeFrame(cursor, timeFrame);
+            groupedData.putIfAbsent(key, 0L);
+
+            switch (timeFrame) {
+                case DAILY: cursor = cursor.plusDays(1); break;
+                case WEEKLY: cursor = cursor.plusWeeks(1); break;
+                case MONTHLY: cursor = cursor.plusMonths(1); break;
+                case QUARTERLY: cursor = cursor.plusMonths(3); break;
+                case YEARLY: cursor = cursor.plusYears(1); break;
+            }
+        }
+
+        // 2. Sumar las ventas recibidas
         for (SalesData data : salesData) {
             String key = formatDateForTimeFrame(data.getDate(), timeFrame);
-            groupedData.merge(key, data.getAmount(), Double::sum);
+            groupedData.merge(key, data.getAmount(), Long::sum);
         }
-        
-        // Agregar al dataset
-        for (Map.Entry<String, Double> entry : groupedData.entrySet()) {
+
+        // 3. Pasar al dataset
+        for (Map.Entry<String, Long> entry : groupedData.entrySet()) {
             groupedDataset.addValue(entry.getValue(), "Ventas", entry.getKey());
         }
-        
+
         return groupedDataset;
     }
-    
+
     /**
      * Formatea la fecha según el timeframe
      */
-    private String formatDateForTimeFrame(Date date, ChartTimeFrame timeFrame) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        
+    private String formatDateForTimeFrame(LocalDate date, ChartTimeFrame timeFrame) {
         switch (timeFrame) {
             case DAILY:
-                return String.format("%02d/%02d", 
-                    cal.get(Calendar.DAY_OF_MONTH), 
-                    cal.get(Calendar.MONTH) + 1);
+                return String.format("%02d/%02d", date.getDayOfMonth(), date.getMonthValue());
             case WEEKLY:
-                int week = cal.get(Calendar.WEEK_OF_YEAR);
-                return String.format("S%02d/%d", week, cal.get(Calendar.YEAR));
+                int week = date.get(WeekFields.ISO.weekOfYear());
+                return String.format("S%02d/%d", week, date.getYear());
             case MONTHLY:
                 String[] months = {"Ene", "Feb", "Mar", "Abr", "May", "Jun",
-                                 "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
-                return months[cal.get(Calendar.MONTH)] + "/" + cal.get(Calendar.YEAR);
+                                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+                return months[date.getMonthValue() - 1] + "/" + date.getYear();
             case QUARTERLY:
-                int quarter = (cal.get(Calendar.MONTH) / 3) + 1;
-                return String.format("Q%d/%d", quarter, cal.get(Calendar.YEAR));
+                int quarter = ((date.getMonthValue() - 1) / 3) + 1;
+                return String.format("Q%d/%d", quarter, date.getYear());
             case YEARLY:
-                return String.valueOf(cal.get(Calendar.YEAR));
+                return String.valueOf(date.getYear());
             default:
                 return date.toString();
         }
     }
-    
+
     /**
      * Recrea el gráfico completo
      */
-    private void recreateChart(ChartTimeFrame timeFrame) {
-        // Limpiar el panel actual
+    private void recreateChart() {
         chartPanel.removeAll();
-        
-        // Crear nuevo gráfico
+
         chart = ChartFactory.createBarChart(
-            "", 
-            getAxisLabel(timeFrame), 
-            "Ventas ($)", 
+            "",
+            getAxisLabel(currentTimeFrame),
+            "Ventas ($)",
             dataset
         );
-        
-        // Personalizar el gráfico
-        customizeChart(timeFrame);
-        
-        // Crear ChartPanel
+
+        customizeChart(currentTimeFrame);
+
         ChartPanel jfreeChartPanel = new ChartPanel(chart);
-        
-        // Configurar tamaño y scroll
-        configureChartPanelSize(jfreeChartPanel, timeFrame);
-        
-        // Refrescar la UI
+        configureChartPanelSize(jfreeChartPanel, currentTimeFrame);
+
         chartPanel.revalidate();
         chartPanel.repaint();
     }
-    
+
     /**
      * Personaliza la apariencia del gráfico
      */
     private void customizeChart(ChartTimeFrame timeFrame) {
         CategoryPlot plot = chart.getCategoryPlot();
         int columnCount = dataset.getColumnCount();
-        
-        // Colores y fondo
+
         plot.setBackgroundPaint(Color.WHITE);
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
         plot.getRenderer().setSeriesPaint(0, primaryColor);
-        
-        // Configurar el eje X
+
         CategoryAxis xAxis = plot.getDomainAxis();
         configureXAxis(xAxis, timeFrame, columnCount);
     }
-    
+
     /**
      * Configura el eje X según el timeframe y cantidad de datos
      */
     private void configureXAxis(CategoryAxis xAxis, ChartTimeFrame timeFrame, int columnCount) {
-        // Ajustar según el timeframe y cantidad de datos
         if (timeFrame == ChartTimeFrame.YEARLY && columnCount > 1) {
             xAxis.setCategoryLabelPositions(CategoryLabelPositions.STANDARD);
             xAxis.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -275,8 +256,7 @@ public class SalesBarChart {
             xAxis.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 8));
             xAxis.setCategoryMargin(0.02);
         }
-        
-        // Ajustar márgenes según la cantidad
+
         if (columnCount > 20) {
             xAxis.setCategoryMargin(0.02);
             xAxis.setLowerMargin(0.005);
@@ -287,7 +267,7 @@ public class SalesBarChart {
             xAxis.setUpperMargin(0.01);
         }
     }
-    
+
     /**
      * Configura el tamaño del ChartPanel y agrega scroll si es necesario
      */
@@ -295,12 +275,12 @@ public class SalesBarChart {
         int columnCount = dataset.getColumnCount();
         int barWidth = getOptimalBarWidth(timeFrame, columnCount);
         int minWidth = Math.max(400, columnCount * barWidth);
-        
+
         jfreeChartPanel.setPreferredSize(new Dimension(minWidth, 250));
         jfreeChartPanel.setBackground(cardColor);
-        
+
         boolean needsScroll = needsHorizontalScroll(timeFrame, columnCount);
-        
+
         if (needsScroll) {
             JScrollPane scrollPane = new JScrollPane(jfreeChartPanel);
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -311,10 +291,7 @@ public class SalesBarChart {
             chartPanel.add(jfreeChartPanel, BorderLayout.CENTER);
         }
     }
-    
-    /**
-     * Determina si necesita scroll horizontal
-     */
+
     private boolean needsHorizontalScroll(ChartTimeFrame timeFrame, int columnCount) {
         switch (timeFrame) {
             case DAILY: return columnCount > 15;
@@ -325,10 +302,7 @@ public class SalesBarChart {
             default: return columnCount > 8;
         }
     }
-    
-    /**
-     * Calcula el ancho óptimo de las barras
-     */
+
     private int getOptimalBarWidth(ChartTimeFrame timeFrame, int columnCount) {
         switch (timeFrame) {
             case DAILY: return columnCount > 30 ? 25 : 40;
@@ -339,10 +313,7 @@ public class SalesBarChart {
             default: return 60;
         }
     }
-    
-    /**
-     * Etiqueta dinámica para el eje X
-     */
+
     private String getAxisLabel(ChartTimeFrame timeFrame) {
         switch (timeFrame) {
             case DAILY: return "Día";
@@ -353,69 +324,41 @@ public class SalesBarChart {
             default: return "Período";
         }
     }
-    
-    /**
-     * Actualiza el título del panel
-     */
-    private void updatePanelTitle(ChartTimeFrame timeFrame, Date startDate, Date endDate) {
+
+    private void updatePanelTitle(ChartTimeFrame timeFrame, LocalDate startDate, LocalDate endDate) {
         String title = "Ventas por " + getAxisLabel(timeFrame);
         if (startDate != null && endDate != null) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-            title += String.format(" (%s - %s)", sdf.format(startDate), sdf.format(endDate));
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            title += String.format(" (%s - %s)", fmt.format(startDate), fmt.format(endDate));
         }
-        
+
         TitledBorder border = (TitledBorder) chartPanel.getBorder();
         border.setTitle(title);
     }
-    
-    /**
-     * Crea datos de ejemplo para testing
-     */
+
     private DefaultCategoryDataset createSampleDataset() {
         DefaultCategoryDataset sampleDataset = new DefaultCategoryDataset();
-        
-        String[] months = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", 
-                          "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
-        double[] sales = {35000, 42000, 38000, 47000, 52000, 45000,
-                         48000, 51000, 44000, 49000, 53000, 47000};
-        
+
+        String[] months = {"Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                           "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+        long[] sales = {35000, 42000, 38000, 47000, 52000, 45000,
+                        48000, 51000, 44000, 49000, 53000, 47000};
+
         for (int i = 0; i < months.length; i++) {
             sampleDataset.addValue(sales[i], "Ventas", months[i]);
         }
-        
+
         return sampleDataset;
     }
-    
-    /**
-     * Convierte una lista de SalesData a DefaultCategoryDataset
-     */
-    public DefaultCategoryDataset createDatasetFromList(List<SalesData> salesData) {
-        DefaultCategoryDataset newDataset = new DefaultCategoryDataset();
-        
-        for (SalesData data : salesData) {
-            newDataset.addValue(data.getAmount(), "Ventas", data.getPeriod());
-        }
-        
-        return newDataset;
-    }
-    
-    /**
-     * Obtiene el timeframe actual
-     */
+
     public ChartTimeFrame getCurrentTimeFrame() {
         return currentTimeFrame;
     }
-    
-    /**
-     * Obtiene el dataset actual
-     */
+
     public DefaultCategoryDataset getCurrentDataset() {
         return dataset;
     }
-    
-    /**
-     * Actualiza solo el título del gráfico
-     */
+
     public void updateTitle(String newTitle) {
         TitledBorder border = (TitledBorder) chartPanel.getBorder();
         border.setTitle(newTitle);

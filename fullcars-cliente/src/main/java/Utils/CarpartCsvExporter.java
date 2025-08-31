@@ -17,7 +17,7 @@ public class CarpartCsvExporter implements CsvExporter<CarPart> {
              OutputStreamWriter osw = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
              BufferedWriter writer = new BufferedWriter(osw)) {
 
-            writer.write("SKU,Nombre,Descripción,Stock,Marca,Proveedor,Categoría,PrecioBase");
+            writer.write("SKU,Nombre,Descripcion,Stock,Marca,Proveedor,Categoria,PrecioBase");
             writer.newLine();
 
             for (CarPart p : parts) {

@@ -6,6 +6,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -88,8 +89,10 @@ public class CarPartSearchDialog extends JDialog {
                 }
             }
         });
-
-        setLayout(new BorderLayout());
+        
+        setLayout(new BorderLayout(10,10));
+        table.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
+        //searchField.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         add(searchField, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
     }

@@ -17,7 +17,7 @@ public abstract class Detail {
     private Integer quantity;
     private Long unitPrice;
 
-    private CarPart product;
+    private CarPart carPart;
     
     public Long getSubTotal() {
     	return quantity * unitPrice ;
@@ -28,7 +28,7 @@ public abstract class Detail {
 		this.id = null;
 		this.quantity = quantity;
 		this.unitPrice = unitPrice;
-		this.product = product;
+		this.carPart = product;
 	}
     
     

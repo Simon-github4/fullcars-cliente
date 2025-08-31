@@ -13,6 +13,8 @@ public class DatePickerS extends DatePicker{
 	public DatePickerS() {
 		super();
 		setBackground(Color.gray);
+		setUsePanelOption(true);
+
 	}
 	
 	@Override

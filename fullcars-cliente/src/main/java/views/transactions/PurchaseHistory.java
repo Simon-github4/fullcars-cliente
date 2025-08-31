@@ -156,7 +156,7 @@ private static final long serialVersionUID = 1L;
 		Purchase purchase = purchasesList.get(idPurch);
 		detailsTableModel.setRowCount(0);
     	for(PurchaseDetail d : purchase.getDetails()) {
-    		Object[] row = {d.getProduct().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
+    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}

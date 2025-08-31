@@ -177,7 +177,7 @@ private static final long serialVersionUID = 1L;
 		while(sale.getId() != idSale) 
 			sale = salesList.get(++i);
     	for(SaleDetail d : sale.getDetails()) {
-    		Object[] row = {d.getProduct().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
+    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}

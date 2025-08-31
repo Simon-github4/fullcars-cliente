@@ -70,7 +70,7 @@ public class PdfUtils {
             document.add(new Paragraph("Fecha:\t\t\t\t" + sale.getDate()));
             document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
             document.add(new Paragraph("Domicilio:\t\t\t" + sale.getCustomer().getAdress()));
-            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getProduct().getBrand()));
+            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getBrand()));
             document.add(new Paragraph("Siniestro:\t\t\t"+ sale.getSaleNumber()));
             document.add(new Paragraph("\n"));
 
@@ -83,8 +83,8 @@ public class PdfUtils {
 
             for (SaleDetail detail : sale.getDetails()) {
             	detailstable.addCell(String.valueOf(detail.getQuantity()));
-            	detailstable.addCell(detail.getProduct().getName());
-            	detailstable.addCell(detail.getProduct().getSku());
+            	detailstable.addCell(detail.getCarPart().getName());
+            	detailstable.addCell(detail.getCarPart().getSku());
             	detailstable.addCell("LEG");
             }
 
@@ -145,7 +145,7 @@ public class PdfUtils {
             document.add(new Paragraph("Fecha:\t\t\t\t" + sale.getDate()));
             document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
             document.add(new Paragraph("Domicilio:\t\t\t" + sale.getCustomer().getAdress()));
-            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getProduct().getBrand()));
+            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getBrand()));
             document.add(new Paragraph("Siniestro:\t\t\t Particular"));
             document.add(new Paragraph("\n"));
 
@@ -158,8 +158,8 @@ public class PdfUtils {
 
             for (SaleDetail detail : sale.getDetails()) {
             	detailstable.addCell(String.valueOf(detail.getQuantity()));
-            	detailstable.addCell(detail.getProduct().getName());
-            	detailstable.addCell(detail.getProduct().getSku());
+            	detailstable.addCell(detail.getCarPart().getName());
+            	detailstable.addCell(detail.getCarPart().getSku());
             	detailstable.addCell(detail.getSubTotal().toString());
             }
 
