@@ -2,12 +2,13 @@ package views.transactions;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,10 +53,10 @@ import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
 import raven.datetime.event.DateSelectionEvent;
 import raven.datetime.event.DateSelectionListener;
+import views.components.AutocompleteField;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
-import views.components.TypedComboBox;
 
 public class SalesHistory extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
@@ -75,8 +76,8 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel saleTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
-	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(customer -> customer.getFullName());
-	private JTextField idSearchTextField = new JTextField("", 10);
+    private final AutocompleteField<Customer> fieldCustomers = new AutocompleteField<Customer>();
+	private JTextField idSearchTextField = new JTextField("", 5);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));
@@ -141,7 +142,7 @@ private static final long serialVersionUID = 1L;
 		sorter.setSortKeys(null);// resets column order
 		
 		salesList = new ArrayList<>();//controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
-		long totalSold = 0;
+		BigDecimal totalSold = BigDecimal.ZERO;
 		
 		String nroCompraText = idSearchTextField.getText().trim();
 
@@ -159,16 +160,16 @@ private static final long serialVersionUID = 1L;
 				setMessage("No se encontro la venta: "+ nroCompraText);
 			}
 		 else 
-			 salesList = controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
+			 salesList = controller.getSales(fieldCustomers.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
 		
 		for (Sale s : salesList) {
-			totalSold += s.getTotal();
+			totalSold = totalSold.add(s.getTotal());
 			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), 
 						   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
-							, s.getTotal(), s.getId() };
+							, NumberFormatArg.format(s.getTotal()), s.getId() };
 			saleTableModel.addRow(row);
 		}
-		totalTextField.setText("$"+ NumberFormatArg.format(totalSold));
+		totalTextField.setText(NumberFormatArg.format(totalSold));
 	}
 	private void loadDetailsTable(Long idSale) {
 		int i = 0;
@@ -177,7 +178,7 @@ private static final long serialVersionUID = 1L;
 		while(sale.getId() != idSale) 
 			sale = salesList.get(++i);
     	for(SaleDetail d : sale.getDetails()) {
-    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
+    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(), NumberFormatArg.format(d.getUnitPrice()),  NumberFormatArg.format(d.getSubTotal()), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}
@@ -195,7 +196,8 @@ private static final long serialVersionUID = 1L;
 			}
 		});
 		dpFilter.setEditor(dateSearchTextField);
-		customerComboBox.addActionListener(e -> loadSaleTable());
+		//fieldCustomers.addActionListener(e -> loadSaleTable());
+		fieldCustomers.setPreferredSize(new Dimension(180, 25));
 		totalTextField.setForeground(LightTheme.COLOR_GREEN_MONEY);
 		totalTextField.setEditable(false);
 		hidenCheckBox.setVisible(false);
@@ -210,7 +212,7 @@ private static final long serialVersionUID = 1L;
 		filterPanel.add(new JLabel("Nro Venta: ", JLabel.RIGHT));
 		filterPanel.add(idSearchTextField);
 		filterPanel.add(new JLabel("Cliente ", JLabel.RIGHT));
-		filterPanel.add(customerComboBox);
+		filterPanel.add(fieldCustomers);
 		filterPanel.add(new JLabel("Desde/Hasta ", JLabel.RIGHT));
 		filterPanel.add(dateSearchTextField);
 		filterPanel.add(new JLabel("  Total Vendido", JLabel.RIGHT));
@@ -338,7 +340,7 @@ private static final long serialVersionUID = 1L;
 	private void clearFields() {
 		saleTable.clearSelection();
 		detailsTableModel.setRowCount(0);
-		customerComboBox.setSelectedIndex(0);
+		fieldCustomers.clearSelection();
 		dpFilter.clearSelectedDate();
 		idSearchTextField.setText("");
 		totalTextField.setText("");
@@ -379,9 +381,9 @@ private static final long serialVersionUID = 1L;
 				else {
 					filtroTimer = new Timer(300, evt ->{
 						dpFilter.clearSelectedDate();
-						customerComboBox.setSelectedIndex(0);
+						fieldCustomers.clearSelection();
 						dateSearchTextField.setEnabled(idSearchTextField.getText().isBlank());
-						customerComboBox.setEnabled(idSearchTextField.getText().isBlank());
+						fieldCustomers.setEnabled(idSearchTextField.getText().isBlank());
 						loadSaleTable();
 					});
 					filtroTimer.setRepeats(false); 
@@ -398,7 +400,7 @@ private static final long serialVersionUID = 1L;
 
 	@Override
 	public void refresh() {
-		ActionListener[] listeners = customerComboBox.getActionListeners();
+		/*ActionListener[] listeners = customerComboBox.getActionListeners();
 		for (ActionListener l : listeners) 
 		    customerComboBox.removeActionListener(l);
 		
@@ -408,7 +410,9 @@ private static final long serialVersionUID = 1L;
 
 		for (ActionListener l : listeners) 
 		    customerComboBox.addActionListener(l);
-		
+		*/
+		fieldCustomers.clearSelection();
+		fieldCustomers.setItems(customerController.getCustomers());
 		clearFields();
 		loadSaleTable();
 	}

@@ -6,6 +6,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -13,11 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -26,6 +33,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -51,6 +59,7 @@ import model.client.entities.StockMovement;
 import raven.datetime.DatePicker;
 import raven.datetime.event.DateSelectionEvent;
 import raven.datetime.event.DateSelectionListener;
+import views.carpart.CarPartSearchDialog;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
@@ -71,7 +80,7 @@ private static final long serialVersionUID = 1L;
 	private JLabel messageLabel;
 	private JButton toggleButton = new JButton("Mostrar formulario", Icons.EYE.create());
 	
-	private TypedComboBox<CarPart> carpartComboBox = new TypedComboBox<>(c -> c.getSku());
+	private JTextField carpartTextField = new JTextField();
 	private JTextField quantityTextField = new JTextField(29);
 	private JComboBox<MovementType> movementComboBox = new JComboBox<>();
 	private JTextField observationsTextField = new JTextField("", 29);
@@ -95,6 +104,7 @@ private static final long serialVersionUID = 1L;
 		    setLayout(new BorderLayout(0, 0));
 		    createInputPanel();	
 		    createTablePanel();
+		    createShortcutsPanel();
 		    createJPopupMenu();
 		    createMessageLabel();
 		    initUI();
@@ -109,9 +119,27 @@ private static final long serialVersionUID = 1L;
 	        //loadTable();
 		}
 		
+		private void createShortcutsPanel() {
+			InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+	        ActionMap actionMap = getActionMap();
+	        
+	        // Definir atajo ALT B (buscar)
+	        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK);
+	        inputMap.put(ctrlS, "buscarCarpartAction");
+	        actionMap.put("buscarCarpartAction", new AbstractAction() {
+	            @Override
+	            public void actionPerformed(ActionEvent e) {
+	            	String sku = searchCarPart();
+	        	    if(sku != null) {
+	        	    	carpartTextField.setText(sku);
+	        	    }
+	            }
+	        });			
+		}
+
 		private void save() {			  
 			StockMovement c = StockMovement.builder()
-					.carPart(carpartComboBox.getSelectedItem())
+					.carPart(carpartController.getCarPart(carpartTextField.getSelectedText()))
 					.date(dpInput.getSelectedDate())
 					.reference(observationsTextField.getText())
 					.quantity(Integer.parseInt(quantityTextField.getText()))
@@ -256,7 +284,18 @@ private static final long serialVersionUID = 1L;
 			JPanel rowsPanel = new JPanel(new GridLayout(0,1));
 
 			rowsPanel.add(new JLabel("  AutoParte", JLabel.LEFT));
-			rowsPanel.add(carpartComboBox);
+			JPanel panel = new JPanel(new BorderLayout());
+			JButton btnBuscar = new JButton("ALT + B", Icons.LENS.create());
+			btnBuscar.setMaximumSize(new Dimension(10, 90));
+			btnBuscar.addActionListener(e -> {
+			    String sku = searchCarPart();
+			    if (sku != null) 
+			    	carpartTextField.setText(sku); 
+			});
+			carpartTextField.setEditable(false); 
+			panel.add(carpartTextField, BorderLayout.CENTER);
+			panel.add(btnBuscar, BorderLayout.EAST);
+			rowsPanel.add(panel);
 			rowsPanel.add(new JLabel("  Cantidad", JLabel.LEFT));
 			rowsPanel.add(quantityTextField);
 			rowsPanel.add(new JLabel("  Tipo Movimiento", JLabel.LEFT));
@@ -341,7 +380,7 @@ private static final long serialVersionUID = 1L;
 					if(sm.getType() == MovementType.ENTRADA_COMPRA || sm.getType() == MovementType.SALIDA_VENTA)
 						setMessage("No se puede modificar este movimiento, unicamente se pueden modificar los Ajustes");
 					else{
-						carpartComboBox.setSelectedItem(sm.getCarPart());
+						carpartTextField.setText(sm.getCarPart().getSku());
 						quantityTextField.setText(sm.getQuantity().toString());
 						movementComboBox.setSelectedItem(sm.getType());
 						observationsTextField.setText(sm.getReference());
@@ -353,8 +392,13 @@ private static final long serialVersionUID = 1L;
 	            }
 		}
 		
+		private String searchCarPart() {
+			CarPartSearchDialog dialog = new CarPartSearchDialog(null); // ventana padre
+    	    dialog.setVisible(true);
+    	    return dialog.getSelectedCarPartSku();
+		}
 		private boolean validateFields() {
-			if(carpartComboBox.getSelectedIndex() == 0) {
+			if(carpartTextField.getText().isBlank()) {
 				setMessage("Debe seleccionar una autoparte");
 				return false;
 			}
@@ -376,7 +420,7 @@ private static final long serialVersionUID = 1L;
 
 		private void clearFields() {	
 			table.clearSelection();
-			carpartComboBox.setSelectedIndex(0);
+			carpartTextField.setText("");
 			movementComboBox.setSelectedIndex(0);
 			quantityTextField.setText("");
 			observationsTextField.setText("");
@@ -428,9 +472,9 @@ private static final long serialVersionUID = 1L;
 
 		@Override
 		public void refresh() {
-			CarPart c = carpartComboBox.getSelectedItem();
-		    carpartComboBox.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku( "Seleccione una autoparte").build());
-		    carpartComboBox.setSelectedItem(c);
+			//CarPart c = carpartTextField.getSelectedItem();
+		    //carpartTextField.fill(carpartController.getCarParts(), CarPart.builder().id(null).sku( "Seleccione una autoparte").build());
+		    //carpartTextField.setSelectedItem(c);
 		    
 			clearFields();
 			loadTable();

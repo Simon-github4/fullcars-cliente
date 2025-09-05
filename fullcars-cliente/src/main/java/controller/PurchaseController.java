@@ -24,7 +24,7 @@ public class PurchaseController {
 	}
 
 	public List<Purchase> getPurchases(Provider c, LocalDate[] dates){
-		return servicePurchase.getPurchases(dates, c.getId());
+		return servicePurchase.getPurchases(dates, (c==null)?null: c.getId());
 	}
 	
 	public void save(Purchase c) throws ServerException, IOException, Exception {

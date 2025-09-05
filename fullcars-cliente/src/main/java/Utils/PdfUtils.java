@@ -2,6 +2,7 @@ package Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -11,14 +12,12 @@ import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
 
 import model.client.entities.Sale;
@@ -70,7 +69,7 @@ public class PdfUtils {
             document.add(new Paragraph("Fecha:\t\t\t\t" + sale.getDate()));
             document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
             document.add(new Paragraph("Domicilio:\t\t\t" + sale.getCustomer().getAdress()));
-            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getBrand()));
+            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getModel().getBrand()));
             document.add(new Paragraph("Siniestro:\t\t\t"+ sale.getSaleNumber()));
             document.add(new Paragraph("\n"));
 
@@ -145,7 +144,7 @@ public class PdfUtils {
             document.add(new Paragraph("Fecha:\t\t\t\t" + sale.getDate()));
             document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
             document.add(new Paragraph("Domicilio:\t\t\t" + sale.getCustomer().getAdress()));
-            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getBrand()));
+            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getModel().getBrand()));
             document.add(new Paragraph("Siniestro:\t\t\t Particular"));
             document.add(new Paragraph("\n"));
 
@@ -160,17 +159,14 @@ public class PdfUtils {
             	detailstable.addCell(String.valueOf(detail.getQuantity()));
             	detailstable.addCell(detail.getCarPart().getName());
             	detailstable.addCell(detail.getCarPart().getSku());
-            	detailstable.addCell(detail.getSubTotal().toString());
+            	detailstable.addCell(NumberFormatArg.format(detail.getSubTotal()));
             }
 
             document.add(detailstable);
 
-            Long total = sale.getTotal();
-            		/*sale.getDetails().stream()
-                    .map(d -> d.getPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);*/
+            BigDecimal total = sale.getTotal();
 
-            document.add(new Paragraph("\nTotal: $" + total).setBold());
+            document.add(new Paragraph("\nTotal: " + NumberFormatArg.format(total)).setBold());
 
             document.add(new Paragraph("\nLa conformidad de este remito declara el perfecto estado de la mercadería recibida. No se aceptan reclamos pasadas 72hs.")
                     .setFontSize(9)

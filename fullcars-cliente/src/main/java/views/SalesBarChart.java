@@ -3,6 +3,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -140,13 +141,13 @@ public class SalesBarChart {
             LocalDate endDate) {
 
         DefaultCategoryDataset groupedDataset = new DefaultCategoryDataset();
-        Map<String, Long> groupedData = new LinkedHashMap<>();
+        Map<String, BigDecimal> groupedData = new LinkedHashMap<>();
 
         // 1. Inicializar todas las categorías en el rango con 0
         LocalDate cursor = startDate;
         while (!cursor.isAfter(endDate)) {
             String key = formatDateForTimeFrame(cursor, timeFrame);
-            groupedData.putIfAbsent(key, 0L);
+            groupedData.putIfAbsent(key, BigDecimal.ZERO);
 
             switch (timeFrame) {
                 case DAILY: cursor = cursor.plusDays(1); break;
@@ -160,11 +161,11 @@ public class SalesBarChart {
         // 2. Sumar las ventas recibidas
         for (SalesData data : salesData) {
             String key = formatDateForTimeFrame(data.getDate(), timeFrame);
-            groupedData.merge(key, data.getAmount(), Long::sum);
+            groupedData.merge(key, data.getAmount(), BigDecimal::add);
         }
 
         // 3. Pasar al dataset
-        for (Map.Entry<String, Long> entry : groupedData.entrySet()) {
+        for (Map.Entry<String, BigDecimal> entry : groupedData.entrySet()) {
             groupedDataset.addValue(entry.getValue(), "Ventas", entry.getKey());
         }
 

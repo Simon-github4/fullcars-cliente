@@ -7,7 +7,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.text.DecimalFormat;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,19 +31,20 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 import Utils.Icons;
+import Utils.NumberFormatArg;
 import controller.StatisticsController;
 import dtos.SalesData;
+import dtos.StatisticsGeneralDTO;
+import dtos.TopProductDTO;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Purchase;
 import model.client.entities.Sale;
-import model.client.entities.StatisticsGeneral;
 import raven.datetime.DatePicker.DateSelectionMode;
 import views.components.DatePickerS;
 
 public class AutopartsDashboard extends JPanel implements Refreshable {
 
-    private DecimalFormat currencyFormat = new DecimalFormat("$###,##0.00");
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     // Colores
@@ -215,7 +217,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
         panel.setBackground(CARD_COLOR);
         panel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-                "Top 5 Productos Más Vendidos", TitledBorder.LEFT, TitledBorder.TOP,
+                "Productos Más Vendidos", TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Segoe UI", Font.BOLD, 14)));
 
         String[] columns = {"Producto", "Código", "Vendidos", "Ingresos"};
@@ -277,20 +279,22 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
 
     @Override
     public void refresh() {
-    	StatisticsGeneral stats = controller.getStatisticsGeneral(dp.getSelectedDateRange()); 
+        dp.setSelectedDateRange(LocalDate.of(2025, 9, 1), LocalDate.now().plusMonths(2));
+
+    	StatisticsGeneralDTO stats = controller.getStatisticsGeneral(dp.getSelectedDateRange()); 
         // ----- CARDS -----
         //List<String> metricValues = stats.getMetricValues(); // ["$15,250.00", "$8,900.00", "1,247", "$45,890.00"]
-        long salesTotal =0;
-        long purchaseTotal =0;
+    	BigDecimal salesTotal = BigDecimal.ZERO;
+    	BigDecimal purchaseTotal = BigDecimal.ZERO;
     	for(SalesData s: stats.getSalesData())
-        	salesTotal += s.getAmount();
+        	salesTotal = salesTotal.add(s.getAmount());
     	for(Purchase p: stats.getPurchases())
-    		purchaseTotal += p.getTotal();
+    		purchaseTotal = purchaseTotal.add(p.getTotal());
     	
-		ventasValue.setText(currencyFormat.format(salesTotal));
-		comprasValue.setText(currencyFormat.format(purchaseTotal));
+		ventasValue.setText(NumberFormatArg.format(salesTotal));
+		comprasValue.setText(NumberFormatArg.format(purchaseTotal));
 		stockValue.setText(String.valueOf(stats.getItemsRegistered()));
-		gananciaValue.setText(currencyFormat.format(stats.getTotalToCharge()));
+		gananciaValue.setText(NumberFormatArg.format(stats.getTotalToCharge()));
         
         loadRecentSalesTable(stats.getRecentSales());
 
@@ -319,7 +323,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
             Sale s = recentSales.get(i);
             data[i][0] = s.getCustomer().getFullName();
             data[i][1] = s.getId();
-            data[i][2] = currencyFormat.format(s.getTotal());
+            data[i][2] = NumberFormatArg.format(s.getTotal());
             data[i][3] = (s.getDate());
         }
 
@@ -333,16 +337,16 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
         recentSalesTable.repaint();
     }
 
-    private void loadTop5ProductsTable(List<CarPart> topProducts) {
+    private void loadTop5ProductsTable(List<TopProductDTO> topProducts) {
         String[] columns = {"SKU", "Nombre", "Vendidos", "Ingresos"};
         Object[][] data = new Object[topProducts.size()][columns.length];
 
         for (int i = 0; i < topProducts.size(); i++) {
-        	CarPart p = topProducts.get(i);
+        	TopProductDTO p = topProducts.get(i);
         	data[i][0] = p.getSku();
-            data[i][1] = p.getName();
-            data[i][2] = 999999999;
-            data[i][3] = currencyFormat.format(99999999);
+            data[i][1] = p.getNombre();
+            data[i][2] = p.getCantidadVendidos();
+            data[i][3] = NumberFormatArg.format(p.getIngresosTotales());
         }
 
         top5ProductsTable.setModel(new javax.swing.table.DefaultTableModel(data, columns) {

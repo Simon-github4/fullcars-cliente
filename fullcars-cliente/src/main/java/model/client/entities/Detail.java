@@ -1,5 +1,8 @@
 package model.client.entities;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
@@ -15,15 +18,15 @@ public abstract class Detail {
     
     private Long id;
     private Integer quantity;
-    private Long unitPrice;
+    private BigDecimal unitPrice;
 
     private CarPart carPart;
     
-    public Long getSubTotal() {
-    	return quantity * unitPrice ;
+    public BigDecimal getSubTotal() {
+    	return unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP) ;
     }
 
-	public Detail(Integer quantity, Long unitPrice, CarPart product) {
+	public Detail(Integer quantity, BigDecimal unitPrice, CarPart product) {
 		super();
 		this.id = null;
 		this.quantity = quantity;

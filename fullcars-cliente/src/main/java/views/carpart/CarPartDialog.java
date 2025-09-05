@@ -41,6 +41,7 @@ public class CarPartDialog extends JDialog {
         add(LightTheme.createTitle("Nueva AutoParte"), BorderLayout.NORTH);
         
         inputPanel.fillCombos(
+       		AppContext.modelController.getModels(),
             AppContext.brandProvider.getBrands(),
             AppContext.categoryController.getCategories(),
             AppContext.providerController.getProviders()

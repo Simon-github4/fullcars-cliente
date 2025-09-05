@@ -27,7 +27,7 @@ public class SaleController {
 	}
 
 	public List<Sale> getSales(Customer c, LocalDate[] dates, boolean showAll){
-		List<Sale> sales = serviceSale.getSales(dates, c.getId());
+		List<Sale> sales = serviceSale.getSales(dates, (c == null)?null: c.getId());
 		if(!showAll)
 			sales = sales.stream().filter(s-> s.getFactura() != null).toList();
 		return sales;

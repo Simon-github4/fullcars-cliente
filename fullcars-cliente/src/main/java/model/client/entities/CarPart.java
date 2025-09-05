@@ -1,5 +1,7 @@
 package model.client.entities;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,12 +19,12 @@ public class CarPart {
     private String sku;
     private Long stock;
     
-    private Brand brand;
+    private Model model;
     private Provider provider;
     private Category category;
     
     @Builder.Default
-    private Long basePrice = 0L;
+    private BigDecimal basePrice = BigDecimal.ZERO;
 
     @Override
     public String toString() {

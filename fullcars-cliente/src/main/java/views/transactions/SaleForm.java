@@ -39,6 +39,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import Utils.Icons;
+import Utils.NumberFormatArg;
 import Utils.ServerException;
 import controller.CarPartController;
 import controller.CustomerController;
@@ -46,11 +47,13 @@ import controller.SaleController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Customer;
+import model.client.entities.Provider;
 import model.client.entities.Sale;
 import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
-import views.carpart.CarPartDialog;
 import views.carpart.CarPartSearchDialog;
+import views.components.AutocompleteField;
+import views.components.BigDecimalField;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
@@ -74,11 +77,12 @@ private static final long serialVersionUID = 1L;
 	private JLabel carpartNameLabel = new JLabel("", JLabel.LEFT);
 
 	private JTextField carpartTextField = new JTextField(19);
-	private TypedComboBox<Customer> customerComboBox = new TypedComboBox<>(c -> c.getFullName());
+    private final AutocompleteField<Customer> fieldCustomers = new AutocompleteField<Customer>();
 	private DatePicker dpInput = new DatePickerS();
 	private JTextField siniestroTextField = new JTextField("Nro. siniestro");	
 
 	private JTextField quantityTextField = new JTextField(29);
+	private BigDecimalField unitPriceTextField = new BigDecimalField(20);
 	private NewModifyButton confirmButton = new NewModifyButton();
 	private JLabel messageLabel;
 
@@ -102,7 +106,7 @@ private static final long serialVersionUID = 1L;
 		Sale sale = Sale.builder()
 				.id(null)
 			    .date(dpInput.getSelectedDate())
-			    .customer(customerComboBox.getSelectedItem())
+			    .customer(fieldCustomers.getSelectedItem())
 			    .saleNumber((siniestroTextField.getText().isBlank())?null : siniestroTextField.getText())
 			    .taxes(new BigDecimal(0))
 			    .build();
@@ -127,13 +131,15 @@ private static final long serialVersionUID = 1L;
 	private void addDetail() {
         if(validateDetailFields()) {
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
-			SaleDetail sd = new SaleDetail(quantity, detailCarpart.getBasePrice(), detailCarpart);
+			SaleDetail sd = new SaleDetail(quantity, unitPriceTextField.getBigDecimal(), detailCarpart);
 			
 			detailsList.add(sd);
-	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity, sd.getUnitPrice(), sd.getSubTotal() });
-
+	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity,
+					NumberFormatArg.format(sd.getUnitPrice()),
+					 NumberFormatArg.format(sd.getSubTotal()) });
 	        quantityTextField.setText("");
 	        carpartTextField.setText("");
+			unitPriceTextField.clear();
 	        carpartTextField.requestFocus();
         }
     }
@@ -156,13 +162,10 @@ private static final long serialVersionUID = 1L;
 		fieldsPanel.setMaximumSize(size);
 
 		fieldsPanel.add(new JLabel("Cliente", JLabel.LEFT));
-		fieldsPanel.add(customerComboBox);
+		fieldsPanel.add(fieldCustomers);
 		fieldsPanel.add(new JLabel("Fecha", JLabel.LEFT));
 		JFormattedTextField dateInputTextField = new JFormattedTextField();
 		dpInput.setEditor(dateInputTextField);
-		dpInput.setUsePanelOption(true);
-		dpInput.setBackground(Color.GRAY); // Color de fondo oscuro
-		dpInput.setDateFormat("dd/MM/yyyy");
 		fieldsPanel.add(dateInputTextField);
 		fieldsPanel.add(new JLabel("Numero de Siniestro (dejar en blanco si es a particular)", JLabel.LEFT));
 		fieldsPanel.add(siniestroTextField);
@@ -217,9 +220,10 @@ private static final long serialVersionUID = 1L;
 		table = new JTable(tableModel);
 		table.setToolTipText("Click Derecho para Eliminar");
 		table.setShowGrid(true);
-		table.getColumnModel().getColumn(table.getColumnCount() - 1).setMaxWidth(90);
-		table.getColumnModel().getColumn(table.getColumnCount() - 1).setMinWidth(90);
-		table.getColumnModel().getColumn(table.getColumnCount() - 1).setPreferredWidth(90);
+		table.getColumnModel().getColumn(1).setMaxWidth(90);
+		table.getColumnModel().getColumn(1).setMinWidth(90);
+		table.getColumnModel().getColumn(1).setPreferredWidth(90);
+		table.getColumnModel().getColumn(table.getColumnCount()-1).setPreferredWidth(180);
 
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -246,14 +250,14 @@ private static final long serialVersionUID = 1L;
 			    )
 		));
 		
-		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,2));
+		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,3));
 		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
-		fieldsDetailsRow.add(new JLabel("  SKU:", JLabel.CENTER));
-		fieldsDetailsRow.add(carpartNameLabel);
-		fieldsDetailsRow.add(new JLabel("  Cantidad", JLabel.LEFT));
+		fieldsDetailsRow.add(new JLabel("SKU", JLabel.CENTER));
+		fieldsDetailsRow.add(new JLabel("Cantidad", JLabel.CENTER));
+		fieldsDetailsRow.add(new JLabel("Precio Unitario", JLabel.CENTER));
 		tablePanel.add(fieldsDetailsRow);
 		
-		fieldsDetailsRow = new JPanel(new GridLayout(0,2));
+		fieldsDetailsRow = new JPanel(new GridLayout(0,3));
 		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
 		fieldsDetailsRow.add(carpartTextField);
 		carpartTextField.putClientProperty("JTextField.placeholderText", "ENTER para buscar autoparte");
@@ -276,10 +280,17 @@ private static final long serialVersionUID = 1L;
 		});
 		carpartTextField.addActionListener(e-> setDetailCarPart());		
 		fieldsDetailsRow.add(quantityTextField);
-		quantityTextField.addActionListener(e -> addDetail());
+		quantityTextField.addActionListener(e -> unitPriceTextField.requestFocus());
 		quantityTextField.putClientProperty("JTextField.placeholderText", "ENTER para agregar detalle");
+		fieldsDetailsRow.add(unitPriceTextField);
+		unitPriceTextField.addActionListener(e-> addDetail());		
 		tablePanel.add(fieldsDetailsRow);
-		
+
+		fieldsDetailsRow = new JPanel(new GridLayout());
+		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
+		fieldsDetailsRow.add(carpartNameLabel);
+		tablePanel.add(fieldsDetailsRow);
+
 		fieldsDetailsRow = new JPanel(new GridLayout(1,0,0,8));
 		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
 		fieldsDetailsRow.setBorder(BorderFactory.createEmptyBorder(8,0,7,0));
@@ -293,6 +304,7 @@ private static final long serialVersionUID = 1L;
 			setMessage("No se escontro autoparte con ese sku");
 		else {
 			carpartNameLabel.setText(detailCarpart.getName());
+			unitPriceTextField.setBigDecimal(detailCarpart.getBasePrice());
 			quantityTextField.requestFocus();
 		}
 	}
@@ -350,6 +362,10 @@ private static final long serialVersionUID = 1L;
 			setMessage("Debe seleccionar una autoparte");
 			return false;
 		}
+		if(unitPriceTextField.getBigDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+			setMessage("Ingrece un precio unitario valido");
+			return false;
+		}
 		try {
 			if (Integer.parseInt(quantityTextField.getText()) <= 0) {
 				setMessage("La cantidad debe ser mayor a cero");
@@ -366,7 +382,7 @@ private static final long serialVersionUID = 1L;
 			setMessage("Debe seleccionar una fecha");
 			return false;
 		}
-		if (customerComboBox.getSelectedIndex() == 0) {
+		if (fieldCustomers.getSelectedItem() == null) {
 			setMessage("Debe seleccionar un cliente");
 			return false;
 		}
@@ -380,13 +396,14 @@ private static final long serialVersionUID = 1L;
 
 	private void clearFields() {
 		tableModel.setRowCount(0);
-		customerComboBox.setSelectedIndex(0);
+		fieldCustomers.clearSelection();
 		dpInput.setSelectedDate(LocalDate.now());
 
 		detailsList = new ArrayList<>();
 		carpartTextField.setText("");
 		quantityTextField.setText("");
 		siniestroTextField.setText("");
+		unitPriceTextField.clear();
 		
 		messageLabel.setText("");
 		messageLabel.setOpaque(false);
@@ -398,7 +415,7 @@ private static final long serialVersionUID = 1L;
 
 	@Override
 	public void refresh() {
-		customerComboBox.fill(customerController.getCustomers(), Customer.builder().fullName("Seleccione un Cliente").build());
+		fieldCustomers.setItems(customerController.getCustomers());
 		clearFields();
 	}
 

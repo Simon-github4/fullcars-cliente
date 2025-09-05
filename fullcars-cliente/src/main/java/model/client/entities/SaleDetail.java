@@ -1,6 +1,6 @@
 package model.client.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +16,7 @@ public class SaleDetail extends Detail{
 	//@JsonIgnore
     private Sale sale;
 
-	public SaleDetail(Integer quantity, Long unitPrice, CarPart product) {
+	public SaleDetail(Integer quantity, BigDecimal unitPrice, CarPart product) {
 		super(quantity, unitPrice, product);
 	}
 

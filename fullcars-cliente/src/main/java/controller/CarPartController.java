@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import Utils.CarpartCsvExporter;
-import Utils.CsvExporter;
+import Utils.CarpartExcelExporter;
+import Utils.Exporter;
 import Utils.FileUtil;
 import Utils.ServerException;
 import data.service.ClienteRestCarPart;
@@ -14,7 +14,7 @@ import model.client.entities.CarPart;
 public class CarPartController {
 
 	private final ClienteRestCarPart serviceCarPart = new ClienteRestCarPart();
-	private final CsvExporter<CarPart> CarpartCsvcarpartExporter = new CarpartCsvExporter();
+	private final Exporter<CarPart> CarpartCsvcarpartExporter = new CarpartExcelExporter();
 	
 	public CarPart getCarPart(Long id){
 		return serviceCarPart.getCarPart(id);

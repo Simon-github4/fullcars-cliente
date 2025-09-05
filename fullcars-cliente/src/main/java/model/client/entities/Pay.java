@@ -1,6 +1,8 @@
 package model.client.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class Pay {
 
     private Long id;
-    private int amount;
+    private BigDecimal amount;
     private LocalDate date;
     private String paymentMethod;
     

@@ -52,7 +52,7 @@ private static final long serialVersionUID = 1L;
 	
 	private JPanel inputPanel;
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Nombre completo", "D.N.I", "CUIT / CUIL", "Email", "Telefono", "Direccion", "id"};
+	private static final Object[] COLUMNS = {"Nombre/Razon Social", "D.N.I", "CUIT / CUIL", "Email", "Telefono", "Direccion", "id"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -146,7 +146,7 @@ private static final long serialVersionUID = 1L;
 			filterPanel.add(new JLabel("          ", JLabel.RIGHT));
 			filterPanel.add(new JLabel("Dni: ", JLabel.RIGHT));
 			filterPanel.add(dniSearchTextField);
-			filterPanel.add(new JLabel("Nombre: ", JLabel.RIGHT));
+			filterPanel.add(new JLabel("Nombre/R.S : ", JLabel.RIGHT));
 			filterPanel.add(nameSearchTextField);
 			nameSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 			dniSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
@@ -203,7 +203,7 @@ private static final long serialVersionUID = 1L;
 
 			JPanel rowsPanel = new JPanel(new GridLayout(0,1));
 
-			rowsPanel.add(new JLabel("  Nombre", JLabel.LEFT));
+			rowsPanel.add(new JLabel("  Nombre/Razon Social", JLabel.LEFT));
 			rowsPanel.add(nameTextField);
 			rowsPanel.add(new JLabel("  Documento (DNI)", JLabel.LEFT));
 			rowsPanel.add(dniTextField);

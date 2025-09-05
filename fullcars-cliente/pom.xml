@@ -18,12 +18,22 @@
 		     <artifactId>jfreechart</artifactId>
 		     <version>1.5.3</version>
 		 </dependency>
+		 <dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>5.2.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.5</version>
+		</dependency>
 		<dependency>
 	  		<groupId>com.formdev</groupId>
 	  		<artifactId>flatlaf</artifactId>
 	  		<version>3.5.2</version>
 		</dependency>
-	<!-- https://mvnrepository.com/artifact/com.formdev/flatlaf-extras -->
+		<!-- https://mvnrepository.com/artifact/com.formdev/flatlaf-extras -->
 		<dependency>
 		    <groupId>com.formdev</groupId>
 		    <artifactId>flatlaf-extras</artifactId>
@@ -47,7 +57,7 @@
 		    <version>2.17.0</version> <!-- o la versión que uses -->
 		</dependency>
 
-	<!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
+		<!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
 		<dependency>
 		    <groupId>com.squareup.okhttp3</groupId>
 		    <artifactId>okhttp</artifactId>

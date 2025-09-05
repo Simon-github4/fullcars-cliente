@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,12 +44,14 @@ import Utils.ServerException;
 import controller.ProviderController;
 import controller.PurchaseController;
 import interfaces.Refreshable;
+import model.client.entities.Customer;
 import model.client.entities.Provider;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
 import raven.datetime.DatePicker;
 import raven.datetime.event.DateSelectionEvent;
 import raven.datetime.event.DateSelectionListener;
+import views.components.AutocompleteField;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
@@ -58,7 +61,7 @@ public class PurchaseHistory extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
 
 	private final PurchaseController controller;
-	private final ProviderController customerController;
+	private final ProviderController providerController;
 	private List<Purchase> purchasesList = new ArrayList<>();
 
 	private JPanel detailsTablePanel;
@@ -72,7 +75,7 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel purchaseTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
-	private TypedComboBox<Provider> providerComboBox = new TypedComboBox<>(provider -> provider.getCompanyName());
+    private final AutocompleteField<Provider> fieldProvider = new AutocompleteField<Provider>();
 	private JTextField idSearchTextField = new JTextField("", 10);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
@@ -84,7 +87,7 @@ private static final long serialVersionUID = 1L;
 
 	public PurchaseHistory(PurchaseController controller, ProviderController providerController) {
 		this.controller = controller;
-		this.customerController = providerController;
+		this.providerController = providerController;
 
 		setLayout(new BorderLayout(0, 0));
 		//providerComboBox.fill(providerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
@@ -124,7 +127,7 @@ private static final long serialVersionUID = 1L;
 		sorter.setSortKeys(null); // resets column order
 
 		purchasesList = new ArrayList<Purchase>();
-		long totalBuys = 0;
+		BigDecimal totalBuys = BigDecimal.ZERO;
 
 		String nroCompraText = idSearchTextField.getText().trim();
 
@@ -140,15 +143,15 @@ private static final long serialVersionUID = 1L;
 				setMessage("No se encontro la compra: "+ nroCompraText);
 			}
 		 else 
-			purchasesList = controller.getPurchases(providerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange());
+			purchasesList = controller.getPurchases(fieldProvider.getSelectedItem(), dpFilter.getSelectedDateRange());
 
 		for (Purchase s : purchasesList) {
-			totalBuys += s.getTotal();
+			totalBuys = totalBuys.add(s.getTotal());
 			Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(),
-					s.getTotal(), (s.isPayed()) ? "Si" : "No", s.getId() };
+					NumberFormatArg.format(s.getTotal()), (s.isPayed()) ? "Si" : "No", s.getId() };
 			purchaseTableModel.addRow(row);
 		}
-		totalTextField.setText("$" + NumberFormatArg.format(totalBuys));
+		totalTextField.setText(NumberFormatArg.format(totalBuys));
 
 	}
 
@@ -156,7 +159,7 @@ private static final long serialVersionUID = 1L;
 		Purchase purchase = purchasesList.get(idPurch);
 		detailsTableModel.setRowCount(0);
     	for(PurchaseDetail d : purchase.getDetails()) {
-    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(), d.getUnitPrice(), d.getSubTotal(), d.getId()};
+    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(),  NumberFormatArg.format(d.getUnitPrice()),  NumberFormatArg.format(d.getSubTotal()), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}
@@ -174,7 +177,7 @@ private static final long serialVersionUID = 1L;
 			}
 		});
 		dpFilter.setEditor(dateSearchTextField);
-		providerComboBox.addActionListener(e -> loadPurchaseTable());
+		//fieldProvider.addActionListener(e -> loadPurchaseTable());
 		totalTextField.setForeground(LightTheme.COLOR_GREEN_MONEY);
 		totalTextField.setEditable(false);
 		
@@ -186,7 +189,7 @@ private static final long serialVersionUID = 1L;
 		filterPanel.add(new JLabel("Nro Compra: ", JLabel.RIGHT));
 		filterPanel.add(idSearchTextField);
 		filterPanel.add(new JLabel("Proveedor ", JLabel.RIGHT));
-		filterPanel.add(providerComboBox);
+		filterPanel.add(fieldProvider);
 		filterPanel.add(new JLabel("Desde/Hasta ", JLabel.RIGHT));
 		filterPanel.add(dateSearchTextField);
 		filterPanel.add(new JLabel("  Total Gastado", JLabel.RIGHT));
@@ -314,7 +317,7 @@ private static final long serialVersionUID = 1L;
 	private void clearFields() {
 		purchaseTable.clearSelection();
 		detailsTableModel.setRowCount(0);
-		providerComboBox.setSelectedIndex(0);
+		fieldProvider.clearSelection();
 		dpFilter.clearSelectedDate();
 		idSearchTextField.setText("");
 		totalTextField.setText("");
@@ -343,9 +346,9 @@ private static final long serialVersionUID = 1L;
 				else {
 					filtroTimer = new Timer(300, evt ->{
 						dpFilter.clearSelectedDate();
-						providerComboBox.setSelectedIndex(0);
+						fieldProvider.clearSelection();
 						dateSearchTextField.setEnabled(idSearchTextField.getText().isBlank());
-						providerComboBox.setEnabled(idSearchTextField.getText().isBlank());
+						fieldProvider.setEnabled(idSearchTextField.getText().isBlank());
 						loadPurchaseTable();
 					});
 					filtroTimer.setRepeats(false); 
@@ -391,17 +394,17 @@ private static final long serialVersionUID = 1L;
 
 	@Override
 	public void refresh() {
-		ActionListener[] listeners = providerComboBox.getActionListeners();
+		/*ActionListener[] listeners = fieldProvider.getActionListeners();
 		for (ActionListener l : listeners) 
-		    providerComboBox.removeActionListener(l);
+		    fieldProvider.removeActionListener(l);
 		
-		Provider c = providerComboBox.getSelectedItem();
-		providerComboBox.fill(customerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
-		providerComboBox.setSelectedItem(c);
+		Provider c = fieldProvider.getSelectedItem();
+		fieldProvider.fill(customerController.getProviders(), Provider.builder().id(null).companyName("Seleccione un proveedor").build());
+		fieldProvider.setSelectedItem(c);
 
 		for (ActionListener l : listeners) 
-		    providerComboBox.addActionListener(l);
-		
+		    fieldProvider.addActionListener(l);*/
+		fieldProvider.setItems(providerController.getProviders());
 		clearFields();
 		loadPurchaseTable();
 	}

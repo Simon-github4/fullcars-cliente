@@ -118,6 +118,7 @@ private static final long serialVersionUID = 1L;
 		JPanel horizontalPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,10,5));
 		horizontalPanel.setPreferredSize(new Dimension(300, 30));
 		horizontalPanel.add(new JLabel("Nombre", JLabel.RIGHT));
+		nameTextField.addActionListener(e-> save());
 		horizontalPanel.add(nameTextField);
 		horizontalPanel.add(new JLabel("       Id", JLabel.RIGHT));
 		horizontalPanel.add(idTextField);

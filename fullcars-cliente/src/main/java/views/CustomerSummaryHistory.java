@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -150,12 +152,18 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 			CustomerSummaryDTO sum = controller.getCustomerSummary(controller.getCustomerSelectedId());
 			paysList = sum.getPayments();
 			salesList = sum.getSales();
-			Long totalBalance = paysList.stream().mapToLong(Pay::getAmount).sum() - salesList.stream().mapToLong(Sale::getTotal).sum();
+			BigDecimal totalBalance = paysList.stream()
+				            .map(Pay::getAmount)
+				            .reduce(BigDecimal.ZERO, BigDecimal::add)
+				            .subtract(
+				                salesList.stream()
+				                         .map(Sale::getTotal)
+				                         .reduce(BigDecimal.ZERO, BigDecimal::add));
 			
 			customerInfoLabel.setText(sum.getCustomer().getFullName()+" - Cuit: "+sum.getCustomer().getCuit());
 			totalBalanceLabel.setText(" - Saldo Total: " + NumberFormatArg.format(totalBalance));
 		    
-		    if(totalBalance <= 0) 
+		    if(totalBalance.compareTo(BigDecimal.ZERO) < 0) 
 		        totalBalanceLabel.setForeground(new Color(255, 0, 0)); // rojo
 		    else 
 		        totalBalanceLabel.setForeground(LightTheme.COLOR_GREEN_MONEY); // verde
@@ -168,26 +176,26 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		saleTableModel.setRowCount(0);
 		sorter.setSortKeys(null);// resets column order
 		
-		long saleBalance = 0;
+		BigDecimal saleBalance = BigDecimal.ZERO;
 		for(Sale s : salesList) 
 			if(dpFilter.getSelectedDateRange() == null || s.getDate().compareTo(dpFilter.getSelectedDateRange()[0]) >= 0 && 
 														  s.getDate().compareTo(dpFilter.getSelectedDateRange()[1]) <= 0){
-				saleBalance = -s.getTotal();
-				saleBalance += paysList.stream()
-			           .filter(p -> p.getSale().getId().equals(s.getId()))
-			           .mapToDouble(Pay::getAmount)
-			           .sum();
+				saleBalance = saleBalance.subtract(s.getTotal());
+				for (Pay p : paysList) 
+				    if (p.getSale().getId().equals(s.getId())) 
+				        saleBalance = saleBalance.add(p.getAmount());
+				    
 				Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
 								(s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber(),
-								s.getTotal(), saleBalance, s.getId() };
+								NumberFormatArg.format(s.getTotal()), NumberFormatArg.format(saleBalance), s.getId() };
 				saleTableModel.addRow(row);
 			}
 		loadPays();
 	}
-	private Long loadPays() {
+	private BigDecimal loadPays() {
 		paysTableModel.setRowCount(0);
 		
-		long totalPays = 0;
+		BigDecimal totalPays = BigDecimal.ZERO;
 		int viewRow = saleTable.getSelectedRow();
 		Long idSale =null;
 		if(viewRow != -1)
@@ -198,11 +206,11 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 			boolean withinDate = dateRange == null ||  (s.getDate().compareTo(dateRange[0]) >= 0 && s.getDate().compareTo(dateRange[1]) <= 0);
 			boolean matchesSale = viewRow == -1 || idSale.equals(s.getSale().getId());
 			if (withinDate && matchesSale) {
-				totalPays += s.getAmount();
-				Object[] rowT = {s.getSale().getId(), s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getAmount(), s.getPaymentMethod(), s.getId() };
+				totalPays = totalPays.add(s.getAmount());
+				Object[] rowT = {s.getSale().getId(), s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), NumberFormatArg.format(s.getAmount()), s.getPaymentMethod(), s.getId() };
 				paysTableModel.addRow(rowT);
 			}}
-		return totalPays;
+		return totalPays.setScale(2, RoundingMode.HALF_UP);
 	}
 	
 	private void initUI() {

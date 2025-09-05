@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.Function;
 
 public class TypedComboBox<T> extends JComboBox<T> {

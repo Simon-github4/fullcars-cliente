@@ -7,6 +7,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import javax.swing.JButton;
@@ -16,17 +17,17 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import model.client.entities.Customer;
 import model.client.entities.Pay;
 import model.client.entities.Sale;
 import raven.datetime.DatePicker;
 import raven.datetime.DatePicker.DateSelectionMode;
+import views.components.BigDecimalField;
 
 public class PayForm extends JDialog {
 
-    private JTextField amountField;
+    private BigDecimalField amountField;
     private DatePicker datePicker;
     private JComboBox<String> payMethodCombo;
     private JButton saveButton;
@@ -51,7 +52,7 @@ public class PayForm extends JDialog {
     }
 
     private void initComponents() {
-        amountField = new JTextField(15); // campo más grande
+        amountField = new BigDecimalField(15); // campo más grande
         datePicker = new DatePicker();
         datePicker.setDateSelectionMode(DateSelectionMode.SINGLE_DATE_SELECTED);
         datePicker.setSelectedDate(LocalDate.now());
@@ -105,7 +106,7 @@ public class PayForm extends JDialog {
 
     private void onSave() {
         try {
-            int amount = Integer.parseInt(amountField.getText());
+        	BigDecimal amount = amountField.getBigDecimal();
             LocalDate date = datePicker.getSelectedDate();
             String method = (String) payMethodCombo.getSelectedItem();
 

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Customer {
+public class Customer implements Comparable<Customer>{
 
     private Long id;
     
@@ -24,4 +24,12 @@ public class Customer {
     public String toString() {
     	return fullName;
     }
+
+	@Override
+	public int compareTo(Customer o) {
+		return this.fullName.compareTo(o.getFullName());
+	}
+    
+
+
 }

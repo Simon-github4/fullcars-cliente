@@ -1,6 +1,8 @@
 package views.carpart;
 
 import java.awt.GridLayout;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -9,10 +11,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import controller.AppContext;
 import model.client.entities.Brand;
 import model.client.entities.CarPart;
 import model.client.entities.Category;
+import model.client.entities.Model;
 import model.client.entities.Provider;
+import views.components.AutocompleteField;
+import views.components.BigDecimalField;
 import views.components.TypedComboBox;
 
 public class CarPartInputPanel extends JPanel {
@@ -21,10 +27,11 @@ public class CarPartInputPanel extends JPanel {
     private final JTextField descriptionTextField = new JTextField("", 29);
     private final JTextField skuTextField = new JTextField(29);
     private final JTextField stockTextField = new JTextField("", 29);
-    private final JTextField sellPriceTextField = new JTextField("", 29);
-    private final TypedComboBox<Provider> comboBoxProviders = new TypedComboBox<>(p -> p.getCompanyName());
-    private final TypedComboBox<Brand> comboBoxBrands = new TypedComboBox<>(b -> b.getName());
+    private final BigDecimalField sellPriceTextField = new BigDecimalField(29);
+    private final AutocompleteField<Provider> fieldProviders = new AutocompleteField<Provider>();
     private final TypedComboBox<Category> comboBoxCategory = new TypedComboBox<>(c -> c.getName());
+	private final AutocompleteField<Model> fieldModels = new AutocompleteField<Model>();
+;
 
     public CarPartInputPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -45,69 +52,70 @@ public class CarPartInputPanel extends JPanel {
         rowsPanel.add(descriptionTextField);
 
         JPanel columnPanel = new JPanel(new GridLayout(1, 0));
+        columnPanel.add(new JLabel("  Categoría", JLabel.LEFT));
         columnPanel.add(new JLabel("  SKU", JLabel.LEFT));
-        columnPanel.add(new JLabel("  Stock", JLabel.LEFT));
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
+        columnPanel.add(comboBoxCategory);
         columnPanel.add(skuTextField);
-        columnPanel.add(stockTextField);
+        //columnPanel.add(stockTextField);
         rowsPanel.add(columnPanel);
 
         rowsPanel.add(new JLabel("  Precio venta", JLabel.LEFT));
         rowsPanel.add(sellPriceTextField);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(new JLabel("  Marca", JLabel.LEFT));
-        columnPanel.add(new JLabel("  Categoría", JLabel.LEFT));
+        columnPanel.add(new JLabel("  Modelo", JLabel.LEFT));
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(comboBoxBrands);
-        columnPanel.add(comboBoxCategory);
+        columnPanel.add(fieldModels);
         rowsPanel.add(columnPanel);
 
         rowsPanel.add(new JLabel("  Proveedor", JLabel.LEFT));
-        rowsPanel.add(comboBoxProviders);
+        rowsPanel.add(fieldProviders);
 
         add(rowsPanel);
     }
 
     // ---------------- Métodos útiles ----------------
 
-    public void fillCombos(List<Brand> brands, List<Category> categories, List<Provider> providers) {
-    	Brand selectedBrand = comboBoxBrands.getSelectedItem();
+    public void fillCombos(List<Model> models, List<Brand> brands, List<Category> categories, List<Provider> providers) {
+    	Model selectedModel = fieldModels.getSelectedItem();
 		Category selectedCategory = comboBoxCategory.getSelectedItem();
-		Provider selectedProvider = comboBoxProviders.getSelectedItem();
+		Provider selectedProvider = fieldProviders.getSelectedItem();
 		
-        comboBoxBrands.fill(brands, new Brand(null, "Seleccione una Marca"));
+		
         comboBoxCategory.fill(categories, new Category(null, "Seleccione una Categoría"));
-        comboBoxProviders.fill(providers, Provider.builder().id(null).companyName("Seleccione un Proveedor").build());
+        fieldProviders.setItems(providers);
+        fieldModels.setItems(models);
 
-        if(selectedBrand != null)
-        	comboBoxBrands.setSelectedItem(selectedBrand);
+        if(selectedModel != null)
+        	fieldModels.setSelectedItem(selectedModel);
         else
-        	comboBoxBrands.setSelectedIndex(0);
+        	fieldModels.clearSelection();
         if(selectedCategory != null)
     		comboBoxCategory.setSelectedItem(selectedCategory);
         else
         	comboBoxCategory.setSelectedIndex(0);
         if(selectedProvider != null)
-    	    comboBoxProviders.setSelectedItem(selectedProvider);
+    	    fieldProviders.setSelectedItem(selectedProvider);
         else
-        	comboBoxProviders.setSelectedIndex(0);
+        	fieldProviders.clearSelection();
     }
 
     public CarPart toCarPart() {
+    	System.out.println(fieldModels.getSelectedItem());
         return CarPart.builder()
                 .name(nameTextField.getText())
                 .description(descriptionTextField.getText())
                 .sku(skuTextField.getText())
                 .stock(stockTextField.getText().isBlank() ? 0L : Long.parseLong(stockTextField.getText()))
-                .basePrice(Long.parseLong(sellPriceTextField.getText()))
-                .brand(comboBoxBrands.getSelectedItem())
+                .basePrice(sellPriceTextField.getBigDecimal())
+                .model(fieldModels.getSelectedItem())
                 .category(comboBoxCategory.getSelectedItem())
-                .provider(comboBoxProviders.getSelectedItem())
+                .provider(fieldProviders.getSelectedItem())
                 .build();
     }
 
@@ -116,10 +124,10 @@ public class CarPartInputPanel extends JPanel {
         descriptionTextField.setText(part.getDescription());
         skuTextField.setText(part.getSku());
         stockTextField.setText(part.getStock() == null ? "" : part.getStock().toString());
-        sellPriceTextField.setText(part.getBasePrice() == null ? "" : part.getBasePrice().toString());
-        comboBoxBrands.setSelectedItem(part.getBrand());
+        sellPriceTextField.setBigDecimal(part.getBasePrice() == null ? BigDecimal.ZERO : part.getBasePrice());
+        fieldModels.setSelectedItem(part.getModel());
         comboBoxCategory.setSelectedItem(part.getCategory());
-        comboBoxProviders.setSelectedItem(part.getProvider());
+        fieldProviders.setSelectedItem(part.getProvider());
     }
 
     public void clearFields() {
@@ -127,10 +135,10 @@ public class CarPartInputPanel extends JPanel {
         descriptionTextField.setText("");
         skuTextField.setText("");
         stockTextField.setText("");
-        sellPriceTextField.setText("");
-        comboBoxBrands.setSelectedIndex(0);
+        sellPriceTextField.clear();
+        fieldModels.clearSelection();
         comboBoxCategory.setSelectedIndex(0);
-        comboBoxProviders.setSelectedIndex(0);
+        fieldProviders.clearSelection();
     }
 
     public boolean validateFields(Consumer<String> errorHandler) {
@@ -143,7 +151,7 @@ public class CarPartInputPanel extends JPanel {
             return false;
         }
         try {
-            if (Long.parseLong(sellPriceTextField.getText()) < 0L) {
+            if (sellPriceTextField.getBigDecimal().compareTo(BigDecimal.ZERO) < 0) {
                 errorHandler.accept("El precio no puede ser menor a 0");
                 return false;
             }
@@ -151,12 +159,12 @@ public class CarPartInputPanel extends JPanel {
             errorHandler.accept("Asegúrese de introducir números en Precio venta");
             return false;
         }
-        if (comboBoxBrands.getSelectedIndex() == 0 || comboBoxCategory.getSelectedIndex() == 0) {
+        if (fieldModels.getSelectedItem() == null || comboBoxCategory.getSelectedIndex() == 0) {
             errorHandler.accept("Debe seleccionar Marca y Categoría válidos");
             return false;
         }
-        if (comboBoxProviders.getSelectedIndex() == 0) {
-            errorHandler.accept("Debe seleccionar un Proveedor válido");
+        if (fieldProviders.getSelectedItem() == null) {
+            errorHandler.accept("Debe seleccionar un Proveedor");
             return false;
         }
         return true;

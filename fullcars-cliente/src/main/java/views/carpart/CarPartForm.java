@@ -40,20 +40,18 @@ import javax.swing.table.TableRowSorter;
 import com.formdev.flatlaf.FlatClientProperties;
 
 import Utils.Icons;
+import Utils.NumberFormatArg;
 import Utils.ServerException;
 import controller.CarPartController;
 import controller.CategoryController;
+import controller.ModelController;
 import controller.ProviderController;
 import interfaces.IBrandProvider;
 import interfaces.Refreshable;
-import model.client.entities.Brand;
 import model.client.entities.CarPart;
-import model.client.entities.Category;
-import model.client.entities.Provider;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.NewModifyButton;
-import views.components.TypedComboBox;
 
 
 public class CarPartForm extends JPanel implements Refreshable{
@@ -61,12 +59,13 @@ public class CarPartForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
 	
 	private final CarPartController controller;
+	private final ModelController modelController;
 	private final IBrandProvider brandProvider;
 	private final CategoryController categoryProvider;
 	private final ProviderController providerController;
 	
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Stock", "Precio venta", "Marca", "Categoria", "Proveedor", "id"};
+	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Stock", "Precio venta", "Marca y Modelo", "Categoria", "Proveedor", "id"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -83,11 +82,12 @@ private static final long serialVersionUID = 1L;
 	private Timer filtroTimer;
 
 
-		public CarPartForm(CarPartController controller, IBrandProvider brand, CategoryController category, ProviderController pc) {
+		public CarPartForm(CarPartController controller, IBrandProvider brand, CategoryController category, ProviderController pc, ModelController modelController) {
 		    this.controller = controller;
 		    this.brandProvider = brand;
 		    this.categoryProvider = category;
 		    this.providerController = pc;
+		    this.modelController = modelController;
 		    
 		    setLayout(new BorderLayout(0, 0));
 		    createInputPanel();	
@@ -147,7 +147,7 @@ private static final long serialVersionUID = 1L;
 	        
 			List<CarPart> carParts = controller.getCarParts();
 			for(CarPart c : carParts) {
-				Object[] row = {c.getName(), c.getDescription(), c.getSku(), c.getStock(), c.getBasePrice(), c.getBrand(), c.getCategory(), c.getProvider(), c.getId()};
+				Object[] row = {c.getName(), c.getDescription(), c.getSku(), c.getStock(), NumberFormatArg.format(c.getBasePrice()), c.getModel(), c.getCategory(), c.getProvider(), c.getId()};
 				tableModel.addRow(row);
 			}
 		}
@@ -300,14 +300,14 @@ private static final long serialVersionUID = 1L;
 
 			File downloadsDir = new File(System.getProperty("user.home"), "Downloads");
 			fileChooser.setCurrentDirectory(downloadsDir);
-			fileChooser.setSelectedFile(new File(downloadsDir, "reporte_autopartes_"+LocalDate.now()+".csv"));
-			fileChooser.setFileFilter(new FileNameExtensionFilter("Archivos CSV", "csv"));
+			fileChooser.setSelectedFile(new File(downloadsDir, "reporte_autopartes_"+LocalDate.now()+".xlsx"));
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Archivos XLSX", "xlsx"));
 
 			
 		    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 		        File file = fileChooser.getSelectedFile();
-		        if (!file.getName().toLowerCase().endsWith(".csv")) {
-		            file = new File(file.getAbsolutePath() + ".csv");
+		        if (!file.getName().toLowerCase().endsWith(".xlsx")) {
+		            file = new File(file.getAbsolutePath() + ".xlsx");
 		        }
 
 		        try {
@@ -378,6 +378,7 @@ private static final long serialVersionUID = 1L;
 			loadTable();
 			
 		    inputPanel.fillCombos(
+		    		modelController.getModels(),
 		    	    brandProvider.getBrands(),
 		    	    categoryProvider.getCategories(),
 		    	    providerController.getProviders()

@@ -78,14 +78,6 @@ public class MainFrame extends JFrame{
         menuProductos.setIcon(Icons.CAR.create());
         menuProductos.addMouseListener(new ClickAdapter("AUTOPARTES"));
 
-        JMenu menuCategorias = new JMenu("CATEGORIAS");
-        menuCategorias.setIcon(Icons.CATEGORY.create());
-        menuCategorias.addMouseListener(new ClickAdapter("CATEGORIAS"));
-
-        JMenu menuMarcas  = new JMenu("MARCAS");
-        menuMarcas.setIcon(Icons.BRAND.create());
-        menuMarcas.addMouseListener(new ClickAdapter("MARCAS"));
-
         JMenu menuClientes  = new JMenu("CLIENTES");
         menuClientes.setIcon(Icons.CUSTOMER.create());
         menuClientes.addMouseListener(new ClickAdapter("CLIENTES"));
@@ -118,6 +110,22 @@ public class MainFrame extends JFrame{
         formPurchases.addMouseListener(new ClickAdapter("NUEVA COMPRA"));
         menuPurchases.add(formPurchases);
         
+        JMenu menuInfo = new JMenu("INFO");
+        menuInfo.setIcon(Icons.CATEGORY.create());
+
+        JMenuItem menuCategorias = new JMenuItem("CATEGORIAS");
+        menuCategorias.setIcon(Icons.CATEGORY.create());
+        menuCategorias.addMouseListener(new ClickAdapter("CATEGORIAS"));
+        JMenuItem menuMarcas  = new JMenuItem("MARCAS");
+        menuMarcas.setIcon(Icons.BRAND.create());
+        menuMarcas.addMouseListener(new ClickAdapter("MARCAS"));
+        JMenuItem menuModelos  = new JMenuItem("MODELOS");
+        menuModelos.addMouseListener(new ClickAdapter("MODELOS"));
+        
+        menuInfo.add(menuCategorias);
+        menuInfo.add(menuMarcas);
+        menuInfo.add(menuModelos);
+        
         menuBar.add(full);
         menuBar.add(menuProductos);
         menuBar.add(menuClientes);
@@ -125,8 +133,7 @@ public class MainFrame extends JFrame{
         menuBar.add(menuProveedores);
         menuBar.add(menuPurchases);
         menuBar.add(menuMovimientosStock);
-        menuBar.add(menuCategorias);
-        menuBar.add(menuMarcas);
+        menuBar.add(menuInfo);
         
         createForms();
     }
@@ -152,6 +159,7 @@ public class MainFrame extends JFrame{
      	        cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
      	        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
      	        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
+     	        cardPanels.add(FormFactory.createModelsForm(), "MODELOS");
                 return null;
             }
         }.execute();
