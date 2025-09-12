@@ -1,10 +1,12 @@
 package controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 import data.service.ClienteRestProvider;
 import model.client.entities.Provider;
+import model.client.entities.ProviderMapping;
 
 public class ProviderController {
 	
@@ -29,6 +31,14 @@ public class ProviderController {
 			e.printStackTrace();
 			throw new IOException("No se pudo eliminar el proveedor");
 		}	
+	}
+
+	public ProviderMapping getProviderMapping(Long idProvider) {
+		return serviceProvider.getProviderMapping(idProvider);
+	}
+
+	public void saveProviderMapping(ProviderMapping nuevoMapping, File archivoSeleccionado) throws IOException {
+		serviceProvider.saveProviderMapping(nuevoMapping, archivoSeleccionado);
 	}
 	
 }

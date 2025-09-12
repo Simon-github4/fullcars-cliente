@@ -43,6 +43,7 @@ import model.client.entities.Provider;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.NewModifyButton;
+import views.transactions.ExcelMappingDialog;
 
 public class ProviderForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
@@ -356,9 +357,15 @@ private static final long serialVersionUID = 1L;
 		}
 
 		private void createJPopupMenu() {
-			new JPopupMenuModifyDelete(table, this::setRowToEdit, this::delete );
+			new JPopupMenuModifyDelete(table, this::setRowToEdit, this::delete ).addMenuItem("Cargar Cotizacion", this::uploadExcel);
 		}
 
+		private void uploadExcel() {
+			Long id = (Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
+			ExcelMappingDialog dialog = new ExcelMappingDialog(null, id);
+			dialog.setVisible(true);
+		}
+		
 		@Override
 		public void refresh() {
 			clearFields();
