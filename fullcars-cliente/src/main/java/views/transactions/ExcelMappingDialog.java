@@ -1,5 +1,6 @@
 package views.transactions;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -16,7 +17,6 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -27,10 +27,13 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 
 import controller.AppContext;
 import controller.ProviderController;
+import dtos.TaskStatusInfo;
 import model.client.entities.ProviderMapping;
 
 public class ExcelMappingDialog extends JDialog {
@@ -160,13 +163,59 @@ public class ExcelMappingDialog extends JDialog {
         );
 
         try {
-			providerController.saveProviderMapping(nuevoMapping, archivoSeleccionado);
-			JOptionPane.showMessageDialog(this, "Datos guardados correctamente.");
-			dispose();
-		} catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error al guardar los Datos.", "Error", JOptionPane.ERROR_MESSAGE);
-			e.printStackTrace();
-		}
+            String taskId = providerController.saveProviderMapping(nuevoMapping, archivoSeleccionado);
+
+            JDialog progressDialog = new JDialog(this, "Procesando. Esto puede tardar unos segundos...", true);
+            JLabel message = new JLabel("   Actualizando Base de Datos...");
+            progressDialog.add(message, BorderLayout.NORTH);
+            JProgressBar progressBar = new JProgressBar();
+            progressBar.setIndeterminate(true);
+            progressDialog.add(progressBar, BorderLayout.CENTER);
+            progressDialog.setSize(400, 140);
+            progressDialog.setLocationRelativeTo(this);
+
+            SwingWorker<Void, String> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    TaskStatusInfo status;
+                    do {
+                        Thread.sleep(500); // consultar cada 1s
+                        status = providerController.getTaskStatus(taskId); // llamada al servidor
+                        //publish(status.getStatus().toString() + "\nActualizando Base de Datos...");//status.getError() != null?status.getError():""); 
+                    } while (TaskStatusInfo.TaskStatus.PENDIENTE.equals(status.getStatus()) || TaskStatusInfo.TaskStatus.CARGANDO.equals(status.getStatus()));
+
+                    return null;
+                }
+                @Override
+                protected void process(java.util.List<String> chunks) {
+                    String latestStatus = chunks.get(chunks.size() - 1);
+                    message.setText(latestStatus);
+                }
+                @Override
+                protected void done() {
+                    progressDialog.dispose();
+                    try {
+                    	TaskStatusInfo finalStatus = providerController.getTaskStatus(taskId);
+                        if (TaskStatusInfo.TaskStatus.TERMINADO.equals(finalStatus.getStatus())) {
+                            JOptionPane.showMessageDialog(null, "Datos guardados correctamente.");
+                            close();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Error en la tarea.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error al consultar el estado.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            };
+            worker.execute();
+            progressDialog.setVisible(true);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al iniciar la tarea.", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+
     }
     
     
@@ -207,5 +256,8 @@ public class ExcelMappingDialog extends JDialog {
                 }
             }
         });
+    }
+    public void close() {
+    	this.dispose();
     }
 }

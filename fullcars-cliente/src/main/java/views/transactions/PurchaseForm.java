@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -25,7 +26,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -48,6 +48,8 @@ import controller.PurchaseController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Provider;
+import model.client.entities.ProviderMapping;
+import model.client.entities.ProviderPart;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
 import raven.datetime.DatePicker;
@@ -59,7 +61,6 @@ import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.NewModifyButton;
-import views.components.TypedComboBox;
 
 public class PurchaseForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
@@ -349,6 +350,21 @@ private static final long serialVersionUID = 1L;
         	    }
             }
         });
+        // Atajo ALT P (buscar Precios)
+        KeyStroke altP = KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK);
+        inputMap.put(altP, "searchPrices");
+        actionMap.put("searchPrices", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	ProviderPartsDialog dialog = new ProviderPartsDialog(null, providerController.getProviderParts());
+            	dialog.setVisible(true);
+
+            	ProviderPart seleccionada = dialog.getSelectedPart();
+            	if (seleccionada != null) {
+            	    System.out.println("Seleccionada: " + seleccionada.getNombre());
+            	}
+            }
+        });
         
         JPanel panelAyuda = new JPanel();
         panelAyuda.setLayout(new BoxLayout(panelAyuda, BoxLayout.Y_AXIS));
@@ -365,6 +381,9 @@ private static final long serialVersionUID = 1L;
         panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
         panelAyuda.add(new JLabel("ALT + B", JLabel.CENTER));
         panelAyuda.add(new JLabel("Buscar AUTOPARTE", JLabel.LEFT));
+        panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
+        panelAyuda.add(new JLabel("ALT + P", JLabel.CENTER));
+        panelAyuda.add(new JLabel("Cotizacion Proveedores", JLabel.LEFT));
         
         JPanel west = new JPanel();
         west.setPreferredSize(panelAyuda.getPreferredSize());

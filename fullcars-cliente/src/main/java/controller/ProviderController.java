@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.util.List;
 
 import data.service.ClienteRestProvider;
+import dtos.TaskStatusInfo;
 import model.client.entities.Provider;
 import model.client.entities.ProviderMapping;
+import model.client.entities.ProviderPart;
 
 public class ProviderController {
 	
@@ -33,12 +35,19 @@ public class ProviderController {
 		}	
 	}
 
+	public List<ProviderPart> getProviderParts(){
+		return serviceProvider.getProviderParts();
+	}
 	public ProviderMapping getProviderMapping(Long idProvider) {
 		return serviceProvider.getProviderMapping(idProvider);
 	}
 
-	public void saveProviderMapping(ProviderMapping nuevoMapping, File archivoSeleccionado) throws IOException {
-		serviceProvider.saveProviderMapping(nuevoMapping, archivoSeleccionado);
+	public String saveProviderMapping(ProviderMapping nuevoMapping, File archivoSeleccionado) throws IOException {
+		return serviceProvider.saveProviderMapping(nuevoMapping, archivoSeleccionado);
+	}
+
+	public TaskStatusInfo getTaskStatus(String taskId) {
+		return serviceProvider.getTaskStatus(taskId);
 	}
 	
 }

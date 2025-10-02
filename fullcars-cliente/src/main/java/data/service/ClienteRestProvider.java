@@ -14,8 +14,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import InitClass.Initializr;
+import dtos.TaskStatusInfo;
 import model.client.entities.Provider;
 import model.client.entities.ProviderMapping;
+import model.client.entities.ProviderPart;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -48,7 +50,7 @@ public class ClienteRestProvider {
 	        	String json = response.body().string();
 	            return mapper.readValue(json, new TypeReference<List<Provider>>() {});
 	        } else {
-	            System.err.println("Error HTTP: " + response.code());
+	            System.err.println("Error HTTP: " + response.code() + response.body().toString());
 	            return new ArrayList<>();
 	        }
 	    } catch (IOException e) {
@@ -121,6 +123,28 @@ public class ClienteRestProvider {
 	        } 
 	}
 
+	public List<ProviderPart> getProviderParts() {
+	    String uri = ADDRESS + "/parts";
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<List<ProviderPart>>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code()+ response.body().toString());
+	            return new ArrayList<>();
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace(); // Manejo de error de conexión o de lectura
+	        return new ArrayList<>();
+	    }
+	}
+	
 	public ProviderMapping getProviderMapping(Long idProvider) {
 		String uri = ADDRESS +"/"+ idProvider.toString() + "/mapping";
 
@@ -143,7 +167,7 @@ public class ClienteRestProvider {
 	    }	   
 	}
 
-	public void saveProviderMapping(ProviderMapping mapping, File excelFile) throws IOException {
+	public String saveProviderMapping(ProviderMapping mapping, File excelFile) throws IOException {
 		String mappingJson = mapper.writeValueAsString(mapping);
 
 		MultipartBody.Builder multipartBuilder = new MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -165,8 +189,30 @@ public class ClienteRestProvider {
 				throw new IOException("Error API: " + response.code() + " - " + response.message());
 			}
 			System.out.println("Mapping y archivo enviados correctamente");
+			return response.body().string();
 		}
 	}
 
+	public TaskStatusInfo getTaskStatus(String taskId) {
+		String uri = ADDRESS +"/tasks/"+ taskId;
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<TaskStatusInfo>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return null;
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }	  
+	}
 
 }
