@@ -6,11 +6,12 @@ import java.util.List;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import model.client.entities.CarPart;
 
@@ -18,7 +19,7 @@ public class CarpartExcelExporter implements Exporter<CarPart> {
 
     @Override
     public byte[] export(List<CarPart> parts) throws IOException {
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        try (Workbook workbook = new SXSSFWorkbook(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("CarParts");
 
             // Estilo de cabecera
@@ -50,6 +51,7 @@ public class CarpartExcelExporter implements Exporter<CarPart> {
                 row.createCell(6).setCellValue(p.getProvider() != null ? p.getProvider().getCompanyName() : "");
                 row.createCell(7).setCellValue(p.getCategory() != null ? p.getCategory().getName() : "");
                 row.createCell(8).setCellValue(p.getBasePrice() != null ? p.getBasePrice().doubleValue() : 0);
+                //row.getCell(8).setCellType(CellType.NUMERIC);
             }
 
             // Autoajustar columnas

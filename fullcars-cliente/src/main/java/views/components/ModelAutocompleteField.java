@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-public class ModelAutocompleteField extends JPanel {
+public class ModelAutocompleteField extends JPanel {//not used
     private final JTextField textField;
     private final JPopupMenu suggestionsPopup;
     private List<Model> allModels;

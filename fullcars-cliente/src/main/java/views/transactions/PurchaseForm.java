@@ -341,7 +341,7 @@ private static final long serialVersionUID = 1L;
         actionMap.put("newCarpartAction", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	CarPartDialog dialog = new CarPartDialog(null); // ventana padre
+            	CarPartDialog dialog = new CarPartDialog(); 
         	    dialog.setVisible(true);
 
         	    CarPart nuevo = dialog.getCreatedPart();
@@ -356,13 +356,26 @@ private static final long serialVersionUID = 1L;
         actionMap.put("searchPrices", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	ProviderPartsDialog dialog = new ProviderPartsDialog(null, providerController.getProviderParts());
+            	ProviderPartsDialog dialog = new ProviderPartsDialog(null, providerController.getProviderParts(), providerController.getProviders());
             	dialog.setVisible(true);
 
-            	ProviderPart seleccionada = dialog.getSelectedPart();
-            	if (seleccionada != null) {
-            	    System.out.println("Seleccionada: " + seleccionada.getNombre());
-            	}
+				ProviderPart seleccionada = dialog.getSelectedPart();
+				if (seleccionada != null) 
+					if (fieldProvider.getSelectedItem() != null && 
+							fieldProvider.getSelectedItem().getId() != seleccionada.getProviderMapping().getProviderId())
+						setMessage("El proveedor debe coincidir con el seleccionado");
+					else {
+						CarPartDialog newPartDialog = new CarPartDialog(seleccionada);
+						newPartDialog.setVisible(true);
+
+						CarPart nuevo = newPartDialog.getCreatedPart();
+						if (nuevo != null) {
+							fieldProvider.setSelectedItem(providerController.getProvider(seleccionada.getProviderMapping().getProviderId()));
+							unitPriceTextField.setBigDecimal(seleccionada.getPrecio());
+							setDetailCarPart(nuevo.getSku());
+						}
+					}
+            	System.gc();
             }
         });
         

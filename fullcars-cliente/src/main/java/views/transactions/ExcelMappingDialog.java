@@ -200,7 +200,7 @@ public class ExcelMappingDialog extends JDialog {
                             JOptionPane.showMessageDialog(null, "Datos guardados correctamente.");
                             close();
                         } else {
-                            JOptionPane.showMessageDialog(null, "Error en la tarea.", "Error", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(null, "Error en la tarea."+finalStatus.getError(), "Error", JOptionPane.ERROR_MESSAGE);
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();

@@ -17,6 +17,7 @@ import model.client.entities.CarPart;
 import model.client.entities.Category;
 import model.client.entities.Model;
 import model.client.entities.Provider;
+import model.client.entities.ProviderPart;
 import views.components.AutocompleteField;
 import views.components.BigDecimalField;
 import views.components.TypedComboBox;
@@ -29,7 +30,8 @@ public class CarPartInputPanel extends JPanel {
     private final JTextField stockTextField = new JTextField("", 29);
     private final BigDecimalField sellPriceTextField = new BigDecimalField(29);
     private final AutocompleteField<Provider> fieldProviders = new AutocompleteField<Provider>();
-    private final TypedComboBox<Category> comboBoxCategory = new TypedComboBox<>(c -> c.getName());
+    private final AutocompleteField<Category> fieldCategory = new AutocompleteField<Category>();
+    //private final TypedComboBox<Category> comboBoxCategory = new TypedComboBox<>(c -> c.getName());
 	private final AutocompleteField<Model> fieldModels = new AutocompleteField<Model>();
 ;
 
@@ -57,7 +59,7 @@ public class CarPartInputPanel extends JPanel {
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(comboBoxCategory);
+        columnPanel.add(fieldCategory);
         columnPanel.add(skuTextField);
         //columnPanel.add(stockTextField);
         rowsPanel.add(columnPanel);
@@ -83,11 +85,11 @@ public class CarPartInputPanel extends JPanel {
 
     public void fillCombos(List<Model> models, List<Brand> brands, List<Category> categories, List<Provider> providers) {
     	Model selectedModel = fieldModels.getSelectedItem();
-		Category selectedCategory = comboBoxCategory.getSelectedItem();
+		Category selectedCategory = fieldCategory.getSelectedItem();
 		Provider selectedProvider = fieldProviders.getSelectedItem();
 		
 		
-        comboBoxCategory.fill(categories, new Category(null, "Seleccione una Categoría"));
+        fieldCategory.setItems(categories);//, new Category(null, "Seleccione una Categoría"));
         fieldProviders.setItems(providers);
         fieldModels.setItems(models);
 
@@ -96,9 +98,9 @@ public class CarPartInputPanel extends JPanel {
         else
         	fieldModels.clearSelection();
         if(selectedCategory != null)
-    		comboBoxCategory.setSelectedItem(selectedCategory);
+    		fieldCategory.setSelectedItem(selectedCategory);
         else
-        	comboBoxCategory.setSelectedIndex(0);
+        	fieldCategory.clearSelection();
         if(selectedProvider != null)
     	    fieldProviders.setSelectedItem(selectedProvider);
         else
@@ -106,7 +108,6 @@ public class CarPartInputPanel extends JPanel {
     }
 
     public CarPart toCarPart() {
-    	System.out.println(fieldModels.getSelectedItem());
         return CarPart.builder()
                 .name(nameTextField.getText())
                 .description(descriptionTextField.getText())
@@ -114,7 +115,7 @@ public class CarPartInputPanel extends JPanel {
                 .stock(stockTextField.getText().isBlank() ? 0L : Long.parseLong(stockTextField.getText()))
                 .basePrice(sellPriceTextField.getBigDecimal())
                 .model(fieldModels.getSelectedItem())
-                .category(comboBoxCategory.getSelectedItem())
+                .category(fieldCategory.getSelectedItem())
                 .provider(fieldProviders.getSelectedItem())
                 .build();
     }
@@ -126,7 +127,7 @@ public class CarPartInputPanel extends JPanel {
         stockTextField.setText(part.getStock() == null ? "" : part.getStock().toString());
         sellPriceTextField.setBigDecimal(part.getBasePrice() == null ? BigDecimal.ZERO : part.getBasePrice());
         fieldModels.setSelectedItem(part.getModel());
-        comboBoxCategory.setSelectedItem(part.getCategory());
+        fieldCategory.setSelectedItem(part.getCategory());
         fieldProviders.setSelectedItem(part.getProvider());
     }
 
@@ -137,7 +138,7 @@ public class CarPartInputPanel extends JPanel {
         stockTextField.setText("");
         sellPriceTextField.clear();
         fieldModels.clearSelection();
-        comboBoxCategory.setSelectedIndex(0);
+        fieldCategory.clearSelection();
         fieldProviders.clearSelection();
     }
 
@@ -159,7 +160,7 @@ public class CarPartInputPanel extends JPanel {
             errorHandler.accept("Asegúrese de introducir números en Precio venta");
             return false;
         }
-        if (fieldModels.getSelectedItem() == null || comboBoxCategory.getSelectedIndex() == 0) {
+        if (fieldModels.getSelectedItem() == null){//) || fieldCategory.getSelectedIndex() == 0) {
             errorHandler.accept("Debe seleccionar Marca y Categoría válidos");
             return false;
         }

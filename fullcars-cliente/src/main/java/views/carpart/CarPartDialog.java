@@ -17,6 +17,7 @@ import controller.CategoryController;
 import controller.ProviderController;
 import interfaces.IBrandProvider;
 import model.client.entities.CarPart;
+import model.client.entities.ProviderPart;
 import views.components.LightTheme;
 
 public class CarPartDialog extends JDialog {
@@ -27,8 +28,18 @@ public class CarPartDialog extends JDialog {
 
     private CarPart createdPart; 
 
-    public CarPartDialog(Window parent) {
-        super(parent, "Nueva Autoparte", ModalityType.APPLICATION_MODAL);
+    public CarPartDialog(ProviderPart providerPart) {
+    	this();
+    	inputPanel.loadFrom(CarPart.builder()
+    			.name(providerPart.getNombre())
+    			.basePrice(providerPart.getPrecio())
+    			.provider(AppContext.providerController.getProvider(providerPart.getProviderMapping().getProviderId()))
+    			//.model(providerPart)
+    			.build());
+	}
+    
+    public CarPartDialog() {
+        super(null, "Nueva Autoparte", ModalityType.APPLICATION_MODAL);
         
         setLayout(new BorderLayout(5,5));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(7, 7, 0, 7));
@@ -61,12 +72,13 @@ public class CarPartDialog extends JDialog {
         cancelButton.addActionListener(e -> dispose());
 
         setSize(500, 500);
-        setLocationRelativeTo(parent);
+        setLocationRelativeTo(null);
     }
 
-    //Devuelve la CarPart creada, o null si el usuario canceló.
+	//Devuelve la CarPart creada, o null si el usuario canceló.
     public CarPart getCreatedPart() {
         return createdPart;
     }
+    
 }
 

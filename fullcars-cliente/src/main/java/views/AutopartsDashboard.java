@@ -127,15 +127,15 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
     private JPanel createMetricsPanel() {
     	metricsPanel = new JPanel(new GridLayout(1, 4, 15, 0));
         metricsPanel.setOpaque(false);
-        metricsPanel.setPreferredSize(new Dimension(0, 120));
+        metricsPanel.setPreferredSize(new Dimension(0, 95));
 
-        metricsPanel.add(createMetricCard("Ventas entre Fehcas:", ventasValue = new JLabel("$0.00"), "", SUCCESS_COLOR));
+        metricsPanel.add(createMetricCard("Ventas entre Fechas:", ventasValue = new JLabel("$0.00"), "", SUCCESS_COLOR));
 
         metricsPanel.add(createMetricCard("Compras entre Fechas:", comprasValue = new JLabel("$0.00"), "", PRIMARY_COLOR));
 
         metricsPanel.add(createMetricCard("Deuda Total por Cobrar", gananciaValue = new JLabel("$0.00"), "", SUCCESS_COLOR));
 
-        metricsPanel.add(createMetricCard("Items en Stock", stockValue = new JLabel("0"), "", WARNING_COLOR));
+        metricsPanel.add(createMetricCard("Partes Registradas", stockValue = new JLabel("0"), "", WARNING_COLOR));
 
         return metricsPanel;
     }

@@ -104,9 +104,9 @@ private static final long serialVersionUID = 1L;
 		saleTable.setRowSorter(sorter);
 		setupDocumentListeners();
 		
+		searchButton.setToolTipText("CTRL + A para ver todos");
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
         .put(KeyStroke.getKeyStroke("control A"), "mostrarCheckbox");
-
 		getActionMap().put("mostrarCheckbox", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
