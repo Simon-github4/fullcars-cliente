@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProviderPart {
 
-    private Long id;
+    //private Long id;
 
-    private ProviderMapping providerMapping;
+    private Long providerId;
 
     private String nombre;
     private String marca;

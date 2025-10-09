@@ -100,5 +100,23 @@ public class CarPartSearchDialog extends JDialog {
     public String getSelectedCarPartSku() {
         return selectedCarPart;
     }
+    @Override
+    public void dispose() {
+    	super.dispose();
+    	this.removeAll();  // elimina referencias de todos los hijos del contenedor !CUIDADO
+        if (table != null) {
+            table.setModel(new DefaultTableModel()); // libera referencia al TableModel
+        }
+        if (sorter != null) {
+            sorter.setRowFilter(null);
+            sorter = null;
+        }
+        if (tableModel != null) {
+            tableModel.setRowCount(0);
+            tableModel = null;
+        }
 
+        //selectedCarPart = null; se necesita para devolver
+        this.searchField =null;
+    }
 }

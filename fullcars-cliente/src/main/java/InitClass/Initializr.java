@@ -7,6 +7,9 @@ import java.util.Properties;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import controller.AppContext;
+import controller.LoginService.User;
+import views.LoginView;
 import views.MainFrame;
 import views.components.LightTheme;
 
@@ -20,10 +23,10 @@ public class Initializr {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				//LightTheme.setup();
+				new LoginView().setVisible(true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			new MainFrame();
 		});
 		try (FileInputStream input = new FileInputStream("config.properties")) {
 			properties.load(input);
@@ -32,7 +35,10 @@ public class Initializr {
 			e.printStackTrace();
 		}
     }
-    
+    public static void launch(User u) {
+		AppContext.setUser(u);
+    	new MainFrame();
+    }
     public static String getServerUrl() {
     	return properties.getProperty("server.url", SERVER_PATH);
     	//return SERVER_PATH;

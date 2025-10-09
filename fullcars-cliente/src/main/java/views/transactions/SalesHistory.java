@@ -104,7 +104,7 @@ private static final long serialVersionUID = 1L;
 		saleTable.setRowSorter(sorter);
 		setupDocumentListeners();
 		
-		searchButton.setToolTipText("CTRL + A para ver todos");
+		hidenCheckBox.setToolTipText("CTRL + A mostrar/no mostrar");
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
         .put(KeyStroke.getKeyStroke("control A"), "mostrarCheckbox");
 		getActionMap().put("mostrarCheckbox", new AbstractAction() {
@@ -200,8 +200,8 @@ private static final long serialVersionUID = 1L;
 		fieldCustomers.setPreferredSize(new Dimension(180, 25));
 		totalTextField.setForeground(LightTheme.COLOR_GREEN_MONEY);
 		totalTextField.setEditable(false);
-		hidenCheckBox.setVisible(false);
-		hidenCheckBox.setSelected(false);
+		//hidenCheckBox.setVisible(false);
+		hidenCheckBox.setSelected(true);
 		hidenCheckBox.addActionListener(e-> loadSaleTable());
 		
 		JPanel north = new JPanel(new BorderLayout());

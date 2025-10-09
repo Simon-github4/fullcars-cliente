@@ -75,8 +75,8 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel purchaseTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
-    private final AutocompleteField<Provider> fieldProvider = new AutocompleteField<Provider>();
-	private JTextField idSearchTextField = new JTextField("", 10);
+    private final AutocompleteField<Provider> fieldProvider = new AutocompleteField<Provider>(12);
+	private JTextField idSearchTextField = new JTextField("", 6);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));

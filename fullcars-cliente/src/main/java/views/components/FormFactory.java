@@ -8,6 +8,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import controller.AppContext;
 import controller.BrandController;
 import controller.CarPartController;
 import controller.CategoryController;
@@ -18,6 +19,7 @@ import controller.ProviderController;
 import controller.PurchaseController;
 import controller.SaleController;
 import controller.StockMovementController;
+import controller.LoginService.Role;
 import interfaces.Refreshable;
 import views.AutopartsDashboard;
 import views.BrandForm;
@@ -59,35 +61,38 @@ public class FormFactory {
 	}
 
 	public static JPanel createCustomerForm() {
-	    JTabbedPane tabbedPane = new JTabbedPane();
-	    
-	    JPanel listadoClientesPanel = new CustomerForm(CUSTOMER_CONTROLLER);
-	    tabbedPane.addTab("Clientes", listadoClientesPanel);
-
-	    JPanel saldoClientesPanel = new CustomerSummaryHistory(CUSTOMER_CONTROLLER, PAY_CONTROLLER, SALE_CONTROLLER);
-	    tabbedPane.addTab("Saldo y Pagos", saldoClientesPanel);
-
-	    tabbedPane.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				if (tabbedPane.getSelectedComponent() instanceof Refreshable )
-		           	((Refreshable)tabbedPane.getSelectedComponent()).refresh();
-			}
-	    });
-	    
-	    final class RefreshablePanel extends JPanel implements Refreshable {
-	        public RefreshablePanel(LayoutManager l) {
-				super.setLayout(l);
-			}
-			@Override
-	        public void refresh() {
-				if (tabbedPane.getSelectedComponent() instanceof Refreshable )
-		           	((Refreshable)tabbedPane.getSelectedComponent()).refresh();
-	        }
-	    }
-	    RefreshablePanel mainPanel = new RefreshablePanel(new BorderLayout());
-	    mainPanel.add(tabbedPane, BorderLayout.CENTER);
-	    return mainPanel;
+	    if(AppContext.getUser().getRole() == Role.ADMIN) {
+			JTabbedPane tabbedPane = new JTabbedPane();
+		    
+		    JPanel listadoClientesPanel = new CustomerForm(CUSTOMER_CONTROLLER);
+		    tabbedPane.addTab("Clientes", listadoClientesPanel);
+	
+		    JPanel saldoClientesPanel = new CustomerSummaryHistory(CUSTOMER_CONTROLLER, PAY_CONTROLLER, SALE_CONTROLLER);
+		    tabbedPane.addTab("Saldo y Pagos", saldoClientesPanel);
+	
+		    tabbedPane.addChangeListener(new ChangeListener() {
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					if (tabbedPane.getSelectedComponent() instanceof Refreshable )
+			           	((Refreshable)tabbedPane.getSelectedComponent()).refresh();
+				}
+		    });
+		    
+		    final class RefreshablePanel extends JPanel implements Refreshable {
+		        public RefreshablePanel(LayoutManager l) {
+					super.setLayout(l);
+				}
+				@Override
+		        public void refresh() {
+					if (tabbedPane.getSelectedComponent() instanceof Refreshable )
+			           	((Refreshable)tabbedPane.getSelectedComponent()).refresh();
+		        }
+		    }
+		    RefreshablePanel mainPanel = new RefreshablePanel(new BorderLayout());
+		    mainPanel.add(tabbedPane, BorderLayout.CENTER);
+		    return mainPanel;
+	    }else
+	    	return new CustomerForm(CUSTOMER_CONTROLLER);
 	}
 
 	public static JPanel createProviderForm() {

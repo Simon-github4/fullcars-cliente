@@ -40,10 +40,10 @@ import controller.ProviderController;
 import interfaces.Refreshable;
 import model.client.entities.Customer;
 import model.client.entities.Provider;
+import views.carpart.ExcelMappingDialog;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.NewModifyButton;
-import views.transactions.ExcelMappingDialog;
 
 public class ProviderForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;

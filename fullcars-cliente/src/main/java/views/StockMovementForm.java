@@ -139,7 +139,7 @@ private static final long serialVersionUID = 1L;
 
 		private void save() {			  
 			StockMovement c = StockMovement.builder()
-					.carPart(carpartController.getCarPart(carpartTextField.getSelectedText()))
+					.carPart(carpartController.getCarPart(carpartTextField.getText()))
 					.date(dpInput.getSelectedDate())
 					.reference(observationsTextField.getText())
 					.quantity(Integer.parseInt(quantityTextField.getText()))

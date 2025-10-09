@@ -20,6 +20,10 @@ public class AutocompleteField<T> extends JPanel {
     private JList<T> suggestionList;
     private boolean programmaticChange = false;
 
+    public AutocompleteField(int cols) {
+    	this();
+    	textField.setColumns(cols);
+    }
     public AutocompleteField() {
         this.items = null;
         this.displayFunction = Object::toString;

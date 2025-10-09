@@ -72,13 +72,15 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
     private DatePickerS dp = new DatePickerS();
     private JButton searchButton = new JButton("Buscar", Icons.LENS.create(20,20));
 
+	private SalesBarChart chart = new SalesBarChart(PRIMARY_COLOR, CARD_COLOR, BACKGROUND_COLOR);;
+
     public AutopartsDashboard() {
         setLayout(new BorderLayout(10, 10));
         setBackground(BACKGROUND_COLOR);
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createContentPanel(), BorderLayout.CENTER);
-        add(createFooterPanel(), BorderLayout.SOUTH);
+        //add(createFooterPanel(), BorderLayout.SOUTH);
         SwingUtilities.invokeLater(()->refresh());
     }
 
@@ -305,8 +307,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
         //List<String> notifications = stats.getNotifications();
         loadNotificationsPanel(new ArrayList<String>(), stats.getPurchasesNotPayed());
 
-        // ----- GRÁFICO DE VENTAS -----
-        SalesBarChart chart = new SalesBarChart(PRIMARY_COLOR, CARD_COLOR, BACKGROUND_COLOR);
+        //chart = new SalesBarChart(PRIMARY_COLOR, CARD_COLOR, BACKGROUND_COLOR);
         chart.updateChart(dp.getSelectedDateRange()[0], dp.getSelectedDateRange()[1], stats.getSalesData());
         
         monthlyBarChartPanel.removeAll();

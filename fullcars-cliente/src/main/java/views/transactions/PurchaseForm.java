@@ -55,6 +55,7 @@ import model.client.entities.PurchaseDetail;
 import raven.datetime.DatePicker;
 import views.carpart.CarPartDialog;
 import views.carpart.CarPartSearchDialog;
+import views.carpart.ProviderPartsDialog;
 import views.components.AutocompleteField;
 import views.components.BigDecimalField;
 import views.components.DatePickerS;
@@ -264,16 +265,19 @@ private static final long serialVersionUID = 1L;
 			public void insertUpdate(DocumentEvent e) {
 				detailCarpart = null;
 				carpartNameLabel.setText("");
+				unitPriceTextField.clear();
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				detailCarpart = null;
 				carpartNameLabel.setText("");
+				unitPriceTextField.clear();
 			}
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				detailCarpart = null;
-				carpartNameLabel.setText("");
+				//detailCarpart = null;
+				//carpartNameLabel.setText("");
+				//unitPriceTextField.clear();
 			}
 		});
 		carpartTextField.addActionListener(e-> setDetailCarPart());		
@@ -302,7 +306,7 @@ private static final long serialVersionUID = 1L;
 			setMessage("No se escontro autoparte con ese SKU");
 		}else {
 			carpartNameLabel.setText(detailCarpart.getName());
-			//unitPriceTextField.setBigDecimal(detailCarpart.getBasePrice());  precioventa NO?
+			unitPriceTextField.setBigDecimal(detailCarpart.getBasePrice());  //precioventa NO?
 			quantityTextField.requestFocus();
 		}	
 	}
@@ -362,7 +366,7 @@ private static final long serialVersionUID = 1L;
 				ProviderPart seleccionada = dialog.getSelectedPart();
 				if (seleccionada != null) 
 					if (fieldProvider.getSelectedItem() != null && 
-							fieldProvider.getSelectedItem().getId() != seleccionada.getProviderMapping().getProviderId())
+							fieldProvider.getSelectedItem().getId() != seleccionada.getProviderId())
 						setMessage("El proveedor debe coincidir con el seleccionado");
 					else {
 						CarPartDialog newPartDialog = new CarPartDialog(seleccionada);
@@ -370,11 +374,11 @@ private static final long serialVersionUID = 1L;
 
 						CarPart nuevo = newPartDialog.getCreatedPart();
 						if (nuevo != null) {
-							fieldProvider.setSelectedItem(providerController.getProvider(seleccionada.getProviderMapping().getProviderId()));
-							unitPriceTextField.setBigDecimal(seleccionada.getPrecio());
+							fieldProvider.setSelectedItem(providerController.getProvider(seleccionada.getProviderId()));
 							setDetailCarPart(nuevo.getSku());
 						}
 					}
+				dialog = null;
             	System.gc();
             }
         });

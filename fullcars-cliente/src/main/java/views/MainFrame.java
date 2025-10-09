@@ -22,6 +22,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import Utils.Icons;
+import controller.AppContext;
+import controller.LoginService.Role;
+import controller.LoginService.User;
 import interfaces.Refreshable;
 import views.components.FormFactory;
 import views.components.LightTheme;
@@ -31,11 +34,12 @@ public class MainFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
 	private CardLayout cardLayout;
     private JPanel cardPanels;
+    private User user;
    
     public MainFrame() {
+    	this.user = AppContext.getUser();
     	setIconImage(new ImageIcon(getClass().getResource(Icons.LOGO.getPath())).getImage());
     	setStyling();
-        
         setTitle("Full Cars");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
@@ -72,7 +76,6 @@ public class MainFrame extends JFrame{
                 full.setBackground(new Color(0,0,0,0)); // vuelve transparente
             }
         });
-        menuBar.add(full);
         
         JMenu menuProductos = new JMenu("AUTOPARTES");
         menuProductos.setIcon(Icons.CAR.create());
@@ -95,7 +98,6 @@ public class MainFrame extends JFrame{
         
         JMenuItem historySales = new JMenuItem("HISTORIAL VENTAS");
         historySales.addMouseListener(new ClickAdapter("HISTORIAL VENTAS"));
-        menuVentas.add(historySales);
         JMenuItem formSales = new JMenuItem("NUEVA VENTA");
         formSales.addMouseListener(new ClickAdapter("NUEVA VENTA"));
         menuVentas.add(formSales);
@@ -105,7 +107,6 @@ public class MainFrame extends JFrame{
 
         JMenuItem historyPurchases = new JMenuItem("HISTORIAL COMPRAS");
         historyPurchases.addMouseListener(new ClickAdapter("HISTORIAL COMPRAS"));
-        menuPurchases.add(historyPurchases);
         JMenuItem formPurchases = new JMenuItem("NUEVA COMPRA");
         formPurchases.addMouseListener(new ClickAdapter("NUEVA COMPRA"));
         menuPurchases.add(formPurchases);
@@ -126,13 +127,18 @@ public class MainFrame extends JFrame{
         menuInfo.add(menuMarcas);
         menuInfo.add(menuModelos);
         
-        menuBar.add(full);
+        if(user.getRole() == Role.ADMIN) {
+        	menuBar.add(full);
+            menuVentas.add(historySales);
+            menuPurchases.add(historyPurchases);
+            menuBar.add(menuMovimientosStock);
+            
+        }
         menuBar.add(menuProductos);
         menuBar.add(menuClientes);
         menuBar.add(menuVentas);
         menuBar.add(menuProveedores);
         menuBar.add(menuPurchases);
-        menuBar.add(menuMovimientosStock);
         menuBar.add(menuInfo);
         
         createForms();
@@ -144,17 +150,19 @@ public class MainFrame extends JFrame{
         cardPanels = new JPanel(cardLayout);
         add(cardPanels, BorderLayout.CENTER);
 
-        cardPanels.add(FormFactory.createDashboard(), "DASHBOARD");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
                 // precarga sin bloquear la UI
-            	cardPanels.add(FormFactory.createFormCarPart(), "AUTOPARTES");
-     	        cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
-     	        cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
+                if(user.getRole() == Role.ADMIN) {
+                	cardPanels.add(FormFactory.createDashboard(), "DASHBOARD");
+	            	cardPanels.add(FormFactory.createPurchaseHistory(), "HISTORIAL COMPRAS");
+	            	cardPanels.add(FormFactory.createSalesHistory(), "HISTORIAL VENTAS");
+	            	cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
+                }
+                cardPanels.add(FormFactory.createFormCarPart(), "AUTOPARTES");
      	        cardPanels.add(FormFactory.createCustomerForm(), "CLIENTES");
      	        cardPanels.add(FormFactory.createProviderForm(), "PROVEEDORES");
-     	        cardPanels.add(FormFactory.createStockMovementForm(), "MOV. STOCK");
      	        cardPanels.add(FormFactory.createSalesForm(), "NUEVA VENTA");
      	        cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
      	        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");

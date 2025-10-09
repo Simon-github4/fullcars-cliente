@@ -1,4 +1,4 @@
-package views.transactions;
+package views.carpart;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -166,6 +166,7 @@ public class ExcelMappingDialog extends JDialog {
             String taskId = providerController.saveProviderMapping(nuevoMapping, archivoSeleccionado);
 
             JDialog progressDialog = new JDialog(this, "Procesando. Esto puede tardar unos segundos...", true);
+            progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
             JLabel message = new JLabel("   Actualizando Base de Datos...");
             progressDialog.add(message, BorderLayout.NORTH);
             JProgressBar progressBar = new JProgressBar();
@@ -198,7 +199,7 @@ public class ExcelMappingDialog extends JDialog {
                     	TaskStatusInfo finalStatus = providerController.getTaskStatus(taskId);
                         if (TaskStatusInfo.TaskStatus.TERMINADO.equals(finalStatus.getStatus())) {
                             JOptionPane.showMessageDialog(null, "Datos guardados correctamente.");
-                            close();
+                            dispose();
                         } else {
                             JOptionPane.showMessageDialog(null, "Error en la tarea."+finalStatus.getError(), "Error", JOptionPane.ERROR_MESSAGE);
                         }
@@ -257,7 +258,14 @@ public class ExcelMappingDialog extends JDialog {
             }
         });
     }
-    public void close() {
-    	this.dispose();
+    
+    @Override
+    public void dispose() {
+    	this.removeAll();
+    	archivoSeleccionado = null;
+    	//providerController = null;
+    	txtColumnaMarca = null;
+    	txtColumnaNombre=null;
+    	super.dispose();
     }
 }

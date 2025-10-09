@@ -1,6 +1,7 @@
-package views.transactions;
+package views.carpart;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
@@ -26,6 +27,7 @@ import javax.swing.SwingWorker;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
 import model.client.entities.Provider;
@@ -90,7 +92,7 @@ public class ProviderPartsDialog extends JDialog {
 
         btnAceptar.addActionListener(e -> aceptarSeleccion());
         btnCancelar.addActionListener(e -> {
-            selectedPart = null;
+            limpiarRecursos();
             dispose();
         });
 
@@ -127,10 +129,11 @@ public class ProviderPartsDialog extends JDialog {
         getRootPane().getActionMap().put("cancelar", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-                selectedPart = null;
+                limpiarRecursos();
                 dispose();
             }
         });
+
 
         cargarDatosEnSegundoPlano(partes);
     }
@@ -156,6 +159,7 @@ public class ProviderPartsDialog extends JDialog {
         if (row >= 0) {
             int modelRow = table.convertRowIndexToModel(row);
             selectedPart = tableModel.getPartAt(modelRow);
+            limpiarRecursos();
             dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione una parte primero.");
@@ -200,6 +204,30 @@ public class ProviderPartsDialog extends JDialog {
         });
     }
 
+    private void limpiarRecursos() {
+    	this.removeAll();  // elimina referencias de todos los hijos del contenedor
+
+        if (table != null) {
+            table.setModel(new DefaultTableModel()); // libera referencia al TableModel
+        }
+
+        if (sorter != null) {
+            sorter.setRowFilter(null);
+            sorter = null;
+        }
+
+        if (tableModel != null) {
+            tableModel.setPartes(null);
+            tableModel = null;
+        }
+
+        txtNombre = null;
+        txtMarca = null;
+        txtProveedor = null;
+
+        //selectedPart = null;
+    }
+
     // ==========================
     // Table Model interno
     // ==========================
@@ -240,7 +268,7 @@ public class ProviderPartsDialog extends JDialog {
             return switch (columnIndex) {
                 case 0 -> p.getNombre();
                 case 1 -> p.getMarca();
-                case 2 -> proveedorNames.getOrDefault(p.getProviderMapping().getProviderId(), "-");
+                case 2 -> proveedorNames.getOrDefault(p.getProviderId(), "-");
                     //Long id = p.getProviderMapping() != null ? p.getProviderMapping().getProviderId() : null;
                 case 3 -> p.getPrecio();
                 default -> "";

@@ -22,9 +22,9 @@ import views.components.LightTheme;
 
 public class CarPartDialog extends JDialog {
 
-    private final CarPartInputPanel inputPanel = new CarPartInputPanel();
-    private final JButton saveButton = new JButton("Guardar");
-    private final JButton cancelButton = new JButton("Cancelar");
+    private CarPartInputPanel inputPanel = new CarPartInputPanel();
+    private JButton saveButton = new JButton("Guardar");
+    private JButton cancelButton = new JButton("Cancelar");
 
     private CarPart createdPart; 
 
@@ -33,7 +33,7 @@ public class CarPartDialog extends JDialog {
     	inputPanel.loadFrom(CarPart.builder()
     			.name(providerPart.getNombre())
     			.basePrice(providerPart.getPrecio())
-    			.provider(AppContext.providerController.getProvider(providerPart.getProviderMapping().getProviderId()))
+    			.provider(AppContext.providerController.getProvider(providerPart.getProviderId()))
     			//.model(providerPart)
     			.build());
 	}
@@ -80,5 +80,13 @@ public class CarPartDialog extends JDialog {
         return createdPart;
     }
     
+    @Override
+    public void dispose() {
+    	super.dispose();
+    	this.removeAll();
+    	this.inputPanel = null;
+    	this.cancelButton = null;
+    	this.saveButton = null;
+    }
 }
 
