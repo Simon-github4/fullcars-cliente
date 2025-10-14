@@ -120,12 +120,9 @@ public class MainFrame extends JFrame{
         JMenuItem menuMarcas  = new JMenuItem("MARCAS");
         menuMarcas.setIcon(Icons.BRAND.create());
         menuMarcas.addMouseListener(new ClickAdapter("MARCAS"));
-        JMenuItem menuModelos  = new JMenuItem("MODELOS");
-        menuModelos.addMouseListener(new ClickAdapter("MODELOS"));
         
         menuInfo.add(menuCategorias);
         menuInfo.add(menuMarcas);
-        menuInfo.add(menuModelos);
         
         if(user.getRole() == Role.ADMIN) {
         	menuBar.add(full);
@@ -167,7 +164,7 @@ public class MainFrame extends JFrame{
      	        cardPanels.add(FormFactory.createPurchaseForm(), "NUEVA COMPRA");
      	        cardPanels.add(FormFactory.createBrandsForm(), "MARCAS");
      	        cardPanels.add(FormFactory.createCategoriesForm(), "CATEGORIAS");
-     	        cardPanels.add(FormFactory.createModelsForm(), "MODELOS");
+     	        //cardPanels.add(FormFactory.createModelsForm(), "MODELOS");
                 return null;
             }
         }.execute();

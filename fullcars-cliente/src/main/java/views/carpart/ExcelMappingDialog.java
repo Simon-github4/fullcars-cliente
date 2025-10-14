@@ -43,6 +43,9 @@ public class ExcelMappingDialog extends JDialog {
     private JTextField txtColumnaNombre;
     private JTextField txtColumnaMarca;
     private JTextField txtColumnaPrecio;
+    private JTextField txtColumnaProvCod;
+    private JTextField txtColumnaQuality;
+    private JTextField txtColumnaCategory;
     private JTextField txtUltimaActualizacion;
     private JTextField txtRutaArchivo;
 
@@ -54,7 +57,7 @@ public class ExcelMappingDialog extends JDialog {
 
     public ExcelMappingDialog(Frame parent, Long idProvider) {
         super(parent, "Carga y Mapeo de Excel", true);
-        setSize(700, 350); // más ancho que el default
+        setSize(700, 450); // más ancho que el default
         setLocationRelativeTo(parent);
         habilitarDragAndDrop();
         this.idProvider = idProvider;
@@ -104,11 +107,32 @@ public class ExcelMappingDialog extends JDialog {
         panel.add(txtColumnaPrecio, gbc);
 
         gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.EAST;
+        panel.add(new JLabel("Columna Cod.Proveedor:"), gbc);
+
+        txtColumnaProvCod = new JTextField(40);
+        gbc.gridx = 1; gbc.gridy = 5; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(txtColumnaProvCod, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.EAST;
+        panel.add(new JLabel("Columna Categoria:"), gbc);
+
+        txtColumnaCategory = new JTextField(40);
+        gbc.gridx = 1; gbc.gridy = 6; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(txtColumnaCategory, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.EAST;
+        panel.add(new JLabel("Columna Calidad:"), gbc);
+
+        txtColumnaQuality = new JTextField(40);
+        gbc.gridx = 1; gbc.gridy = 7; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(txtColumnaQuality, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.EAST;
         panel.add(new JLabel("Última actualización:"), gbc);
 
         txtUltimaActualizacion = new JTextField(40);
         txtUltimaActualizacion.setEditable(false);
-        gbc.gridx = 1; gbc.gridy = 5; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 1; gbc.gridy = 8; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
         panel.add(txtUltimaActualizacion, gbc);
 
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -117,7 +141,7 @@ public class ExcelMappingDialog extends JDialog {
         panelBotones.add(btnGuardar);
         panelBotones.add(btnCancelar);
 
-        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 4; gbc.weightx = 0; gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 4; gbc.weightx = 0; gbc.anchor = GridBagConstraints.CENTER;
         panel.add(panelBotones, gbc);
 
         add(panel);
@@ -128,6 +152,9 @@ public class ExcelMappingDialog extends JDialog {
             txtColumnaNombre.setText(mappingExistente.getNameColumn());
             txtColumnaMarca.setText(mappingExistente.getBrandColumn());
             txtColumnaPrecio.setText(mappingExistente.getPriceColumn());
+            txtColumnaQuality.setText(mappingExistente.getQualityColumn());
+            txtColumnaCategory.setText(mappingExistente.getCategoryColumn());
+            txtColumnaProvCod.setText(mappingExistente.getProvCodColumn());
             txtUltimaActualizacion.setText(mappingExistente.getLastUpdate()
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         } else {
@@ -159,9 +186,12 @@ public class ExcelMappingDialog extends JDialog {
                 txtColumnaNombre.getText(),
                 txtColumnaMarca.getText(),
                 txtColumnaPrecio.getText(),
+                txtColumnaProvCod.getText(),
+                txtColumnaQuality.getText(),
+                txtColumnaCategory.getText(),
                 LocalDateTime.now()
         );
-
+        System.out.println(nuevoMapping);
         try {
             String taskId = providerController.saveProviderMapping(nuevoMapping, archivoSeleccionado);
 

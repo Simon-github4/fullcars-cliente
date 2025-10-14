@@ -1,6 +1,7 @@
 package Utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 
@@ -31,68 +32,34 @@ public class PdfUtils {
 	public static final String PHONE = "[02291] 15519359";
 	public static final String LOCATION = "Mar del Plata - Bs. As. Argentina";
 	
-	public static byte[] generateRemitoPdf(Sale sale) {
+	public static byte[] generateRemitoPdf(Sale sale, String plate, String taller) {
         try {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();//in memory file
         	PdfWriter writer = new PdfWriter(baos);
         	
             PdfDocument pdf = new PdfDocument(writer);
             Document document = new Document(pdf);
-            PdfFont font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN); // o Times, Courier...
-            document.setFont(font);
-
-            InputStream is = PdfUtils.class.getResourceAsStream(LOGO_PATH);
-            Image img = new Image(ImageDataFactory.create(is.readAllBytes()));
-            img.setHeight(150).setWidth(225);
-            
-            Paragraph title = new Paragraph("REMITO ORIGINAL")
-                    .setBold()
-                    .setFontSize(16);
-            Paragraph companyAddress = new Paragraph(ADDRESS+" - "+ PHONE+"\n"+LOCATION)
-                    .setFontSize(10)         
-                    .setFontColor(ColorConstants.DARK_GRAY)
-                    .setMarginTop(5);         
-
-            Cell rightCell = new Cell()
-                    .add(title)
-                    .add(companyAddress)
-                    .setBorder(null)
-                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                    .setHorizontalAlignment(HorizontalAlignment.RIGHT);
-
-            Table table = new Table(2);
-            table.addCell(new Cell().add(img).setBorder(null));
-            table.addCell(rightCell);
-
-            document.add(table);
-    		document.setMargins(40,55,55,40);
-            document.add(new Paragraph("Fecha:\t\t\t\t" + sale.getDate()));
-            document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
-            document.add(new Paragraph("Domicilio:\t\t\t" + sale.getCustomer().getAdress()));
-            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getModel().getBrand()));
-            document.add(new Paragraph("Siniestro:\t\t\t"+ sale.getSaleNumber()));
-            document.add(new Paragraph("\n"));
+            createHeader(document, "REMITO ORIGINAL", sale, plate, taller);
 
             float[] columnWidths = {50, 280, 90, 50};
             Table detailstable = new Table(columnWidths);
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Cantidad").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Detalle").setBold()));
-            detailstable.addHeaderCell(new Cell().add(new Paragraph("Codigo").setBold()));
+            detailstable.addHeaderCell(new Cell().add(new Paragraph("Descripcion").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("")));
 
             for (SaleDetail detail : sale.getDetails()) {
             	detailstable.addCell(String.valueOf(detail.getQuantity()));
             	detailstable.addCell(detail.getCarPart().getName());
-            	detailstable.addCell(detail.getCarPart().getSku());
-            	detailstable.addCell("LEG");
+            	detailstable.addCell(detail.getCarPart().getDescription());
+            	detailstable.addCell((detail.getCarPart().getQuality() ==null)?"":detail.getCarPart().getQuality());
             }
 
             document.add(detailstable);
-
             document.add(new Paragraph("\nLa conformidad de este remito declara el perfecto estado de la mercadería recibida. No se aceptan reclamos pasadas 72hs.")
                     .setFontSize(9)
                     .setFontColor(ColorConstants.GRAY));
-
+            
             document.add(new Paragraph("\n\n\nFirma / Aclaración ______________________________")
                     .setTextAlignment(TextAlignment.CENTER));
             
@@ -106,59 +73,26 @@ public class PdfUtils {
         }
     }
 	
-	public static byte[] generatePresupuestoPdf(Sale sale) {
+	public static byte[] generatePresupuestoPdf(Sale sale, String plate, String taller) {
         try {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();//in memory file
         	PdfWriter writer = new PdfWriter(baos);
         	
             PdfDocument pdf = new PdfDocument(writer);
             Document document = new Document(pdf);
-            PdfFont font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN); // o Times, Courier...
-            document.setFont(font);
+            createHeader(document, "PRESUPUESTO ORIGINAL", sale, plate, taller);
             
-            InputStream is = PdfUtils.class.getResourceAsStream(LOGO_PATH);
-            Image img = new Image(ImageDataFactory.create(is.readAllBytes()));
-            img.setHeight(150).setWidth(225);
-            
-            Paragraph title = new Paragraph("PRESUPUESTO ORIGINAL")
-                    .setBold()
-                    .setFontSize(16);
-            Paragraph companyAddress = new Paragraph(ADDRESS+" - "+ PHONE+"\n"+LOCATION)
-                    .setFontSize(10)         
-                    .setFontColor(ColorConstants.DARK_GRAY)
-                    .setMarginTop(5);         
-
-            Cell rightCell = new Cell()
-                    .add(title)
-                    .add(companyAddress)
-                    .setBorder(null)
-                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                    .setHorizontalAlignment(HorizontalAlignment.RIGHT);
-
-            Table table = new Table(2);
-            table.addCell(new Cell().add(img).setBorder(null));
-            table.addCell(rightCell);
-
-            document.add(table);
-    		document.setMargins(40,55,55,40);
-            document.add(new Paragraph("Fecha:\t\t\t\t" + sale.getDate()));
-            document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
-            document.add(new Paragraph("Domicilio:\t\t\t" + sale.getCustomer().getAdress()));
-            document.add(new Paragraph("Marca/Modelo:\t" + sale.getDetails().get(0).getCarPart().getModel().getBrand()));
-            document.add(new Paragraph("Siniestro:\t\t\t Particular"));
-            document.add(new Paragraph("\n"));
-
             float[] columnWidths = {50, 280, 70, 100};
             Table detailstable = new Table(columnWidths);
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Cantidad").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Detalle").setBold()));
-            detailstable.addHeaderCell(new Cell().add(new Paragraph("Codigo").setBold()));
+            detailstable.addHeaderCell(new Cell().add(new Paragraph("Descripcion").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Subtotal").setBold()));
 
             for (SaleDetail detail : sale.getDetails()) {
             	detailstable.addCell(String.valueOf(detail.getQuantity()));
             	detailstable.addCell(detail.getCarPart().getName());
-            	detailstable.addCell(detail.getCarPart().getSku());
+            	detailstable.addCell(detail.getCarPart().getDescription());
             	detailstable.addCell(NumberFormatArg.format(detail.getSubTotal()));
             }
 
@@ -184,5 +118,53 @@ public class PdfUtils {
             return null;
         }
     }
+	
+	private static void createHeader(Document document, String titleText, Sale sale, String plate, String taller) throws IOException {
+		PdfFont font = null;
+		try {
+			font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
+		} catch (IOException e) {
+			font = document.getPdfDocument().getDefaultFont();
+			e.printStackTrace();
+		} // o Times, Courier...
+        document.setFont(font);
+        
+        InputStream is = PdfUtils.class.getResourceAsStream(LOGO_PATH);
+        Image img = new Image(ImageDataFactory.create(is.readAllBytes()));
+        img.setHeight(150).setWidth(225);
+        
+        Paragraph title = new Paragraph(titleText)
+                .setBold()
+                .setFontSize(16);
+        Paragraph companyAddress = new Paragraph(ADDRESS+" - "+ PHONE+"\n"+LOCATION)
+                .setFontSize(10)         
+                .setFontColor(ColorConstants.DARK_GRAY)
+                .setMarginTop(5);         
+
+        Cell rightCell = new Cell()
+                .add(title)
+                .add(companyAddress)
+                .setBorder(null)
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                .setHorizontalAlignment(HorizontalAlignment.RIGHT);
+
+        Table table = new Table(2);
+        table.addCell(new Cell().add(img).setBorder(null));
+        table.addCell(rightCell);
+
+        document.add(table);
+		document.setMargins(40,55,55,40);
+        document.add(new Paragraph("Fecha:  \t\t\t\t" + sale.getDate()));
+        document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
+        document.add(new Paragraph("Taller: \t\t\t\t" + taller));
+        document.add(new Paragraph("Patente:\t\t\t\t" + plate));
+        String siniestroText = (sale.getSaleNumber() == null || sale.getSaleNumber().isBlank())
+        	        ? "Particular"
+        	        : sale.getSaleNumber();
+        document.add(new Paragraph("Siniestro:\t\t\t "+ siniestroText));
+        document.add(new Paragraph("\n"));
+		
+	}
+
 	
 }

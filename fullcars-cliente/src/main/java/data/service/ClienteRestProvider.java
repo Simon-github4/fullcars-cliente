@@ -15,6 +15,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import InitClass.Initializr;
 import dtos.TaskStatusInfo;
+import model.client.entities.CarPart;
 import model.client.entities.Provider;
 import model.client.entities.ProviderMapping;
 import model.client.entities.ProviderPart;
@@ -213,6 +214,33 @@ public class ClienteRestProvider {
 	        e.printStackTrace();
 	        return null;
 	    }	  
+	}
+
+	public CarPart findOrCreateCarPartFromProviderPart(ProviderPart provPart)  {
+		String uri = ADDRESS +"/from-provider";
+		String json = null;
+		try {
+			json = mapper.writeValueAsString(provPart);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
+		Request request = new Request.Builder().url(uri).post(body).build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String jsonResponse = response.body().string();
+	            return mapper.readValue(jsonResponse, new TypeReference<CarPart>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code()+ response.body().string());
+	            return null;
+	        }
+	    } catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 }

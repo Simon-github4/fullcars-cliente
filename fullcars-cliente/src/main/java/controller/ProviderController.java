@@ -4,8 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import Utils.ServerException;
 import data.service.ClienteRestProvider;
 import dtos.TaskStatusInfo;
+import model.client.entities.CarPart;
 import model.client.entities.Provider;
 import model.client.entities.ProviderMapping;
 import model.client.entities.ProviderPart;
@@ -48,6 +52,16 @@ public class ProviderController {
 
 	public TaskStatusInfo getTaskStatus(String taskId) {
 		return serviceProvider.getTaskStatus(taskId);
+	}
+
+	public CarPart findOrCreateCarPartFromProviderPart(ProviderPart provPart)  {
+		try {
+			return serviceProvider.findOrCreateCarPartFromProviderPart(provPart);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+			//throw new Exception("No se pudo obtener Ni Crear la Autoparte");
+		}
 	}
 	
 }

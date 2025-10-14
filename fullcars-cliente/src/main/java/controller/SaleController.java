@@ -13,6 +13,7 @@ import Utils.ServerException;
 import data.service.ClienteRestSale;
 import model.client.entities.Customer;
 import model.client.entities.Sale;
+import views.transactions.DialogTallerPatente;
 
 public class SaleController {
 
@@ -36,12 +37,17 @@ public class SaleController {
 	public void save(Sale c) throws ServerException, IOException, Exception {
 		Sale savedSale = serviceSale.save(c);
 		
+		DialogTallerPatente dialogo = new DialogTallerPatente(null);
+		dialogo.showDialog();
+		String taller = dialogo.getTaller();
+        String patente = dialogo.getPatente();
+        
 		Thread t = new Thread(() ->{ 
 			byte[] file;
 			if(savedSale.getSaleNumber() == null)
-				file = PdfUtils.generatePresupuestoPdf(savedSale);
+				file = PdfUtils.generatePresupuestoPdf(savedSale, taller, patente);
 			else
-				file = PdfUtils.generateRemitoPdf(savedSale);
+				file = PdfUtils.generateRemitoPdf(savedSale, taller, patente);
 			
 			if(file != null && savedSale != null) {
 	            File tempFile = null;

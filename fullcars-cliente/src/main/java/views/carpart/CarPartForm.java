@@ -44,7 +44,6 @@ import Utils.NumberFormatArg;
 import Utils.ServerException;
 import controller.CarPartController;
 import controller.CategoryController;
-import controller.ModelController;
 import controller.ProviderController;
 import interfaces.IBrandProvider;
 import interfaces.Refreshable;
@@ -59,13 +58,12 @@ public class CarPartForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
 	
 	private final CarPartController controller;
-	private final ModelController modelController;
 	private final IBrandProvider brandProvider;
 	private final CategoryController categoryProvider;
 	private final ProviderController providerController;
 	
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Stock", "Precio venta", "Marca y Modelo", "Categoria", "Proveedor", "id"};
+	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Cod Prov", "Stock", "Precio venta", "Marca", "Categoria", "Proveedor", "Calidad", "id"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -82,12 +80,11 @@ private static final long serialVersionUID = 1L;
 	private Timer filtroTimer;
 
 
-		public CarPartForm(CarPartController controller, IBrandProvider brand, CategoryController category, ProviderController pc, ModelController modelController) {
+		public CarPartForm(CarPartController controller, IBrandProvider brand, CategoryController category, ProviderController pc) {
 		    this.controller = controller;
 		    this.brandProvider = brand;
 		    this.categoryProvider = category;
 		    this.providerController = pc;
-		    this.modelController = modelController;
 		    
 		    setLayout(new BorderLayout(0, 0));
 		    createInputPanel();	
@@ -147,7 +144,8 @@ private static final long serialVersionUID = 1L;
 	        
 			List<CarPart> carParts = controller.getCarParts();
 			for(CarPart c : carParts) {
-				Object[] row = {c.getName(), c.getDescription(), c.getSku(), c.getStock(), NumberFormatArg.format(c.getBasePrice()), c.getModel(), c.getCategory(), c.getProvider(), c.getId()};
+				Object[] row = {c.getName(), c.getDescription(), c.getSku(), c.getProviderSku(), c.getStock(), NumberFormatArg.format(c.getBasePrice()),
+								c.getBrand(), c.getCategory(), c.getProvider(), c.getQuality(), c.getId()};
 				tableModel.addRow(row);
 			}
 		}
@@ -231,7 +229,7 @@ private static final long serialVersionUID = 1L;
 			firsts.add(confirmButton);
 
 			JButton cancel = new JButton("Cancelar", Icons.CLEAN.create());
-			cancel.addActionListener(e -> inputPanel.clearFields());
+			cancel.addActionListener(e -> clearFields());
 			LightTheme.aplicarEstiloSecundario(cancel);
 			cancel.setPreferredSize(new Dimension(250, 70));
 			firsts.add(cancel);
@@ -263,6 +261,8 @@ private static final long serialVersionUID = 1L;
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMaxWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMinWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setPreferredWidth(0);
+			table.getColumnModel().getColumn(table.getColumnCount()-2).setPreferredWidth(50);
+			table.getColumnModel().getColumn(0).setMinWidth(130);
 
 			DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 	        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -378,7 +378,6 @@ private static final long serialVersionUID = 1L;
 			loadTable();
 			
 		    inputPanel.fillCombos(
-		    		modelController.getModels(),
 		    	    brandProvider.getBrands(),
 		    	    categoryProvider.getCategories(),
 		    	    providerController.getProviders()

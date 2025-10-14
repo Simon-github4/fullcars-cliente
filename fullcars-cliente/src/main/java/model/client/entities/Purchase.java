@@ -23,6 +23,7 @@ public class Purchase {
     private BigDecimal taxes;
 
     private String observations;
+    private String facturaNumber;
     private String filePath;
     private boolean isPayed;
     

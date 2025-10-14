@@ -28,11 +28,13 @@ public class CarPartInputPanel extends JPanel {
     private final JTextField descriptionTextField = new JTextField("", 29);
     private final JTextField skuTextField = new JTextField(29);
     private final JTextField stockTextField = new JTextField("", 29);
+    private final JTextField qualityTextField = new JTextField("", 29);
+    private final JTextField provSkuTextField = new JTextField("", 29);
     private final BigDecimalField sellPriceTextField = new BigDecimalField(29);
     private final AutocompleteField<Provider> fieldProviders = new AutocompleteField<Provider>();
     private final AutocompleteField<Category> fieldCategory = new AutocompleteField<Category>();
     //private final TypedComboBox<Category> comboBoxCategory = new TypedComboBox<>(c -> c.getName());
-	private final AutocompleteField<Model> fieldModels = new AutocompleteField<Model>();
+	private final AutocompleteField<Brand> fieldBrands = new AutocompleteField<Brand>();
 ;
 
     public CarPartInputPanel() {
@@ -54,25 +56,33 @@ public class CarPartInputPanel extends JPanel {
         rowsPanel.add(descriptionTextField);
 
         JPanel columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(new JLabel("  Categoría", JLabel.LEFT));
+        columnPanel.add(new JLabel("  Cod Proveedor", JLabel.LEFT));
         columnPanel.add(new JLabel("  SKU", JLabel.LEFT));
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(fieldCategory);
+        columnPanel.add(provSkuTextField);
         columnPanel.add(skuTextField);
-        //columnPanel.add(stockTextField);
-        rowsPanel.add(columnPanel);
-
-        rowsPanel.add(new JLabel("  Precio venta", JLabel.LEFT));
-        rowsPanel.add(sellPriceTextField);
-
-        columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(new JLabel("  Modelo", JLabel.LEFT));
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
-        columnPanel.add(fieldModels);
+        columnPanel.add(new JLabel("  Precio venta", JLabel.LEFT));
+        columnPanel.add(new JLabel("  Calidad", JLabel.LEFT));
+        rowsPanel.add(columnPanel);
+
+        columnPanel = new JPanel(new GridLayout(1, 0));
+        columnPanel.add(sellPriceTextField);
+        columnPanel.add(qualityTextField);
+        rowsPanel.add(columnPanel);
+
+        columnPanel = new JPanel(new GridLayout(1, 0));
+        columnPanel.add(new JLabel("  Marca", JLabel.LEFT));
+        columnPanel.add(new JLabel("  Categoría", JLabel.LEFT));
+        rowsPanel.add(columnPanel);
+
+        columnPanel = new JPanel(new GridLayout(1, 0));
+        columnPanel.add(fieldBrands);
+        columnPanel.add(fieldCategory);
         rowsPanel.add(columnPanel);
 
         rowsPanel.add(new JLabel("  Proveedor", JLabel.LEFT));
@@ -83,20 +93,19 @@ public class CarPartInputPanel extends JPanel {
 
     // ---------------- Métodos útiles ----------------
 
-    public void fillCombos(List<Model> models, List<Brand> brands, List<Category> categories, List<Provider> providers) {
-    	Model selectedModel = fieldModels.getSelectedItem();
+    public void fillCombos(List<Brand> brands, List<Category> categories, List<Provider> providers) {
 		Category selectedCategory = fieldCategory.getSelectedItem();
 		Provider selectedProvider = fieldProviders.getSelectedItem();
-		
+		Brand selectedBrand = fieldBrands.getSelectedItem();
 		
         fieldCategory.setItems(categories);//, new Category(null, "Seleccione una Categoría"));
         fieldProviders.setItems(providers);
-        fieldModels.setItems(models);
+        fieldBrands.setItems(brands);
 
-        if(selectedModel != null)
-        	fieldModels.setSelectedItem(selectedModel);
+        if(selectedBrand != null)
+        	fieldBrands.setSelectedItem(selectedBrand);
         else
-        	fieldModels.clearSelection();
+        	fieldBrands.clearSelection();
         if(selectedCategory != null)
     		fieldCategory.setSelectedItem(selectedCategory);
         else
@@ -114,9 +123,11 @@ public class CarPartInputPanel extends JPanel {
                 .sku(skuTextField.getText())
                 .stock(stockTextField.getText().isBlank() ? 0L : Long.parseLong(stockTextField.getText()))
                 .basePrice(sellPriceTextField.getBigDecimal())
-                .model(fieldModels.getSelectedItem())
+                .brand(fieldBrands.getSelectedItem())
                 .category(fieldCategory.getSelectedItem())
                 .provider(fieldProviders.getSelectedItem())
+                .providerSku(provSkuTextField.getText())
+                .quality(qualityTextField.getText())
                 .build();
     }
 
@@ -126,9 +137,11 @@ public class CarPartInputPanel extends JPanel {
         skuTextField.setText(part.getSku());
         stockTextField.setText(part.getStock() == null ? "" : part.getStock().toString());
         sellPriceTextField.setBigDecimal(part.getBasePrice() == null ? BigDecimal.ZERO : part.getBasePrice());
-        fieldModels.setSelectedItem(part.getModel());
+        fieldBrands.setSelectedItem(part.getBrand());
         fieldCategory.setSelectedItem(part.getCategory());
         fieldProviders.setSelectedItem(part.getProvider());
+        provSkuTextField.setText(part.getProviderSku());
+        qualityTextField.setText(part.getQuality());
     }
 
     public void clearFields() {
@@ -136,8 +149,11 @@ public class CarPartInputPanel extends JPanel {
         descriptionTextField.setText("");
         skuTextField.setText("");
         stockTextField.setText("");
+        provSkuTextField.setText("");
+        qualityTextField.setText("");
+        
         sellPriceTextField.clear();
-        fieldModels.clearSelection();
+        fieldBrands.clearSelection();
         fieldCategory.clearSelection();
         fieldProviders.clearSelection();
     }
@@ -145,10 +161,6 @@ public class CarPartInputPanel extends JPanel {
     public boolean validateFields(Consumer<String> errorHandler) {
         if (nameTextField.getText().isBlank()) {
             errorHandler.accept("El nombre no puede estar vacío");
-            return false;
-        }
-        if (nameTextField.getText().length() > 45) {
-            errorHandler.accept("El nombre no puede superar los 45 caracteres");
             return false;
         }
         try {
@@ -160,7 +172,7 @@ public class CarPartInputPanel extends JPanel {
             errorHandler.accept("Asegúrese de introducir números en Precio venta");
             return false;
         }
-        if (fieldModels.getSelectedItem() == null){//) || fieldCategory.getSelectedIndex() == 0) {
+        if (fieldBrands.getSelectedItem() == null){//) || fieldCategory.getSelectedIndex() == 0) {
             errorHandler.accept("Debe seleccionar Marca y Categoría válidos");
             return false;
         }

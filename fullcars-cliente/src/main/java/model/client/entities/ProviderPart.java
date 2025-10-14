@@ -19,4 +19,7 @@ public class ProviderPart {
     private String marca;
     private BigDecimal precio;
 
+	private String provCod;
+	private String quality;
+	private String category;
 }

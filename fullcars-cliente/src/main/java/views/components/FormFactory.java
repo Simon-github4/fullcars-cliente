@@ -13,20 +13,18 @@ import controller.BrandController;
 import controller.CarPartController;
 import controller.CategoryController;
 import controller.CustomerController;
-import controller.ModelController;
+import controller.LoginService.Role;
 import controller.PayController;
 import controller.ProviderController;
 import controller.PurchaseController;
 import controller.SaleController;
 import controller.StockMovementController;
-import controller.LoginService.Role;
 import interfaces.Refreshable;
 import views.AutopartsDashboard;
 import views.BrandForm;
 import views.CategoryForm;
 import views.CustomerForm;
 import views.CustomerSummaryHistory;
-import views.ModelForm;
 import views.ProviderForm;
 import views.StockMovementForm;
 import views.carpart.CarPartForm;
@@ -39,7 +37,6 @@ public class FormFactory {
 
 	private static final CarPartController CAR_PART_CONTROLLER = new CarPartController();
 	private static final BrandController BRAND_CONTROLLER = new BrandController();
-	private static final ModelController MODEL_CONTROLLER = new ModelController();
 	private static final CategoryController CATEGORY_CONTROLLER = new CategoryController();	    
 	private static final CustomerController CUSTOMER_CONTROLLER = new CustomerController();	    
 	private static final ProviderController PROVIDER_CONTROLLER = new ProviderController();	    
@@ -49,7 +46,7 @@ public class FormFactory {
 	private static final PayController PAY_CONTROLLER = new PayController();	    
 	    
     public static JPanel createFormCarPart() {
-        return new CarPartForm(CAR_PART_CONTROLLER, BRAND_CONTROLLER, CATEGORY_CONTROLLER, PROVIDER_CONTROLLER, MODEL_CONTROLLER);
+        return new CarPartForm(CAR_PART_CONTROLLER, BRAND_CONTROLLER, CATEGORY_CONTROLLER, PROVIDER_CONTROLLER);
     }
 	
     public static JPanel createCategoriesForm() {
@@ -123,8 +120,8 @@ public class FormFactory {
 		return new AutopartsDashboard();
 	}
 
-	public static ModelForm createModelsForm() {
+	/*public static ModelForm createModelsForm() {
 		return new ModelForm(MODEL_CONTROLLER, BRAND_CONTROLLER);
-	}
+	}*/
 
 }

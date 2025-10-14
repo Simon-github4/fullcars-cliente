@@ -90,6 +90,28 @@ public class ClienteRestPurchase {
 			return new ArrayList<>();
 		}
 	}
+
+	public List<Purchase> getPurchases(String facturaNumber) {
+		String uri = ADDRESS +"/search?facturaNumber="+ URLEncoder.encode(facturaNumber, StandardCharsets.UTF_8);
+
+	    Request request = new Request.Builder()
+	            .url(uri)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<List<Purchase>>() {});
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return null;
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
 	
 	public Purchase getPurchase(Long id) {
 		String uri = ADDRESS +"/"+ URLEncoder.encode(id.toString(), StandardCharsets.UTF_8);
@@ -112,7 +134,7 @@ public class ClienteRestPurchase {
 	        return null;
 	    }
 	}
-	
+
 	public void save(Purchase m) throws ServerException, IOException, Exception{
 		try{
 			m.getDetails().forEach(d -> d.setPurchase(null));// Avoid loop json
@@ -244,4 +266,5 @@ public class ClienteRestPurchase {
 			throw new Exception("No se pudo confirmar");
 		}
 	}
+
 }

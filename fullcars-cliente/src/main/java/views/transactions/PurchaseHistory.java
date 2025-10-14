@@ -5,7 +5,7 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -13,8 +13,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -24,6 +27,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
@@ -44,7 +48,6 @@ import Utils.ServerException;
 import controller.ProviderController;
 import controller.PurchaseController;
 import interfaces.Refreshable;
-import model.client.entities.Customer;
 import model.client.entities.Provider;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
@@ -55,7 +58,6 @@ import views.components.AutocompleteField;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
-import views.components.TypedComboBox;
 
 public class PurchaseHistory extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
@@ -70,15 +72,16 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel detailsTableModel;
 	
 	private JPanel purchaseeTablePanel;
-	private static final Object[] PURCHASE_COLUMNS = {"Fecha", "Proveedor", "Total", "Esta Pago", "Nro. Compra" };
+	private static final Object[] PURCHASE_COLUMNS = {"Fecha", "Proveedor", "Nro Factura", "Total", "Esta Pago", "Nro. Compra" };
 	private JTable purchaseTable;
 	private DefaultTableModel purchaseTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
     private final AutocompleteField<Provider> fieldProvider = new AutocompleteField<Provider>(12);
-	private JTextField idSearchTextField = new JTextField("", 6);
+	private JTextField idSearchTextField = new JTextField("", 10);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
+	private JCheckBox hidenCheckBox = new JCheckBox("Ver Todo(*)");
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));
 
 	private TableRowSorter<DefaultTableModel> sorter;
@@ -102,7 +105,21 @@ private static final long serialVersionUID = 1L;
 		purchaseTable.setRowSorter(sorter);
 		setupDocumentListeners();
 		
-		//loadPurchaseTable();
+		hidenCheckBox.setToolTipText("CTRL + A mostrar/no mostrar");
+		hidenCheckBox.setSelected(true);
+		hidenCheckBox.addActionListener(e-> loadPurchaseTable());
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+        .put(KeyStroke.getKeyStroke("control A"), "mostrarCheckbox");
+		getActionMap().put("mostrarCheckbox", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				hidenCheckBox.setVisible(!hidenCheckBox.isVisible());
+				hidenCheckBox.setSelected(hidenCheckBox.isVisible());
+				revalidate();
+				repaint();
+				loadPurchaseTable();
+			}
+		});
 	}
 
 	private void delete() {			
@@ -133,10 +150,11 @@ private static final long serialVersionUID = 1L;
 
 		if (!nroCompraText.isEmpty()) 
 			try {
-				Purchase p = controller.getPurchase(Long.parseLong(nroCompraText));
-				if(p == null)
+				List<Purchase> purchasesByFacturaNumber = controller.getPurchases(nroCompraText);
+				if(purchasesByFacturaNumber == null || purchasesByFacturaNumber.isEmpty())
 					throw new NullPointerException();
-				purchasesList.add(p);
+				for(Purchase p: purchasesByFacturaNumber)
+					purchasesList.add(p);
 			} catch (NumberFormatException ex) {
 				setMessage("El número de compra no es válido");
 			}catch (NullPointerException ex) {
@@ -146,10 +164,12 @@ private static final long serialVersionUID = 1L;
 			purchasesList = controller.getPurchases(fieldProvider.getSelectedItem(), dpFilter.getSelectedDateRange());
 
 		for (Purchase s : purchasesList) {
-			totalBuys = totalBuys.add(s.getTotal());
-			Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(),
-					NumberFormatArg.format(s.getTotal()), (s.isPayed()) ? "Si" : "No", s.getId() };
-			purchaseTableModel.addRow(row);
+			if(hidenCheckBox.isSelected() || s.getFacturaNumber()==null || !s.getFacturaNumber().contains("*")) {
+				totalBuys = totalBuys.add(s.getTotal());
+				Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getFacturaNumber(),
+								 NumberFormatArg.format(s.getTotal()), (s.isPayed()) ? "Si" : "No", s.getId() };
+				purchaseTableModel.addRow(row);
+			}
 		}
 		totalTextField.setText(NumberFormatArg.format(totalBuys));
 
@@ -186,7 +206,7 @@ private static final long serialVersionUID = 1L;
 
 		JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-		filterPanel.add(new JLabel("Nro Compra: ", JLabel.RIGHT));
+		filterPanel.add(new JLabel("Nro Factura: ", JLabel.RIGHT));
 		filterPanel.add(idSearchTextField);
 		filterPanel.add(new JLabel("Proveedor ", JLabel.RIGHT));
 		filterPanel.add(fieldProvider);
@@ -197,6 +217,7 @@ private static final long serialVersionUID = 1L;
 		dateSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		idSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		filterPanel.add(searchButton);
+		filterPanel.add(hidenCheckBox);
 		LightTheme.aplicarEstiloPrimario(searchButton);
 		filterPanel.setBorder(BorderFactory.createCompoundBorder(
 			    BorderFactory.createEmptyBorder(0, 10, 10, 10),  

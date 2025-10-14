@@ -19,9 +19,12 @@ public class CarPart {
     private String sku;
     private Long stock;
     
-    private Model model;
+    private Brand brand;
     private Provider provider;
     private Category category;
+    
+    private String providerSku;
+    private String quality;
     
     @Builder.Default
     private BigDecimal basePrice = BigDecimal.ZERO;

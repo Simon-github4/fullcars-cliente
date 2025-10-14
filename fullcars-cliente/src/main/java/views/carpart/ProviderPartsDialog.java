@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -44,6 +45,7 @@ public class ProviderPartsDialog extends JDialog {
     private JTextField txtProveedor;
 
     private ProviderPart selectedPart;
+	private JTextField txtProviderCode;
 
     public ProviderPartsDialog(Frame parent, List<ProviderPart> partes, List<Provider> providers) {
         super(parent, "Seleccionar Parte de Proveedor", true);
@@ -66,10 +68,13 @@ public class ProviderPartsDialog extends JDialog {
         txtNombre = new JTextField();
         txtMarca = new JTextField();
         txtProveedor = new JTextField();
+        txtProviderCode = new JTextField();
 
+        filterPanel.add(new JLabel("Cod.Proveedor:"));
         filterPanel.add(new JLabel("Nombre:"));
         filterPanel.add(new JLabel("Marca:"));
         filterPanel.add(new JLabel("Proveedor:"));
+        filterPanel.add(txtProviderCode);
         filterPanel.add(txtNombre);
         filterPanel.add(txtMarca);
         filterPanel.add(txtProveedor);
@@ -86,6 +91,7 @@ public class ProviderPartsDialog extends JDialog {
         txtNombre.getDocument().addDocumentListener(listener);
         txtMarca.getDocument().addDocumentListener(listener);
         txtProveedor.getDocument().addDocumentListener(listener);
+        txtProviderCode.getDocument().addDocumentListener(listener);
 
         JButton btnAceptar = new JButton("Aceptar");
         JButton btnCancelar = new JButton("Cancelar [ESC]");
@@ -111,6 +117,7 @@ public class ProviderPartsDialog extends JDialog {
         agregarAtajoBajarAFila(txtNombre);
         agregarAtajoBajarAFila(txtMarca);
         agregarAtajoBajarAFila(txtProveedor);
+        agregarAtajoBajarAFila(txtProviderCode);
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(btnAceptar);
@@ -121,7 +128,7 @@ public class ProviderPartsDialog extends JDialog {
         getContentPane().add(scrollPane, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-        setSize(800, 500);
+        setSize(1200, 750);
         setLocationRelativeTo(parent);
 
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
@@ -150,7 +157,10 @@ public class ProviderPartsDialog extends JDialog {
         if (!txtProveedor.getText().trim().isEmpty()) {
             filtros.add(RowFilter.regexFilter("(?i)" + txtProveedor.getText().trim(), 2)); // columna proveedor
         }
-
+        if (!txtProviderCode.getText().trim().isEmpty()) {
+            filtros.add(RowFilter.regexFilter("(?i)" + txtProviderCode.getText().trim(), 3)); // columna Codigo proveedor
+        }
+        
         sorter.setRowFilter(RowFilter.andFilter(filtros));
     }
 
@@ -224,7 +234,7 @@ public class ProviderPartsDialog extends JDialog {
         txtNombre = null;
         txtMarca = null;
         txtProveedor = null;
-
+        txtProviderCode = null;
         //selectedPart = null;
     }
 
@@ -232,7 +242,7 @@ public class ProviderPartsDialog extends JDialog {
     // Table Model interno
     // ==========================
     private static class ProviderPartTableModel extends AbstractTableModel {
-        private final String[] columnNames = {"Nombre", "Marca", "Proveedor", "Precio"};
+        private final String[] columnNames = {"Nombre", "Marca", "Proveedor", "Cod.Proveedor", "Precio"};
         private List<ProviderPart> partes;
         private final Map<Long, String> proveedorNames;
 
@@ -269,8 +279,8 @@ public class ProviderPartsDialog extends JDialog {
                 case 0 -> p.getNombre();
                 case 1 -> p.getMarca();
                 case 2 -> proveedorNames.getOrDefault(p.getProviderId(), "-");
-                    //Long id = p.getProviderMapping() != null ? p.getProviderMapping().getProviderId() : null;
-                case 3 -> p.getPrecio();
+                case 3 -> p.getProvCod();
+                case 4 -> p.getPrecio();
                 default -> "";
             };
         }
@@ -282,8 +292,8 @@ public class ProviderPartsDialog extends JDialog {
         @Override
         public Class<?> getColumnClass(int columnIndex) {
             return switch (columnIndex) {
-                case 0, 1, 2 -> String.class;
-                case 3 -> java.math.BigDecimal.class;
+                case 0, 1, 2, 3 -> String.class;
+                case 4 -> java.math.BigDecimal.class;
                 default -> Object.class;
             };
         }

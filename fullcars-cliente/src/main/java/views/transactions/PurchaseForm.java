@@ -82,6 +82,7 @@ private static final long serialVersionUID = 1L;
 	private JTextField carpartTextField = new JTextField(29);
     private final AutocompleteField<Provider> fieldProvider = new AutocompleteField<Provider>();
 	private DatePicker dpInput = new DatePickerS();
+	private JTextField facturaNumberTextField = new JTextField(29);
 
 	private JTextField quantityTextField = new JTextField(29);
 	private BigDecimalField unitPriceTextField = new BigDecimalField(20);
@@ -108,6 +109,7 @@ private static final long serialVersionUID = 1L;
 	private void save() {
 		Purchase purchase = Purchase.builder()
 				.id(null)
+				.facturaNumber(facturaNumberTextField.getText())
 			    .date(dpInput.getSelectedDate())
 			    .provider(fieldProvider.getSelectedItem())
 			    .taxes(new BigDecimal(0))
@@ -161,20 +163,26 @@ private static final long serialVersionUID = 1L;
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		Dimension size = new Dimension(700, Integer.MAX_VALUE);
 
-		JPanel fieldsPanel = new JPanel(new GridLayout(0, 1));
+		JPanel fieldsPanel = new JPanel(new GridLayout(0, 2));
 		fieldsPanel.setMaximumSize(size);
 
 		fieldsPanel.add(new JLabel("Proveedor", JLabel.LEFT));
-		fieldsPanel.add(fieldProvider);
 		fieldsPanel.add(new JLabel("Fecha", JLabel.LEFT));
+		fieldsPanel.add(fieldProvider);
 		JFormattedTextField dateInputTextField = new JFormattedTextField();
 		dpInput.setEditor(dateInputTextField);
 		dpInput.setUsePanelOption(true);
 		dpInput.setBackground(Color.GRAY); 
 		dpInput.setDateFormat("dd/MM/yyyy");
 		fieldsPanel.add(dateInputTextField);
-		
 		mainPanel.add(fieldsPanel);
+		
+		fieldsPanel = new JPanel(new GridLayout(0,1));
+		fieldsPanel.setMaximumSize(size);
+		fieldsPanel.add(new JLabel("Numero de Factura", JLabel.LEFT));
+		fieldsPanel.add(facturaNumberTextField);
+		mainPanel.add(fieldsPanel);
+		
 		mainPanel.add(tablePanel);
 		
 		JPanel buttonsPanel = new JPanel(new GridLayout(1,0));
@@ -182,7 +190,7 @@ private static final long serialVersionUID = 1L;
 
 		confirmButton.setText("Confirmar Compra");
 		confirmButton.addActionListener(e -> {
-			if (validateSaleFields())
+			if (validatePurchaseFields())
 				save();
 		});
 		LightTheme.aplicarEstiloPrimario(confirmButton);
@@ -364,20 +372,25 @@ private static final long serialVersionUID = 1L;
             	dialog.setVisible(true);
 
 				ProviderPart seleccionada = dialog.getSelectedPart();
-				if (seleccionada != null) 
+				CarPart nuevo = providerController.findOrCreateCarPartFromProviderPart(seleccionada);
+				
+				if (nuevo != null) 
 					if (fieldProvider.getSelectedItem() != null && 
-							fieldProvider.getSelectedItem().getId() != seleccionada.getProviderId())
+							fieldProvider.getSelectedItem().getId() != nuevo.getProvider().getId())
 						setMessage("El proveedor debe coincidir con el seleccionado");
 					else {
-						CarPartDialog newPartDialog = new CarPartDialog(seleccionada);
-						newPartDialog.setVisible(true);
+						//CarPartDialog newPartDialog = new CarPartDialog(seleccionada);
+						//newPartDialog.setVisible(true);
 
-						CarPart nuevo = newPartDialog.getCreatedPart();
-						if (nuevo != null) {
+						//nuevo = newPartDialog.getCreatedPart();
+						//if (nuevo != null) {
 							fieldProvider.setSelectedItem(providerController.getProvider(seleccionada.getProviderId()));
 							setDetailCarPart(nuevo.getSku());
-						}
+						//}
 					}
+				else
+					setMessage("No se pudo obtener Ni Crear la Autoparte");
+
 				dialog = null;
             	System.gc();
             }
@@ -400,7 +413,7 @@ private static final long serialVersionUID = 1L;
         panelAyuda.add(new JLabel("Buscar AUTOPARTE", JLabel.LEFT));
         panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
         panelAyuda.add(new JLabel("ALT + P", JLabel.CENTER));
-        panelAyuda.add(new JLabel("Cotizacion Proveedores", JLabel.LEFT));
+        panelAyuda.add(new JLabel("Buscar x Cod Proveedor", JLabel.LEFT));
         
         JPanel west = new JPanel();
         west.setPreferredSize(panelAyuda.getPreferredSize());
@@ -429,7 +442,7 @@ private static final long serialVersionUID = 1L;
 		}
 		return true;
 	}
-	private boolean validateSaleFields() {
+	private boolean validatePurchaseFields() {
 		if (dpInput.getSelectedDate() == null) {
 			setMessage("Debe seleccionar una fecha");
 			return false;
@@ -438,7 +451,10 @@ private static final long serialVersionUID = 1L;
 			setMessage("Debe seleccionar un proveedor");
 			return false;
 		}
-
+		if (facturaNumberTextField.getText().isBlank()) {
+			setMessage("Debe introducir un Numero de Factura");
+			return false;
+		}
 		if(detailsList.size() == 0) {
 			setMessage("Debe agregar al menos un detalle");
 			return false;
@@ -455,7 +471,8 @@ private static final long serialVersionUID = 1L;
 		carpartTextField.setText("");
 		quantityTextField.setText("");
 		unitPriceTextField.clear();
-
+		facturaNumberTextField.setText("");
+		
 		messageLabel.setText("");
 		messageLabel.setOpaque(false);
 	}

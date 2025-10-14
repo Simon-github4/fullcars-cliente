@@ -18,6 +18,10 @@ public class PurchaseController {
 	public Purchase getPurchase(Long id){
 		return servicePurchase.getPurchase(id);
 	}
+
+	public List<Purchase> getPurchases(String facturaNumber) {
+		return servicePurchase.getPurchases(facturaNumber);
+	}
 	
 	public List<Purchase> getPurchases(){
 		return servicePurchase.getPurchases();
@@ -47,4 +51,5 @@ public class PurchaseController {
 	public void confirmPay(Long purchaseId) throws Exception {
 		servicePurchase.confirmPay(purchaseId, new ConfirmPurchasePayDTO(true));
 	}
+
 }

@@ -1,5 +1,6 @@
 package InitClass;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -8,10 +9,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import controller.AppContext;
+import controller.LoginService.Role;
 import controller.LoginService.User;
-import views.LoginView;
 import views.MainFrame;
-import views.components.LightTheme;
 
 public class Initializr {
 
@@ -23,19 +23,36 @@ public class Initializr {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				//LightTheme.setup();
-				new LoginView().setVisible(true);
+				//new LoginView().setVisible(true);
+				Initializr.launch(new User("walterlucas", "fullcontra", Role.ADMIN));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
-		try (FileInputStream input = new FileInputStream("config.properties")) {
-			properties.load(input);
-		} catch (IOException e) {
-			System.out.println("❌ No se encontró el archivo config.properties");
-			e.printStackTrace();
-		}
+		loadProperties();		
     }
-    public static void launch(User u) {
+    
+    private static void loadProperties() {
+		try {
+	//try (FileInputStream input = new FileInputStream("config.properties"))  si el archivo esta en misma carpeta, NO con jpackage
+		    // Obtiene el path del .exe o .jar
+		    String path = new File(Initializr.class.getProtectionDomain()
+		            .getCodeSource().getLocation()
+		            .toURI()).getParent();
+		
+		    File configFile = new File(path, "config.properties");
+		
+		    try (FileInputStream input = new FileInputStream(configFile)) {
+		        properties.load(input);
+		        System.out.println("✅ Config cargado desde: " + configFile.getAbsolutePath());
+		    }
+		} catch (Exception e) {
+		    System.out.println("❌ No se encontró el archivo config.properties");
+		    e.printStackTrace();
+		}		
+	}
+    
+	public static void launch(User u) {
 		AppContext.setUser(u);
     	new MainFrame();
     }
