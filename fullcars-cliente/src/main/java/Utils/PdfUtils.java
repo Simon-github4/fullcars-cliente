@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -32,7 +33,7 @@ public class PdfUtils {
 	public static final String PHONE = "[02291] 15519359";
 	public static final String LOCATION = "Mar del Plata - Bs. As. Argentina";
 	
-	public static byte[] generateRemitoPdf(Sale sale, String plate, String taller) {
+	public static byte[] generateRemitoPdf(Sale sale, String plate, String taller, List<String> calidades) {
         try {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();//in memory file
         	PdfWriter writer = new PdfWriter(baos);
@@ -41,20 +42,22 @@ public class PdfUtils {
             Document document = new Document(pdf);
             createHeader(document, "REMITO ORIGINAL", sale, plate, taller);
 
-            float[] columnWidths = {50, 280, 90, 50};
+            float[] columnWidths = {50, 370, 50};
             Table detailstable = new Table(columnWidths);
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Cantidad").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Detalle").setBold()));
-            detailstable.addHeaderCell(new Cell().add(new Paragraph("Descripcion").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("")));
 
-            for (SaleDetail detail : sale.getDetails()) {
-            	detailstable.addCell(String.valueOf(detail.getQuantity()));
-            	detailstable.addCell(detail.getCarPart().getName());
-            	detailstable.addCell(detail.getCarPart().getDescription());
-            	detailstable.addCell((detail.getCarPart().getQuality() ==null)?"":detail.getCarPart().getQuality());
+            List<SaleDetail> details = sale.getDetails();
+            for (int i = 0; i < details.size(); i++) {
+                SaleDetail detail = details.get(i);
+                detailstable.addCell(String.valueOf(detail.getQuantity()));
+                detailstable.addCell(detail.getCarPart().getName() + "  " +
+                    ((detail.getCarPart().getDescription() != null) ? detail.getCarPart().getDescription() : ""));
+                detailstable.addCell(calidades.get(i));
             }
 
+            
             document.add(detailstable);
             document.add(new Paragraph("\nLa conformidad de este remito declara el perfecto estado de la mercadería recibida. No se aceptan reclamos pasadas 72hs.")
                     .setFontSize(9)
@@ -73,7 +76,7 @@ public class PdfUtils {
         }
     }
 	
-	public static byte[] generatePresupuestoPdf(Sale sale, String plate, String taller) {
+	public static byte[] generatePresupuestoPdf(Sale sale, String plate, String taller, List<String> calidades) {
         try {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();//in memory file
         	PdfWriter writer = new PdfWriter(baos);
@@ -82,18 +85,21 @@ public class PdfUtils {
             Document document = new Document(pdf);
             createHeader(document, "PRESUPUESTO ORIGINAL", sale, plate, taller);
             
-            float[] columnWidths = {50, 280, 70, 100};
+            float[] columnWidths = {50, 280, 90, 50};
             Table detailstable = new Table(columnWidths);
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Cantidad").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Detalle").setBold()));
-            detailstable.addHeaderCell(new Cell().add(new Paragraph("Descripcion").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Subtotal").setBold()));
+            detailstable.addHeaderCell(new Cell().add(new Paragraph("")));
 
-            for (SaleDetail detail : sale.getDetails()) {
-            	detailstable.addCell(String.valueOf(detail.getQuantity()));
-            	detailstable.addCell(detail.getCarPart().getName());
-            	detailstable.addCell(detail.getCarPart().getDescription());
+            List<SaleDetail> details = sale.getDetails();
+            for (int i = 0; i < details.size(); i++) {
+                SaleDetail detail = details.get(i);
+                detailstable.addCell(String.valueOf(detail.getQuantity()));
+            	detailstable.addCell(detail.getCarPart().getName() + "  " +
+            		    ((detail.getCarPart().getDescription() != null) ? detail.getCarPart().getDescription() : ""));
             	detailstable.addCell(NumberFormatArg.format(detail.getSubTotal()));
+                detailstable.addCell(calidades.get(i));
             }
 
             document.add(detailstable);
@@ -154,14 +160,14 @@ public class PdfUtils {
 
         document.add(table);
 		document.setMargins(40,55,55,40);
-        document.add(new Paragraph("Fecha:  \t\t\t\t" + sale.getDate()));
-        document.add(new Paragraph("Cliente:\t\t\t\t" + sale.getCustomer().getFullName()));
-        document.add(new Paragraph("Taller: \t\t\t\t" + taller));
-        document.add(new Paragraph("Patente:\t\t\t\t" + plate));
+        document.add(new Paragraph("Fecha:                   " + sale.getDate()));
+        document.add(new Paragraph("Cliente:                 " + sale.getCustomer().getFullName()));
+        document.add(new Paragraph("Taller:                   " + taller));
+        document.add(new Paragraph("Patente:                 " + plate));
         String siniestroText = (sale.getSaleNumber() == null || sale.getSaleNumber().isBlank())
         	        ? "Particular"
         	        : sale.getSaleNumber();
-        document.add(new Paragraph("Siniestro:\t\t\t "+ siniestroText));
+        document.add(new Paragraph("Siniestro:               "+ siniestroText));
         document.add(new Paragraph("\n"));
 		
 	}

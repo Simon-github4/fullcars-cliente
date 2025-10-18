@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.NullPointerException;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;

@@ -1,6 +1,6 @@
 package controller;
 
-import controller.LoginService.User;
+import data.service.LoginService.User;
 import interfaces.IBrandProvider;
 
 public class AppContext {

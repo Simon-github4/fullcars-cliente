@@ -13,13 +13,13 @@ public class ProviderPart {
 
     //private Long id;
 
-    private Long providerId;
-
     private String nombre;
     private String marca;
     private BigDecimal precio;
+ 
+    private Long providerId;
 
 	private String provCod;
-	private String quality;
+	//private String quality;
 	private String category;
 }

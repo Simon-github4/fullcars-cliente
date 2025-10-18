@@ -21,8 +21,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import InitClass.Initializr;
-import controller.LoginService;
-import controller.LoginService.User;
+import data.service.LoginService;
+import data.service.LoginService.User;
 
 public class LoginView extends JFrame {
 
@@ -118,7 +118,7 @@ public class LoginView extends JFrame {
 	}
 
 	private void loginSuccess(User user) {
-		showMessage("Bienvenido " + user.getUsername());
+		//showMessage("Bienvenido " + user.getUsername());
 
 		SwingUtilities.invokeLater(() -> {
 			dispose();

@@ -2,20 +2,21 @@ package InitClass;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import controller.AppContext;
-import controller.LoginService.Role;
-import controller.LoginService.User;
+import data.service.LoginService.Role;
+import data.service.LoginService.User;
+
+import views.LoginView;
 import views.MainFrame;
 
 public class Initializr {
 
-	private static final String SERVER_PATH = "http://192.168.0.103:8080";
+	private static final String SERVER_PATH = "http://192.168.100.130:8080";
 	private static Properties properties = new Properties();
 	
     public static void main(String[] args) {
@@ -23,8 +24,8 @@ public class Initializr {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				//LightTheme.setup();
-				//new LoginView().setVisible(true);
-				Initializr.launch(new User("walterlucas", "fullcontra", Role.ADMIN));
+				new LoginView().setVisible(true);
+				//Initializr.launch(new User("walterlucas", "fullcontra", Role.ADMIN));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

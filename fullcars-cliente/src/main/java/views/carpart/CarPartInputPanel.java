@@ -10,6 +10,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import controller.AppContext;
 import model.client.entities.Brand;
@@ -28,7 +29,6 @@ public class CarPartInputPanel extends JPanel {
     private final JTextField descriptionTextField = new JTextField("", 29);
     private final JTextField skuTextField = new JTextField(29);
     private final JTextField stockTextField = new JTextField("", 29);
-    private final JTextField qualityTextField = new JTextField("", 29);
     private final JTextField provSkuTextField = new JTextField("", 29);
     private final BigDecimalField sellPriceTextField = new BigDecimalField(29);
     private final AutocompleteField<Provider> fieldProviders = new AutocompleteField<Provider>();
@@ -67,12 +67,10 @@ public class CarPartInputPanel extends JPanel {
 
         columnPanel = new JPanel(new GridLayout(1, 0));
         columnPanel.add(new JLabel("  Precio venta", JLabel.LEFT));
-        columnPanel.add(new JLabel("  Calidad", JLabel.LEFT));
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
         columnPanel.add(sellPriceTextField);
-        columnPanel.add(qualityTextField);
         rowsPanel.add(columnPanel);
 
         columnPanel = new JPanel(new GridLayout(1, 0));
@@ -127,7 +125,6 @@ public class CarPartInputPanel extends JPanel {
                 .category(fieldCategory.getSelectedItem())
                 .provider(fieldProviders.getSelectedItem())
                 .providerSku(provSkuTextField.getText())
-                .quality(qualityTextField.getText())
                 .build();
     }
 
@@ -141,7 +138,6 @@ public class CarPartInputPanel extends JPanel {
         fieldCategory.setSelectedItem(part.getCategory());
         fieldProviders.setSelectedItem(part.getProvider());
         provSkuTextField.setText(part.getProviderSku());
-        qualityTextField.setText(part.getQuality());
     }
 
     public void clearFields() {
@@ -150,7 +146,6 @@ public class CarPartInputPanel extends JPanel {
         skuTextField.setText("");
         stockTextField.setText("");
         provSkuTextField.setText("");
-        qualityTextField.setText("");
         
         sellPriceTextField.clear();
         fieldBrands.clearSelection();
@@ -182,5 +177,16 @@ public class CarPartInputPanel extends JPanel {
         }
         return true;
     }
+
+
+	public void setDescriptionFocus() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				descriptionTextField.requestFocusInWindow();
+			}
+		});
+	}	
+   
 }
 

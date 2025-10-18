@@ -1,21 +1,16 @@
 package views.carpart;
 
 import java.awt.BorderLayout;
-import java.awt.Dialog.ModalityType;
 import java.awt.FlowLayout;
-import java.awt.Window;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import controller.AppContext;
-import controller.CarPartController;
-import controller.CategoryController;
-import controller.ProviderController;
-import interfaces.IBrandProvider;
 import model.client.entities.CarPart;
 import model.client.entities.ProviderPart;
 import views.components.LightTheme;
@@ -23,23 +18,23 @@ import views.components.LightTheme;
 public class CarPartDialog extends JDialog {
 
     private CarPartInputPanel inputPanel = new CarPartInputPanel();
+    private Long id;
     private JButton saveButton = new JButton("Guardar");
     private JButton cancelButton = new JButton("Cancelar");
 
-    private CarPart createdPart; 
+    private CarPart createdPart;
+	private JPanel title; 
 
-    public CarPartDialog(ProviderPart providerPart) {
-    	this();
-    	inputPanel.loadFrom(CarPart.builder()
-    			.name(providerPart.getNombre())
-    			.basePrice(providerPart.getPrecio())
-    			.provider(AppContext.providerController.getProvider(providerPart.getProviderId()))
-    			//.model(providerPart)
-    			.build());
+    public CarPartDialog(CarPart nuevo) {
+		this();
+		inputPanel.loadFrom(nuevo);
+		LightTheme.replaceTitle(title, "Completar Descripcion");
+		id = nuevo.getId();
 	}
     
     public CarPartDialog() {
-        super(null, "Nueva Autoparte", ModalityType.APPLICATION_MODAL);
+        super(null, "Autoparte", ModalityType.APPLICATION_MODAL);
+        id = null;
         
         setLayout(new BorderLayout(5,5));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(7, 7, 0, 7));
@@ -49,7 +44,8 @@ public class CarPartDialog extends JDialog {
         buttonsPanel.add(saveButton);
         buttonsPanel.add(cancelButton);
         add(buttonsPanel, BorderLayout.SOUTH);
-        add(LightTheme.createTitle("Nueva AutoParte"), BorderLayout.NORTH);
+        title = LightTheme.createTitle("Nueva AutoParte");
+        add(title, BorderLayout.NORTH);
         
         inputPanel.fillCombos(
             AppContext.brandProvider.getBrands(),
@@ -61,6 +57,8 @@ public class CarPartDialog extends JDialog {
             if (inputPanel.validateFields(msg -> JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE))) 
                 try {
                 	CarPart part = inputPanel.toCarPart();
+                	if(id != null)
+                		part.setId(id);
                     createdPart = AppContext.carPartController.save(part); 
                     dispose(); 
                 } catch (Exception ex) {
@@ -70,7 +68,7 @@ public class CarPartDialog extends JDialog {
 
         cancelButton.addActionListener(e -> dispose());
 
-        setSize(500, 500);
+        setSize(750, 600);
         setLocationRelativeTo(null);
     }
 
@@ -87,5 +85,9 @@ public class CarPartDialog extends JDialog {
     	this.cancelButton = null;
     	this.saveButton = null;
     }
+
+    public void setDescriptionFocus() {
+		inputPanel.setDescriptionFocus();
+	}
 }
 

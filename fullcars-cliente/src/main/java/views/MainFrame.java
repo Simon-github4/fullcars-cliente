@@ -23,8 +23,8 @@ import javax.swing.SwingWorker;
 
 import Utils.Icons;
 import controller.AppContext;
-import controller.LoginService.Role;
-import controller.LoginService.User;
+import data.service.LoginService.Role;
+import data.service.LoginService.User;
 import interfaces.Refreshable;
 import views.components.FormFactory;
 import views.components.LightTheme;

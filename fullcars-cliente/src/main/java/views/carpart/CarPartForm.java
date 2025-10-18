@@ -63,7 +63,7 @@ private static final long serialVersionUID = 1L;
 	private final ProviderController providerController;
 	
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Cod Prov", "Stock", "Precio venta", "Marca", "Categoria", "Proveedor", "Calidad", "id"};
+	private static final Object[] COLUMNS = {"Nombre", "Descripcion", "SKU", "Cod Prov", "Stock", "Precio venta", "Marca", "Categoria", "Proveedor", "id"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -145,7 +145,7 @@ private static final long serialVersionUID = 1L;
 			List<CarPart> carParts = controller.getCarParts();
 			for(CarPart c : carParts) {
 				Object[] row = {c.getName(), c.getDescription(), c.getSku(), c.getProviderSku(), c.getStock(), NumberFormatArg.format(c.getBasePrice()),
-								c.getBrand(), c.getCategory(), c.getProvider(), c.getQuality(), c.getId()};
+								c.getBrand(), c.getCategory(), c.getProvider(), c.getId()};
 				tableModel.addRow(row);
 			}
 		}

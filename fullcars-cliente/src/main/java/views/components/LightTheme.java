@@ -19,8 +19,6 @@ import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatLightLaf;
 
-import Utils.Icons;
-
 public class LightTheme extends FlatLightLaf {
 
 	private static final long serialVersionUID = 150295267894992027L;
@@ -102,8 +100,8 @@ public class LightTheme extends FlatLightLaf {
     	JLabel title = new JLabel(text.toUpperCase(), JLabel.CENTER);
     	title.setFont(TITLE_FONT);
     	title.setPreferredSize(new Dimension(Integer.MAX_VALUE, 80));
-    	JLabel logo = new JLabel(Icons.LOGO.create(96, 96));
-    	logo.setPreferredSize(new Dimension(96, 96));
+    	//JLabel logo = new JLabel(Icons.LOGO.create(96, 96));
+    	//logo.setPreferredSize(new Dimension(96, 96));
     	
     	//panel.add(logo, BorderLayout.EAST);
     	panel.add(title, BorderLayout.CENTER);
@@ -117,7 +115,18 @@ public class LightTheme extends FlatLightLaf {
     	
     	return title;
 	}
-    
+ 
+	public static void replaceTitle(JPanel panel, String newTitle) {
+	    java.awt.Component[] components = panel.getComponents();
+
+	    for (java.awt.Component component : components) 
+	        if (component instanceof JLabel) {
+	            ((JLabel) component).setText(newTitle);
+	            return;
+	        }
+	   
+	}
+	
     public static JLabel createMessageLabel() {
     	JLabel messageLabel = new JLabel("", SwingConstants.CENTER);
         messageLabel.setForeground(Color.WHITE);

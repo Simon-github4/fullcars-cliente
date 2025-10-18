@@ -37,17 +37,18 @@ public class SaleController {
 	public void save(Sale c) throws ServerException, IOException, Exception {
 		Sale savedSale = serviceSale.save(c);
 		
-		DialogTallerPatente dialogo = new DialogTallerPatente(null);
+		DialogTallerPatente dialogo = new DialogTallerPatente(null, c.getDetails());
 		dialogo.showDialog();
 		String taller = dialogo.getTaller();
         String patente = dialogo.getPatente();
+        List<String> calidades = dialogo.getCalidades();
         
 		Thread t = new Thread(() ->{ 
 			byte[] file;
 			if(savedSale.getSaleNumber() == null)
-				file = PdfUtils.generatePresupuestoPdf(savedSale, taller, patente);
+				file = PdfUtils.generatePresupuestoPdf(savedSale, taller, patente, calidades);
 			else
-				file = PdfUtils.generateRemitoPdf(savedSale, taller, patente);
+				file = PdfUtils.generateRemitoPdf(savedSale, taller, patente, calidades);
 			
 			if(file != null && savedSale != null) {
 	            File tempFile = null;

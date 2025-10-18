@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -48,7 +47,6 @@ import controller.PurchaseController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Provider;
-import model.client.entities.ProviderMapping;
 import model.client.entities.ProviderPart;
 import model.client.entities.Purchase;
 import model.client.entities.PurchaseDetail;
@@ -370,23 +368,24 @@ private static final long serialVersionUID = 1L;
             public void actionPerformed(ActionEvent e) {
             	ProviderPartsDialog dialog = new ProviderPartsDialog(null, providerController.getProviderParts(), providerController.getProviders());
             	dialog.setVisible(true);
-
-				ProviderPart seleccionada = dialog.getSelectedPart();
-				CarPart nuevo = providerController.findOrCreateCarPartFromProviderPart(seleccionada);
+				CarPart nuevo = providerController.findOrCreateCarPartFromProviderPart(dialog.getSelectedPart());
 				
 				if (nuevo != null) 
 					if (fieldProvider.getSelectedItem() != null && 
 							fieldProvider.getSelectedItem().getId() != nuevo.getProvider().getId())
 						setMessage("El proveedor debe coincidir con el seleccionado");
 					else {
-						//CarPartDialog newPartDialog = new CarPartDialog(seleccionada);
-						//newPartDialog.setVisible(true);
-
-						//nuevo = newPartDialog.getCreatedPart();
-						//if (nuevo != null) {
-							fieldProvider.setSelectedItem(providerController.getProvider(seleccionada.getProviderId()));
+						if (nuevo.getDescription() == null || nuevo.getDescription().isBlank()) {
+							CarPartDialog newPartDialog = new CarPartDialog(nuevo);
+							newPartDialog.setDescriptionFocus();
+							newPartDialog.setVisible(true);
+							nuevo = newPartDialog.getCreatedPart();
+						}
+						
+						if (nuevo != null) {
+							fieldProvider.setSelectedItem(providerController.getProvider(nuevo.getProvider().getId()));
 							setDetailCarPart(nuevo.getSku());
-						//}
+						}
 					}
 				else
 					setMessage("No se pudo obtener Ni Crear la Autoparte");

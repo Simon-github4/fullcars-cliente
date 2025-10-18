@@ -19,7 +19,7 @@ public class ProviderMapping {
 	private String priceColumn;
 
 	private String provCodColumn;
-	private String qualityColumn;
+	//private String qualityColumn;
 	private String categoryColumn;
 	
 	private LocalDateTime lastUpdate;

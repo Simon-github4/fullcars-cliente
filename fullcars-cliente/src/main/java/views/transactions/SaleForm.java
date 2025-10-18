@@ -41,24 +41,28 @@ import javax.swing.table.DefaultTableModel;
 import Utils.Icons;
 import Utils.NumberFormatArg;
 import Utils.ServerException;
+import controller.AppContext;
 import controller.CarPartController;
 import controller.CustomerController;
+import controller.ProviderController;
 import controller.SaleController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Customer;
 import model.client.entities.Provider;
+import model.client.entities.ProviderPart;
 import model.client.entities.Sale;
 import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
+import views.carpart.CarPartDialog;
 import views.carpart.CarPartSearchDialog;
+import views.carpart.ProviderPartsDialog;
 import views.components.AutocompleteField;
 import views.components.BigDecimalField;
 import views.components.DatePickerS;
 import views.components.JPopupMenuModifyDelete;
 import views.components.LightTheme;
 import views.components.NewModifyButton;
-import views.components.TypedComboBox;
 
 public class SaleForm extends JPanel implements Refreshable{
 private static final long serialVersionUID = 1L;
@@ -337,6 +341,34 @@ private static final long serialVersionUID = 1L;
         	    }
             }
         });
+        // Atajo ALT P (buscar x cod.Prov)
+        KeyStroke altP = KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK);
+        inputMap.put(altP, "searchPrices");
+        actionMap.put("searchPrices", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	ProviderController providerController = AppContext.providerController;
+            	ProviderPartsDialog dialog = new ProviderPartsDialog(null, providerController.getProviderParts(), providerController.getProviders());
+            	dialog.setVisible(true);
+
+				CarPart nuevo = providerController.findOrCreateCarPartFromProviderPart(dialog.getSelectedPart());
+				
+				if (nuevo.getDescription() == null || nuevo.getDescription().isBlank()) {
+					CarPartDialog newPartDialog = new CarPartDialog(nuevo);
+					newPartDialog.setDescriptionFocus();
+					newPartDialog.setVisible(true);
+					nuevo = newPartDialog.getCreatedPart();
+				}
+				
+				if (nuevo != null) 
+					setDetailCarPart(nuevo.getSku());
+				else
+					setMessage("No se pudo obtener Ni Crear la Autoparte");
+
+				dialog = null;
+            	System.gc();
+            }
+        });
         JPanel panelAyuda = new JPanel();
         panelAyuda.setLayout(new BoxLayout(panelAyuda, BoxLayout.Y_AXIS));
         panelAyuda.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -349,6 +381,8 @@ private static final long serialVersionUID = 1L;
         panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
         panelAyuda.add(new JLabel("ALT + B", JLabel.CENTER));
         panelAyuda.add(new JLabel("Buscar AUTOPARTE", JLabel.LEFT));
+        panelAyuda.add(new JLabel("ALT + P", JLabel.CENTER));
+        panelAyuda.add(new JLabel("Buscar X Cod.Proveedor", JLabel.LEFT));
         
         JPanel west = new JPanel();
         west.setPreferredSize(panelAyuda.getPreferredSize());

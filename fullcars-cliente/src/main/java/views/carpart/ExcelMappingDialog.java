@@ -44,7 +44,6 @@ public class ExcelMappingDialog extends JDialog {
     private JTextField txtColumnaMarca;
     private JTextField txtColumnaPrecio;
     private JTextField txtColumnaProvCod;
-    private JTextField txtColumnaQuality;
     private JTextField txtColumnaCategory;
     private JTextField txtUltimaActualizacion;
     private JTextField txtRutaArchivo;
@@ -121,18 +120,11 @@ public class ExcelMappingDialog extends JDialog {
         panel.add(txtColumnaCategory, gbc);
         
         gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.EAST;
-        panel.add(new JLabel("Columna Calidad:"), gbc);
-
-        txtColumnaQuality = new JTextField(40);
-        gbc.gridx = 1; gbc.gridy = 7; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
-        panel.add(txtColumnaQuality, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.EAST;
         panel.add(new JLabel("Última actualización:"), gbc);
 
         txtUltimaActualizacion = new JTextField(40);
         txtUltimaActualizacion.setEditable(false);
-        gbc.gridx = 1; gbc.gridy = 8; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 1; gbc.gridy = 7; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.anchor = GridBagConstraints.CENTER;
         panel.add(txtUltimaActualizacion, gbc);
 
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -141,7 +133,7 @@ public class ExcelMappingDialog extends JDialog {
         panelBotones.add(btnGuardar);
         panelBotones.add(btnCancelar);
 
-        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 4; gbc.weightx = 0; gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 4; gbc.weightx = 0; gbc.anchor = GridBagConstraints.CENTER;
         panel.add(panelBotones, gbc);
 
         add(panel);
@@ -152,7 +144,6 @@ public class ExcelMappingDialog extends JDialog {
             txtColumnaNombre.setText(mappingExistente.getNameColumn());
             txtColumnaMarca.setText(mappingExistente.getBrandColumn());
             txtColumnaPrecio.setText(mappingExistente.getPriceColumn());
-            txtColumnaQuality.setText(mappingExistente.getQualityColumn());
             txtColumnaCategory.setText(mappingExistente.getCategoryColumn());
             txtColumnaProvCod.setText(mappingExistente.getProvCodColumn());
             txtUltimaActualizacion.setText(mappingExistente.getLastUpdate()
@@ -187,7 +178,7 @@ public class ExcelMappingDialog extends JDialog {
                 txtColumnaMarca.getText(),
                 txtColumnaPrecio.getText(),
                 txtColumnaProvCod.getText(),
-                txtColumnaQuality.getText(),
+                //"",
                 txtColumnaCategory.getText(),
                 LocalDateTime.now()
         );
