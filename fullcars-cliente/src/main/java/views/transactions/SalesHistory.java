@@ -361,7 +361,22 @@ private static final long serialVersionUID = 1L;
 			setMessage("Hubo un error al obtener el remito "+e.getMessage());
 		}
 	}
-
+	private void facturar() {
+		try {
+			controller.facturar((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
+			loadSaleTable();
+		} catch (ServerException e) {
+			e.printStackTrace();
+			setMessage(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
+			setMessage("Error al facturar: "+e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			setMessage("Error al facturar: "+e.getMessage());
+		}
+	}
+	
 	private void setupDocumentListeners() {
 		DocumentListener debounceListener = new DocumentListener() {
 			@Override
@@ -396,7 +411,9 @@ private static final long serialVersionUID = 1L;
 	}
 
 	private void createJPopupMenu() {
-		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta").addMenuItem("Abrir Remito de Venta", this::openRemito);
+		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta")
+		.addMenuItem("Abrir Remito de Venta", this::openRemito)
+		.addMenuItem("Facturar", this::facturar);
 	}
 
 	@Override

@@ -187,7 +187,7 @@ public class ClienteRestProvider {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
-				throw new IOException("Error API: " + response.code() + " - " + response.message());
+				throw new IOException(response.message());
 			}
 			System.out.println("Mapping y archivo enviados correctamente");
 			return response.body().string();

@@ -234,7 +234,7 @@ public class ExcelMappingDialog extends JDialog {
             progressDialog.setVisible(true);
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al iniciar la tarea.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getLocalizedMessage() , "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
 

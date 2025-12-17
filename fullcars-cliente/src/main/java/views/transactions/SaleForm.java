@@ -121,7 +121,8 @@ private static final long serialVersionUID = 1L;
 		sale.setDetails(detailsList);
 			
 		try {
-			controller.save(sale);
+			Sale savedSale = controller.save(sale);
+			controller.facturar(savedSale.getId());
 			clearFields();
 		} catch (ServerException se) {
 			setMessage(se.getMessage());

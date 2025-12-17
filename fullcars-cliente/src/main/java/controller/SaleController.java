@@ -10,14 +10,17 @@ import java.util.List;
 
 import Utils.PdfUtils;
 import Utils.ServerException;
+import data.service.ClienteRestFactura;
 import data.service.ClienteRestSale;
 import model.client.entities.Customer;
 import model.client.entities.Sale;
+import views.transactions.DialogFactura;
 import views.transactions.DialogTallerPatente;
 
 public class SaleController {
 
 	private final ClienteRestSale serviceSale = new ClienteRestSale();
+	private final ClienteRestFactura serviceFactura = new ClienteRestFactura();
 	
 	public Sale getSale(Long id){
 		return serviceSale.getSale(id);
@@ -34,7 +37,7 @@ public class SaleController {
 		return sales;
 	}
 	
-	public void save(Sale c) throws ServerException, IOException, Exception {
+	public Sale save(Sale c) throws ServerException, IOException, Exception {
 		Sale savedSale = serviceSale.save(c);
 		
 		DialogTallerPatente dialogo = new DialogTallerPatente(null, c.getDetails());
@@ -46,9 +49,9 @@ public class SaleController {
 		Thread t = new Thread(() ->{ 
 			byte[] file;
 			if(savedSale.getSaleNumber() == null)
-				file = PdfUtils.generatePresupuestoPdf(savedSale, taller, patente, calidades);
+				file = PdfUtils.generatePresupuestoPdf(savedSale, patente, taller, calidades);
 			else
-				file = PdfUtils.generateRemitoPdf(savedSale, taller, patente, calidades);
+				file = PdfUtils.generateRemitoPdf(savedSale, patente, taller, calidades);
 			
 			if(file != null && savedSale != null) {
 	            File tempFile = null;
@@ -68,13 +71,13 @@ public class SaleController {
 				System.err.println("Archivo devuelto o savedSale == null");
 		});
 		t.start();
+		return savedSale;
 	}
 
 	public void delete(Long id) throws ServerException, IOException {
 		serviceSale.delete(id);
 	}
 
-	
 	public void getAndOpenRemito(Long saleId) throws ServerException, IOException {
 		Path tempFile = serviceSale.getAndOpenRemito(saleId);
 		
@@ -82,5 +85,20 @@ public class SaleController {
             Desktop.getDesktop().open(tempFile.toFile());
         else 
             System.out.println("Archivo descargado en: " + tempFile.toAbsolutePath());
+	}
+	
+	public void facturar(Long saleId) throws ServerException, IOException, Exception {
+        DialogFactura dialogo = new DialogFactura(null);
+        dialogo.setVisible(true);
+        
+        Integer resultado = dialogo.getTipoFacturaSeleccionado();
+        if (resultado != null) {
+        	Path tempFile = serviceFactura.facturar(saleId, resultado, 0L);
+        	
+        	if (Desktop.isDesktopSupported()) 
+                Desktop.getDesktop().open(tempFile.toFile());
+            else 
+                System.out.println("Archivo descargado en: " + tempFile.toAbsolutePath());
+        } 
 	}
 }

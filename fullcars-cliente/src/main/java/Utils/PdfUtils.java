@@ -162,8 +162,10 @@ public class PdfUtils {
 		document.setMargins(40,55,55,40);
         document.add(new Paragraph("Fecha:                   " + sale.getDate()));
         document.add(new Paragraph("Cliente:                 " + sale.getCustomer().getFullName()));
-        document.add(new Paragraph("Taller:                   " + taller));
-        document.add(new Paragraph("Patente:                 " + plate));
+        if(taller != null && !taller.isBlank())
+        	document.add(new Paragraph("Taller:                   " + taller));
+        if(plate != null && !plate.isBlank())
+        	document.add(new Paragraph("Patente:                 " + plate));
         String siniestroText = (sale.getSaleNumber() == null || sale.getSaleNumber().isBlank())
         	        ? "Particular"
         	        : sale.getSaleNumber();

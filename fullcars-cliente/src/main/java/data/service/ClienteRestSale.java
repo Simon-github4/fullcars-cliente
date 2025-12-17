@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -197,7 +198,7 @@ public class ClienteRestSale {
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
 				System.err.println("Error al descargar archivo: " + response.code() + " - " + response.message());
-				throw new ServerException("No se pudo obtener el Remito");
+				throw new ServerException(response.body() != null ? response.body().string() : "No se pudo obtener el Remito");
 			}
 
 			String disposition = response.header("Content-Disposition");

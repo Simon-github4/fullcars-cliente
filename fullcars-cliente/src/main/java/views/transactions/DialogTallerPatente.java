@@ -142,7 +142,7 @@ public class DialogTallerPatente extends JDialog {
         String t = tallerField.getText().trim();
         String p = patenteField.getText().trim();
 
-        if (t.isEmpty() || p.isEmpty()) {
+        /*if (t.isEmpty() || p.isEmpty()) {
             JOptionPane.showMessageDialog(
                 this,
                 "Debe ingresar ambos valores: Taller y Patente.",
@@ -150,7 +150,7 @@ public class DialogTallerPatente extends JDialog {
                 JOptionPane.WARNING_MESSAGE
             );
             return;
-        }
+        }*/
 
         // Validar que todas las calidades estén completas
         calidades.clear();
