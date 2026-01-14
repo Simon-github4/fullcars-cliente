@@ -122,8 +122,8 @@ private static final long serialVersionUID = 1L;
 			
 		try {
 			Sale savedSale = controller.save(sale);
-			controller.facturar(savedSale.getId());
 			clearFields();
+			controller.facturar(savedSale.getId());
 		} catch (ServerException se) {
 			setMessage(se.getMessage());
 		} catch (IOException ioe) {
@@ -383,7 +383,7 @@ private static final long serialVersionUID = 1L;
         panelAyuda.add(new JLabel("ALT + B", JLabel.CENTER));
         panelAyuda.add(new JLabel("Buscar AUTOPARTE", JLabel.LEFT));
         panelAyuda.add(new JLabel("ALT + P", JLabel.CENTER));
-        panelAyuda.add(new JLabel("Buscar X Cod.Proveedor", JLabel.LEFT));
+        panelAyuda.add(new JLabel("Buscar X Cotizacion", JLabel.LEFT));
         
         JPanel west = new JPanel();
         west.setPreferredSize(panelAyuda.getPreferredSize());

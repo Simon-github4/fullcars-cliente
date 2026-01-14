@@ -137,7 +137,7 @@ public class ClienteRestPurchase {
 
 	public void save(Purchase m) throws ServerException, IOException, Exception{
 		try{
-			m.getDetails().forEach(d -> d.setPurchase(null));// Avoid loop json
+			m.getDetails().forEach(d -> d.setPurchase(null));// Avoid loop json 
 
 			String json = mapper.writeValueAsString(m);
 	

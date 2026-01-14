@@ -99,7 +99,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
         text.setColumns(20);
 
         dp.setDateSelectionMode(DateSelectionMode.BETWEEN_DATE_SELECTED);
-        dp.setSelectedDateRange(LocalDate.of(2025, 9, 1), LocalDate.now().plusMonths(2));
+        //dp.setSelectedDateRange(LocalDate.of(2025, 9, 1), LocalDate.now().plusMonths(2));
         dp.setEditor(text);
 
         panel.add(text);
@@ -281,7 +281,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
 
     @Override
     public void refresh() {
-        dp.setSelectedDateRange(LocalDate.of(2025, 9, 1), LocalDate.now().plusMonths(2));
+        //dp.setSelectedDateRange(LocalDate.of(2025, 9, 1), LocalDate.now().plusMonths(2));
 
     	StatisticsGeneralDTO stats = controller.getStatisticsGeneral(dp.getSelectedDateRange()); 
         // ----- CARDS -----
@@ -291,7 +291,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
     	for(SalesData s: stats.getSalesData())
         	salesTotal = salesTotal.add(s.getAmount());
     	for(Purchase p: stats.getPurchases())
-    		purchaseTotal = purchaseTotal.add(p.getTotal());
+    		purchaseTotal = purchaseTotal.add(p.getAmount());
     	
 		ventasValue.setText(NumberFormatArg.format(salesTotal));
 		comprasValue.setText(NumberFormatArg.format(purchaseTotal));

@@ -10,17 +10,15 @@ import java.util.List;
 
 import Utils.PdfUtils;
 import Utils.ServerException;
-import data.service.ClienteRestFactura;
 import data.service.ClienteRestSale;
 import model.client.entities.Customer;
 import model.client.entities.Sale;
-import views.transactions.DialogFactura;
 import views.transactions.DialogTallerPatente;
 
 public class SaleController {
 
 	private final ClienteRestSale serviceSale = new ClienteRestSale();
-	private final ClienteRestFactura serviceFactura = new ClienteRestFactura();
+	private final FacturaController serviceFactura = new FacturaController();
 	
 	public Sale getSale(Long id){
 		return serviceSale.getSale(id);
@@ -87,18 +85,11 @@ public class SaleController {
             System.out.println("Archivo descargado en: " + tempFile.toAbsolutePath());
 	}
 	
-	public void facturar(Long saleId) throws ServerException, IOException, Exception {
-        DialogFactura dialogo = new DialogFactura(null);
-        dialogo.setVisible(true);
-        
-        Integer resultado = dialogo.getTipoFacturaSeleccionado();
-        if (resultado != null) {
-        	Path tempFile = serviceFactura.facturar(saleId, resultado, 0L);
-        	
-        	if (Desktop.isDesktopSupported()) 
-                Desktop.getDesktop().open(tempFile.toFile());
-            else 
-                System.out.println("Archivo descargado en: " + tempFile.toAbsolutePath());
-        } 
+	public void facturar(Long saleId) throws Exception {
+		serviceFactura.facturar(saleId);
+	}
+
+	public void showFacturaData(Long saleId) throws Exception {
+		serviceFactura.showFacturaData(saleId);
 	}
 }

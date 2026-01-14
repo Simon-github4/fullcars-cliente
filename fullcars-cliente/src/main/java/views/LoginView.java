@@ -40,7 +40,8 @@ public class LoginView extends JFrame {
 		setSize(380, 240);
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout(10, 10));
-
+		setVisible(true);
+		
 		// Panel central con formulario
 		JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 12));
 		formPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 15, 25));

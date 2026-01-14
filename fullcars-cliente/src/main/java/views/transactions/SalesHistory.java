@@ -145,11 +145,11 @@ private static final long serialVersionUID = 1L;
 		salesList = new ArrayList<>();//controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
 		BigDecimal totalSold = BigDecimal.ZERO;
 		
-		String nroCompraText = idSearchTextField.getText().trim();
+		String nroVentaText = idSearchTextField.getText().trim();
 
-		if (!nroCompraText.isEmpty()) 
+		if (!nroVentaText.isEmpty()) 
 			try {
-				Sale s = controller.getSale(Long.parseLong(nroCompraText));
+				Sale s = controller.getSale(Long.parseLong(nroVentaText));
 				if(s == null)
 					throw new NullPointerException();
 				if(!hidenCheckBox.isSelected() && s.getFactura() == null)
@@ -158,7 +158,7 @@ private static final long serialVersionUID = 1L;
 			} catch (NumberFormatException ex) {
 				setMessage("El número de venta no es válido");
 			}catch (NullPointerException ex) {
-				setMessage("No se encontro la venta: "+ nroCompraText);
+				setMessage("No se encontro la venta: "+ nroVentaText);
 			}
 		 else 
 			 salesList = controller.getSales(fieldCustomers.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
@@ -376,6 +376,15 @@ private static final long serialVersionUID = 1L;
 			setMessage("Error al facturar: "+e.getMessage());
 		}
 	}
+	private void verFactura() {
+		try {
+			controller.showFacturaData((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
+			loadSaleTable();
+		} catch (Exception e) {
+			e.printStackTrace();
+			setMessage("Error : "+e.getMessage());
+		}
+	}
 	
 	private void setupDocumentListeners() {
 		DocumentListener debounceListener = new DocumentListener() {
@@ -413,7 +422,8 @@ private static final long serialVersionUID = 1L;
 	private void createJPopupMenu() {
 		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta")
 		.addMenuItem("Abrir Remito de Venta", this::openRemito)
-		.addMenuItem("Facturar", this::facturar);
+		.addMenuItem("Facturar", this::facturar)
+		.addMenuItem("Ver Datos de la Factura",	this::verFactura);
 	}
 
 	@Override

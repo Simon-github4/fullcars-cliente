@@ -158,7 +158,7 @@ private static final long serialVersionUID = 1L;
 
 			JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-			filterPanel.add(new JLabel("SKU: ", JLabel.RIGHT));
+			filterPanel.add(new JLabel("SKU/ Cod. Prov: ", JLabel.RIGHT));
 			filterPanel.add(skuSearchTextField);
 			filterPanel.add(new JLabel("Nombre: ", JLabel.RIGHT));
 			filterPanel.add(nameSearchTextField);
@@ -337,7 +337,7 @@ private static final long serialVersionUID = 1L;
 		    List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
 		    if (!skuText.isEmpty()) 
-		        filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 2)); // Columna SKU
+		        filters.add(RowFilter.regexFilter("(?i)^" + Pattern.quote(skuText), 2, 3)); // Columna SKU y Cod. Prov
 
 		    if (!nameText.isEmpty()) 
 		        filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(nameText), 0)); // Columna Nombre

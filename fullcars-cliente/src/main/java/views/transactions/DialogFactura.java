@@ -29,7 +29,6 @@ public class DialogFactura extends JDialog {
         
         rbFacturaA = new JRadioButton("Factura tipo A");
         rbFacturaB = new JRadioButton("Factura tipo B");
-        rbFacturaB.setEnabled(false);//por el momento
         
         rbFacturaA.setAlignmentX(Component.LEFT_ALIGNMENT);
         rbFacturaB.setAlignmentX(Component.LEFT_ALIGNMENT);

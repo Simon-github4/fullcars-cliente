@@ -70,7 +70,7 @@ private static final long serialVersionUID = 1L;
 	
 	private JPanel mainPanel;
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Autoparte", "Cantidad", "Precio unitario", "SubTotal"};
+	private static final Object[] COLUMNS = {"Autoparte", "Cantidad"};
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private List<PurchaseDetail> detailsList = new ArrayList<>();
@@ -83,7 +83,7 @@ private static final long serialVersionUID = 1L;
 	private JTextField facturaNumberTextField = new JTextField(29);
 
 	private JTextField quantityTextField = new JTextField(29);
-	private BigDecimalField unitPriceTextField = new BigDecimalField(20);
+	private BigDecimalField amountTextField = new BigDecimalField(20);
 	private NewModifyButton confirmButton = new NewModifyButton();
 
 	private JLabel carpartNameLabel = new JLabel("", JLabel.LEFT);
@@ -107,10 +107,11 @@ private static final long serialVersionUID = 1L;
 	private void save() {
 		Purchase purchase = Purchase.builder()
 				.id(null)
+				.date(dpInput.getSelectedDate())
+				.taxes(new BigDecimal(0))
 				.facturaNumber(facturaNumberTextField.getText())
-			    .date(dpInput.getSelectedDate())
 			    .provider(fieldProvider.getSelectedItem())
-			    .taxes(new BigDecimal(0))
+			    .amount(amountTextField.getBigDecimal())
 			    .build();
 		
 		detailsList.forEach(d -> {
@@ -133,16 +134,15 @@ private static final long serialVersionUID = 1L;
 	private void addDetail() {
         if(validateDetailFields()) {
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
-			PurchaseDetail purchaseDetail = new PurchaseDetail(quantity, unitPriceTextField.getBigDecimal(), detailCarpart);
+			PurchaseDetail purchaseDetail = new PurchaseDetail(quantity, BigDecimal.ZERO, detailCarpart);
 			
 			detailsList.add(purchaseDetail);
-	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity,
-	        								NumberFormatArg.format(purchaseDetail.getUnitPrice()),
-	        								 NumberFormatArg.format(purchaseDetail.getSubTotal()) });
-
+	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity});
+	        								/*NumberFormatArg.format(purchaseDetail.getUnitPrice()),
+	        								 NumberFormatArg.format(purchaseDetail.getSubTotal())*/ 
 	        quantityTextField.setText("");
 	        carpartTextField.setText("");
-			unitPriceTextField.clear();
+			//amountTextField.clear();
 	        carpartTextField.requestFocus();
         }
     }
@@ -175,10 +175,12 @@ private static final long serialVersionUID = 1L;
 		fieldsPanel.add(dateInputTextField);
 		mainPanel.add(fieldsPanel);
 		
-		fieldsPanel = new JPanel(new GridLayout(0,1));
+		fieldsPanel = new JPanel(new GridLayout(0,2));
 		fieldsPanel.setMaximumSize(size);
 		fieldsPanel.add(new JLabel("Numero de Factura", JLabel.LEFT));
+		fieldsPanel.add(new JLabel("Precio Total", JLabel.LEFT));
 		fieldsPanel.add(facturaNumberTextField);
+		fieldsPanel.add(amountTextField);
 		mainPanel.add(fieldsPanel);
 		
 		mainPanel.add(tablePanel);
@@ -229,9 +231,9 @@ private static final long serialVersionUID = 1L;
 		table = new JTable(tableModel);
 		table.setToolTipText("Click Derecho para Eliminar");
 		table.setShowGrid(true);
-		table.getColumnModel().getColumn(1).setMaxWidth(90);
-		table.getColumnModel().getColumn(1).setMinWidth(90);
-		table.getColumnModel().getColumn(1).setPreferredWidth(90);
+		//table.getColumnModel().getColumn(1).setMaxWidth(90);
+		//table.getColumnModel().getColumn(1).setMinWidth(90);
+		//table.getColumnModel().getColumn(1).setPreferredWidth(90);
 
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -255,14 +257,14 @@ private static final long serialVersionUID = 1L;
 			    )
 		));
 		
-		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,3));
+		JPanel fieldsDetailsRow = new JPanel(new GridLayout(1,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
 		fieldsDetailsRow.add(new JLabel("SKU", JLabel.CENTER));
 		fieldsDetailsRow.add(new JLabel("Cantidad", JLabel.CENTER));
-		fieldsDetailsRow.add(new JLabel("Precio Unitario", JLabel.CENTER));
+		//fieldsDetailsRow.add(new JLabel("Precio Unitario", JLabel.CENTER));
 		tablePanel.add(fieldsDetailsRow);
 		
-		fieldsDetailsRow = new JPanel(new GridLayout(0,3));
+		fieldsDetailsRow = new JPanel(new GridLayout(0,2));
 		fieldsDetailsRow.setMaximumSize(new Dimension(750, Integer.MAX_VALUE));
 		fieldsDetailsRow.add(carpartTextField);
 		carpartTextField.putClientProperty("JTextField.placeholderText", "ENTER para buscar autoparte");
@@ -271,13 +273,13 @@ private static final long serialVersionUID = 1L;
 			public void insertUpdate(DocumentEvent e) {
 				detailCarpart = null;
 				carpartNameLabel.setText("");
-				unitPriceTextField.clear();
+				//amountTextField.clear();
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				detailCarpart = null;
 				carpartNameLabel.setText("");
-				unitPriceTextField.clear();
+				//amountTextField.clear();
 			}
 			@Override
 			public void changedUpdate(DocumentEvent e) {
@@ -288,10 +290,10 @@ private static final long serialVersionUID = 1L;
 		});
 		carpartTextField.addActionListener(e-> setDetailCarPart());		
 		fieldsDetailsRow.add(quantityTextField);
-		quantityTextField.addActionListener(e -> unitPriceTextField.requestFocus());
+		//quantityTextField.addActionListener(e -> amountTextField.requestFocus());
 		quantityTextField.putClientProperty("JTextField.placeholderText", "ENTER para agregar detalle");
-		fieldsDetailsRow.add(unitPriceTextField);
-		unitPriceTextField.addActionListener(e-> addDetail());		
+		//fieldsDetailsRow.add(amountTextField);
+		quantityTextField.addActionListener(e-> addDetail());		
 		tablePanel.add(fieldsDetailsRow);
 
 		fieldsDetailsRow = new JPanel(new GridLayout());
@@ -312,7 +314,7 @@ private static final long serialVersionUID = 1L;
 			setMessage("No se escontro autoparte con ese SKU");
 		}else {
 			carpartNameLabel.setText(detailCarpart.getName());
-			unitPriceTextField.setBigDecimal(detailCarpart.getBasePrice());  //precioventa NO?
+			//amountTextField.setBigDecimal(detailCarpart.getBasePrice()); 
 			quantityTextField.requestFocus();
 		}	
 	}
@@ -412,7 +414,7 @@ private static final long serialVersionUID = 1L;
         panelAyuda.add(new JLabel("Buscar AUTOPARTE", JLabel.LEFT));
         panelAyuda.add(Box.createRigidArea(new Dimension(0, 10)));
         panelAyuda.add(new JLabel("ALT + P", JLabel.CENTER));
-        panelAyuda.add(new JLabel("Buscar x Cod Proveedor", JLabel.LEFT));
+        panelAyuda.add(new JLabel("Buscar X Cotizacion", JLabel.LEFT));
         
         JPanel west = new JPanel();
         west.setPreferredSize(panelAyuda.getPreferredSize());
@@ -426,10 +428,10 @@ private static final long serialVersionUID = 1L;
 			setMessage("Debe seleccionar una autoparte");
 			return false;
 		}
-		if(unitPriceTextField.getBigDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+		/*if(amountTextField.getBigDecimal().compareTo(BigDecimal.ZERO) <= 0) {
 			setMessage("Ingrece un precio unitario valido");
 			return false;
-		}
+		}*/
 		try {
 			if (Integer.parseInt(quantityTextField.getText()) <= 0) {
 				setMessage("La cantidad debe ser mayor a cero");
@@ -469,7 +471,7 @@ private static final long serialVersionUID = 1L;
 		detailsList = new ArrayList<>();
 		carpartTextField.setText("");
 		quantityTextField.setText("");
-		unitPriceTextField.clear();
+		amountTextField.clear();
 		facturaNumberTextField.setText("");
 		
 		messageLabel.setText("");

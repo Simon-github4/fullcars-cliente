@@ -29,18 +29,18 @@ public class CarPartSearchDialog extends JDialog {
     private String selectedCarPart;
 
     public CarPartSearchDialog(Frame parent) {
-        super(parent, "Buscar por SKU o NOMBRE", true);
+        super(parent, "Buscar por SKU, NOMBRE, Cod. PROV.", true);
         setSize(600, 400);
         setLocationRelativeTo(parent);
 
         searchField = new JTextField();
-        tableModel = new DefaultTableModel(new Object[]{"SKU", "Nombre"}, 0) {
+        tableModel = new DefaultTableModel(new Object[]{"SKU","Cod. Prov", "Nombre"}, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
 
         List<CarPart> carParts = AppContext.carPartController.getCarParts();
         for (CarPart cp : carParts) 
-            tableModel.addRow(new Object[]{cp.getSku(), cp.getName()});
+            tableModel.addRow(new Object[]{cp.getSku(), cp.getProviderSku(), cp.getName()});
 
         table = new JTable(tableModel);
         sorter = new TableRowSorter<>(tableModel);
@@ -54,7 +54,7 @@ public class CarPartSearchDialog extends JDialog {
                 if (text.isEmpty()) {
                     sorter.setRowFilter(null);
                 } else {
-                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 0, 1)); // SKU o Nombre
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 0, 1, 2)); // SKU o Nombre
                 }
             }
             @Override public void insertUpdate(DocumentEvent e) { filter(); }
@@ -82,7 +82,6 @@ public class CarPartSearchDialog extends JDialog {
                     if (row != -1) {
                         int modelRow = table.convertRowIndexToModel(row);
                         String sku = (String) tableModel.getValueAt(modelRow, 0);
-                        String name = (String) tableModel.getValueAt(modelRow, 1);
                         selectedCarPart = sku;
                         dispose();
                     }

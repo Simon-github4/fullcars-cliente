@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class Purchase {
 
     private Long id;
-    //private nroFactura;
+
     private LocalDate date;
     private BigDecimal taxes;
 
@@ -30,11 +30,13 @@ public class Purchase {
     private Provider provider;
     private List<PurchaseDetail> details = new ArrayList<>();
 
-    public BigDecimal getTotal() {
+    private BigDecimal amount;
+
+    /*public BigDecimal getAmount() {
     	BigDecimal total = BigDecimal.ZERO;
     	for(PurchaseDetail d : details) 
     		total = total.add(d.getSubTotal());
     	return total.setScale(2, RoundingMode.HALF_UP);
-    }
+    }*/
 }
 

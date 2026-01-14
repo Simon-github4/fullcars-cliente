@@ -166,9 +166,9 @@ private static final long serialVersionUID = 1L;
 
 		for (Purchase s : purchasesList) {
 			if(hidenCheckBox.isSelected() || s.getFacturaNumber()==null || !s.getFacturaNumber().contains("*")) {
-				totalBuys = totalBuys.add(s.getTotal());
+				totalBuys = totalBuys.add(s.getAmount());
 				Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getFacturaNumber(),
-								 NumberFormatArg.format(s.getTotal()), (s.isPayed()) ? "Si" : "No", s.getId() };
+								 NumberFormatArg.format(s.getAmount()), (s.isPayed()) ? "Si" : "No", s.getId() };
 				purchaseTableModel.addRow(row);
 			}
 		}
