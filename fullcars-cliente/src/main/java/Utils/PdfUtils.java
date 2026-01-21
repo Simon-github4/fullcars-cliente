@@ -85,10 +85,11 @@ public class PdfUtils {
             Document document = new Document(pdf);
             createHeader(document, "PRESUPUESTO ORIGINAL", sale, plate, taller);
             
-            float[] columnWidths = {50, 280, 90, 50};
+            float[] columnWidths = {40, 280, 80, 90, 30};
             Table detailstable = new Table(columnWidths);
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Cantidad").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Detalle").setBold()));
+            detailstable.addHeaderCell(new Cell().add(new Paragraph("Unitario").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("Subtotal").setBold()));
             detailstable.addHeaderCell(new Cell().add(new Paragraph("")));
 
@@ -98,6 +99,7 @@ public class PdfUtils {
                 detailstable.addCell(String.valueOf(detail.getQuantity()));
             	detailstable.addCell(detail.getCarPart().getName() + "  " +
             		    ((detail.getCarPart().getDescription() != null) ? detail.getCarPart().getDescription() : ""));
+            	detailstable.addCell(NumberFormatArg.format(detail.getUnitPrice()));
             	detailstable.addCell(NumberFormatArg.format(detail.getSubTotal()));
                 detailstable.addCell(calidades.get(i));
             }

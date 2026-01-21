@@ -22,6 +22,9 @@ public class Sale {
     private String saleNumber;
     private BigDecimal taxes;
     
+    @Builder.Default
+    private boolean anulada = false;
+
     private Customer customer;
     private String remitoPath;
     private Factura factura;

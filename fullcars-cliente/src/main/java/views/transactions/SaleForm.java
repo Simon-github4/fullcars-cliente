@@ -401,7 +401,7 @@ private static final long serialVersionUID = 1L;
 			setMessage("Ingrece un precio unitario valido");
 			return false;
 		}
-		try {
+		/*try {
 			if (Integer.parseInt(quantityTextField.getText()) <= 0) {
 				setMessage("La cantidad debe ser mayor a cero");
 				return false;
@@ -409,7 +409,7 @@ private static final long serialVersionUID = 1L;
 		} catch (NumberFormatException e) {
 			setMessage("Debe indicar una cantidad Valida (unicamente numeros)");
 			return false;
-		}
+		}*/
 		return true;
 	}
 	private boolean validateSaleFields() {
@@ -422,10 +422,10 @@ private static final long serialVersionUID = 1L;
 			return false;
 		}
 
-		if(detailsList.size() == 0) {
+		/*if(detailsList.size() == 0) {
 			setMessage("Debe agregar al menos un detalle");
 			return false;
-		}
+		}*/
 		return true;
 	}
 

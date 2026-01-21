@@ -431,7 +431,7 @@ private static final long serialVersionUID = 1L;
 		/*if(amountTextField.getBigDecimal().compareTo(BigDecimal.ZERO) <= 0) {
 			setMessage("Ingrece un precio unitario valido");
 			return false;
-		}*/
+		}
 		try {
 			if (Integer.parseInt(quantityTextField.getText()) <= 0) {
 				setMessage("La cantidad debe ser mayor a cero");
@@ -440,7 +440,7 @@ private static final long serialVersionUID = 1L;
 		} catch (NumberFormatException e) {
 			setMessage("Debe indicar una cantidad Valida (unicamente numeros)");
 			return false;
-		}
+		}*/
 		return true;
 	}
 	private boolean validatePurchaseFields() {
@@ -456,10 +456,10 @@ private static final long serialVersionUID = 1L;
 			setMessage("Debe introducir un Numero de Factura");
 			return false;
 		}
-		if(detailsList.size() == 0) {
+		/*if(detailsList.size() == 0) {
 			setMessage("Debe agregar al menos un detalle");
 			return false;
-		}
+		}*/
 		return true;
 	}
 

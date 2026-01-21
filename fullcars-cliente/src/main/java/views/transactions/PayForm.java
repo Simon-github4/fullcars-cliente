@@ -17,6 +17,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import model.client.entities.Customer;
 import model.client.entities.Pay;
@@ -32,15 +33,16 @@ public class PayForm extends JDialog {
     private JComboBox<String> payMethodCombo;
     private JButton saveButton;
     private JButton cancelButton;
+    private JTextField descriptionField;
 
     private Pay createdPay; // El pago que se crea al cerrar el diálogo
     private Customer customer;
-    private Sale sale;
+    //private Sale sale;
 
-    public PayForm(Frame owner, Customer customer, Sale sale) {
+    public PayForm(Frame owner, Customer customer) {
         super(owner, "Nuevo Pago", true);
         this.customer = customer;
-        this.sale = sale;
+        //this.sale = sale;
 
         initComponents();
         layoutComponents();
@@ -60,6 +62,7 @@ public class PayForm extends JDialog {
         payMethodCombo = new JComboBox<>(new String[]{"Efectivo", "Tarjeta", "Transferencia"});
         saveButton = new JButton("Guardar");
         cancelButton = new JButton("Cancelar");
+        descriptionField = new JTextField(15);
         
         payMethodCombo.setPreferredSize(new Dimension(200, 25));
         saveButton.setPreferredSize(new Dimension(200, 25));
@@ -89,6 +92,10 @@ public class PayForm extends JDialog {
         gbc.gridx = 1; panel.add(payMethodCombo, gbc);
 
         gbc.gridx = 0; gbc.gridy++;
+        panel.add(new JLabel("Descripcion:"), gbc);
+        gbc.gridx = 1; panel.add(descriptionField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         JPanel buttonsPanel = new JPanel();
@@ -115,7 +122,7 @@ public class PayForm extends JDialog {
             createdPay.setDate(date);
             createdPay.setPaymentMethod(method);
             createdPay.setCustomer(customer);
-            createdPay.setSale(sale);
+            createdPay.setDescription(descriptionField.getText());
 
             dispose();
         } catch (Exception ex) {

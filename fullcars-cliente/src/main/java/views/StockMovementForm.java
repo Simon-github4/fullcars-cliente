@@ -105,7 +105,7 @@ private static final long serialVersionUID = 1L;
 		    createInputPanel();	
 		    createTablePanel();
 		    createShortcutsPanel();
-		    createJPopupMenu();
+		    //createJPopupMenu();
 		    createMessageLabel();
 		    initUI();
 			

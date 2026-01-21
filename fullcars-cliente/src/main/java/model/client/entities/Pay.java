@@ -21,6 +21,7 @@ public class Pay {
     
     private Customer customer;
     
-    private Sale sale;//not confirmed yet
+    private String description;
+    //private Sale sale;//not confirmed yet
 
 }
