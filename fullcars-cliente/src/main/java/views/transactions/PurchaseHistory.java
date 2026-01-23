@@ -383,7 +383,8 @@ private static final long serialVersionUID = 1L;
 
 	private void createJPopupMenu() {
 		new JPopupMenuModifyDelete(purchaseTable, this::delete, "Eliminar Compra").addMenuItem("Agregar Archivo", this::uploadFile)
-		.addMenuItem("Abrir Archivo", this::downloadFile).addMenuItem("Confirmar Pago",	this::confirmPay);
+		.addMenuItem("Abrir Archivo", this::downloadFile).addMenuItem("Confirmar Pago",	this::confirmPay)
+		.addMenuItem("Modificar Monto", this::modifyAmount);
 	}
 	private void confirmPay() {
         try {
@@ -412,8 +413,54 @@ private static final long serialVersionUID = 1L;
 	}
 	private void downloadFile() {
 		controller.downloadAndOpenFile((Long) purchaseTableModel.getValueAt(purchaseTable.convertRowIndexToModel(purchaseTable.getSelectedRow()), purchaseTable.getColumnModel().getColumnCount()-1));
-	}
+	} 
+	private void modifyAmount() {
+		int selectedRow = purchaseTable.getSelectedRow();
+		
+		if (selectedRow == -1) {
+			setMessage("Debe seleccionar una compra para modificar.");
+			return;
+		}
+		try {
+			int modelRow = purchaseTable.convertRowIndexToModel(selectedRow);
+			int idColIndex = purchaseTable.getColumnCount() - 1; // La última columna es el ID
+			Long idPurchase = (Long) purchaseTableModel.getValueAt(modelRow, idColIndex);
 
+			Purchase purchaseToEdit = controller.getPurchase(idPurchase);
+					/*purchasesList.stream()
+					.filter(p -> p.getId().equals(idPurchase))
+					.findFirst()
+					.orElse(null);  buscar en lista en memoria*/
+
+			if (purchaseToEdit == null) {
+				setMessage("No se encontró la compra seleccionada.");
+				return;
+			}
+
+			String input = JOptionPane.showInputDialog(this, 
+					"Ingrese el nuevo monto para la compra #" + idPurchase, 
+					purchaseToEdit.getAmount().toString());
+
+			if (input != null && !input.trim().isEmpty()) {
+				// Parsear el monto (soportando coma o punto)
+				BigDecimal newAmount = new BigDecimal(input.replace(",", "."));
+
+				purchaseToEdit.setAmount(newAmount);
+				controller.save(purchaseToEdit); 
+
+				loadPurchaseTable();
+				//setMessage("Monto actualizado correctamente.");
+			}
+
+		} catch (NumberFormatException e) {
+			setMessage("El valor ingresado no es un número válido.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			// Capturamos ServerException o IOException
+			setMessage("Error al actualizar la compra: " + e.getMessage());
+		}
+	}
+	
 	@Override
 	public void refresh() {
 		/*ActionListener[] listeners = fieldProvider.getActionListeners();
