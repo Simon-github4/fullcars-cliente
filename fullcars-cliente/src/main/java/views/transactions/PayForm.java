@@ -37,12 +37,12 @@ public class PayForm extends JDialog {
 
     private Pay createdPay; // El pago que se crea al cerrar el diálogo
     private Customer customer;
-    //private Sale sale;
+    private Sale sale;
 
-    public PayForm(Frame owner, Customer customer) {
+    public PayForm(Frame owner, Customer customer, Sale sale) {
         super(owner, "Nuevo Pago", true);
         this.customer = customer;
-        //this.sale = sale;
+        this.sale = sale;
 
         initComponents();
         layoutComponents();
@@ -123,7 +123,8 @@ public class PayForm extends JDialog {
             createdPay.setPaymentMethod(method);
             createdPay.setCustomer(customer);
             createdPay.setDescription(descriptionField.getText());
-
+            createdPay.setSale(sale);
+            
             dispose();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Datos inválidos: " + ex.getMessage(), 

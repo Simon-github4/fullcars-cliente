@@ -62,18 +62,18 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 
 	private final CustomerController controller;
 	private final PayController payController;
-	//private final SaleController saleController;
+	private final SaleController saleController;
 	private List<Sale> salesList = new ArrayList<>();
 	private List<Pay> paysList = new ArrayList<>();
 	private JLabel customerInfoLabel = new JLabel("", JLabel.CENTER);
 	
 	private JPanel paysTablePanel;
-	private static final Object[] PAYS_COLUMNS = {"Descripcion", "Fecha", "Monto", "Metodo de Pago", "id" };
+	private static final Object[] PAYS_COLUMNS = {"Venta", "Descripcion", "Fecha", "Monto", "Metodo de Pago", "id" };
 	private JTable paysTable;
 	private DefaultTableModel paysTableModel;
 	
 	private JPanel saleTablePanel;
-	private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Total", "Nro. Venta" };
+	private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Total", "Saldo", "Nro. Venta"};
 	private JTable saleTable;
 	private DefaultTableModel saleTableModel;
 
@@ -95,7 +95,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 	public CustomerSummaryHistory(CustomerController controller, PayController payController, SaleController saleController) {
 		this.controller = controller;
 		this.payController = payController;
-		//this.saleController = saleController;
+		this.saleController = saleController;
 		
 		setLayout(new BorderLayout(0, 0));
 		
@@ -109,7 +109,6 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		saleTable.setRowSorter(sorter);
 		setupLiveFilterListeners();
 		
-		//loadPurchaseTable();
 	}
 
 	private void deletePayment() {			
@@ -128,12 +127,12 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 	}
 	
 	private void addPayment() {
-		/*int row = saleTable.getSelectedRow();
+		int row = saleTable.getSelectedRow();
 		if(row == -1)
 			JOptionPane.showMessageDialog(null, "Debe seleccionar una Venta asociada al Pago");
 		else {
-			row = saleTable.convertRowIndexToModel(row);*/
-			PayForm dialog = new PayForm(null, controller.getCustomer(controller.getCustomerSelectedId()));
+			row = saleTable.convertRowIndexToModel(row);
+			PayForm dialog = new PayForm(null, controller.getCustomer(controller.getCustomerSelectedId()), saleController.getSale((Long)saleTableModel.getValueAt(row, saleTableModel.getColumnCount()-1)));
 	        Pay pay = dialog.showDialog();
 	        if (pay != null) 
 	        	try {
@@ -144,7 +143,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 				}
 	        else 
 				JOptionPane.showMessageDialog(null, "Pago cancelado");
-	    
+		}
 	}
 	
 	private void refreshFromDB() {
@@ -179,10 +178,15 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		for(Sale s : salesList) 
 			if(dpFilter.getSelectedDateRange() == null || s.getDate().compareTo(dpFilter.getSelectedDateRange()[0]) >= 0 && 
 														  s.getDate().compareTo(dpFilter.getSelectedDateRange()[1]) <= 0){
-				    
-				Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-								(s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber(),
-								NumberFormatArg.format(s.getTotal()), s.getId() };
+				BigDecimal pagosDeEstaVenta = paysList.stream()
+						.filter(p -> p.getSale() != null && p.getSale().getId().equals(s.getId())).map(Pay::getAmount)
+						.reduce(BigDecimal.ZERO, BigDecimal::add);
+				BigDecimal saldo = pagosDeEstaVenta.subtract(s.getTotal()).setScale(2, RoundingMode.HALF_UP);
+				
+				Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+						(s.getSaleNumber() == null || s.getSaleNumber().isBlank()) ? "Particular" : s.getSaleNumber(),
+						NumberFormatArg.format(s.getTotal()), NumberFormatArg.format(saldo), // Nueva columna
+						s.getId() };
 				saleTableModel.addRow(row);
 			}
 		loadPays();
@@ -191,18 +195,20 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		paysTableModel.setRowCount(0);
 		
 		BigDecimal totalPays = BigDecimal.ZERO;
-		/*int viewRow = saleTable.getSelectedRow();
+		int viewRow = saleTable.getSelectedRow();
 		Long idSale =null;
 		if(viewRow != -1)
 			idSale = (Long)saleTableModel.getValueAt(saleTable.convertRowIndexToModel(viewRow), saleTable.getColumnCount()-1);
-		*/
+		
 		for (Pay s : paysList) { 
 			LocalDate[] dateRange = dpFilter.getSelectedDateRange();
 			boolean withinDate = dateRange == null ||  (s.getDate().compareTo(dateRange[0]) >= 0 && s.getDate().compareTo(dateRange[1]) <= 0);
-			//boolean matchesSale = viewRow == -1 || idSale.equals(s.getSale().getId());
-			if (withinDate /*&& matchesSale*/) {
+			boolean matchesSale = viewRow == -1 || idSale.equals(s.getSale().getId());
+			if (withinDate && matchesSale) {
 				totalPays = totalPays.add(s.getAmount());
-				Object[] rowT = {/*s.getSale().getId(),*/s.getDescription(), s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), NumberFormatArg.format(s.getAmount()), s.getPaymentMethod(), s.getId() };
+				Object[] rowT = {(s.getSale() !=null)?s.getSale().getId():"Gral" ,s.getDescription(),
+						s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+						NumberFormatArg.format(s.getAmount()), s.getPaymentMethod(), s.getId() };
 				paysTableModel.addRow(rowT);
 			}}
 		return totalPays.setScale(2, RoundingMode.HALF_UP);
@@ -210,7 +216,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 	
 	private void initUI() {
 		refreshButton.addActionListener(e -> refreshFromDB());
-		//showAllButton.addActionListener(e -> saleTable.clearSelection());
+		showAllButton.addActionListener(e -> saleTable.clearSelection());
 		addPayButton.addActionListener(e -> addPayment());
 		dpFilter.setDateSelectionMode(DatePicker.DateSelectionMode.BETWEEN_DATE_SELECTED);
 		dpFilter.setUsePanelOption(true);
@@ -241,10 +247,10 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		idSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		filterPanel.add(refreshButton);
 		LightTheme.aplicarEstiloPrimario(refreshButton);
-		filterPanel.add(addPayButton);
-		LightTheme.aplicarEstiloPrimario(addPayButton);
-		/*filterPanel.add(showAllButton);
-		LightTheme.aplicarEstiloSecundario(showAllButton);*/
+		//filterPanel.add(addPayButton);
+		//LightTheme.aplicarEstiloPrimario(addPayButton);
+		filterPanel.add(showAllButton);
+		LightTheme.aplicarEstiloSecundario(showAllButton);
 		filterPanel.setBorder(BorderFactory.createCompoundBorder(
 			    BorderFactory.createEmptyBorder(0, 10, 10, 10),  
 			    BorderFactory.createTitledBorder(
@@ -312,7 +318,6 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 		paysTablePanel.add(LightTheme.createSubTitle("Pagos"), BorderLayout.NORTH);
 	}
 
-	@SuppressWarnings("serial")
 	private void createSaleTablePanel() {
 		saleTableModel = new DefaultTableModel(SALE_COLUMNS, 0) {
 			@Override
@@ -321,40 +326,58 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 			}
 			@Override
 			public Class<?> getColumnClass(int column) {
-				switch (column) {
-				case 1:
-					return Long.class;
-				case 2:
-					return Long.class;
-				case 3:
-					return Long.class;
-				default:
-					return Object.class;
-				}
+	            switch (column) {
+	                case 1: return Long.class; // Nro siniestro
+	                case 2: return String.class; // Total (formateado)
+	                case 3: return String.class; // Saldo (formateado)
+	                case 4: return Long.class;   // ID de Venta
+	                default: return Object.class;
+	            }
 			}
 		};
 		saleTable = new JTable(saleTableModel);
-		//saleTable.setToolTipText("Click derecho para agregar pago; Selecciona una venta(click izquierdo) para ver sus pagos asociados");
+		saleTable.setToolTipText("Click derecho para agregar pago; Selecciona una venta(click izquierdo) para ver sus pagos asociados");
 		saleTable.setShowGrid(true);
 		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setMaxWidth(90);
 		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setMinWidth(90);
 		saleTable.getColumnModel().getColumn(saleTable.getColumnCount() - 1).setPreferredWidth(90);
-		/*saleTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+		saleTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
                 	loadPays();
                 }
 			}
-		});*/
+		});
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+		saleTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
 		for (int i = 0; i < saleTable.getColumnCount(); i++) {
 			Class<?> columnClass = saleTableModel.getColumnClass(i);
 			if (Number.class.isAssignableFrom(columnClass))
 				saleTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
-
+		saleTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+		    @Override
+		    public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+		        JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+		        c.setHorizontalAlignment(SwingConstants.CENTER);
+		        if (value != null) {
+		            String texto = value.toString().replace("$", "").trim();
+		            // Si el valor es exactamente 0 (considerando el formato con coma)
+		            if (texto.contains("-")) 
+		            	c.setForeground(Color.RED); // Deuda pendiente
+		            else 
+		            	c.setForeground(LightTheme.COLOR_GREEN_MONEY);
+		            
+		        }
+		        if (isSelected) {// Si la fila está seleccionada, mantenemos el color de selección para que sea legible
+		            c.setForeground(table.getSelectionForeground());
+		        }
+		        return c;
+		    }
+		});
+		
 		saleTablePanel = new JPanel(new BorderLayout());
 		saleTablePanel.add(LightTheme.createSubTitle("Historial Ventas"), BorderLayout.NORTH);
 		saleTablePanel.add(new JScrollPane(saleTable), BorderLayout.CENTER);
@@ -422,7 +445,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 
 	private void createJPopupMenu() {
 		new JPopupMenuModifyDelete(paysTable, this::deletePayment, "Eliminar Pago");
-		//new JPopupMenuModifyDelete(saleTable, this::addPayment, "Agregar Pago");
+		new JPopupMenuModifyDelete(saleTable, this::addPayment, "Agregar Pago");
 	}
 
 	@Override
