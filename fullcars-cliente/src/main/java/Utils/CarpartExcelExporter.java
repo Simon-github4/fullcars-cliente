@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import model.client.entities.CarPart;
@@ -20,8 +21,11 @@ public class CarpartExcelExporter implements Exporter<CarPart> {
     @Override
     public byte[] export(List<CarPart> parts) throws IOException {
         try (Workbook workbook = new SXSSFWorkbook(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Sheet sheet = workbook.createSheet("CarParts");
-
+            
+        	//Sheet sheet = workbook.createSheet("CarParts");
+            SXSSFSheet sheet = (SXSSFSheet) workbook.createSheet("CarParts");
+            sheet.trackAllColumnsForAutoSizing();
+            
             // Estilo de cabecera
             CellStyle headerStyle = workbook.createCellStyle();
             Font font = workbook.createFont();
@@ -47,9 +51,9 @@ public class CarpartExcelExporter implements Exporter<CarPart> {
                 row.createCell(2).setCellValue(safe(p.getDescription()));
                 row.createCell(3).setCellValue(p.getStock() != null ? p.getStock() : 0);
                 row.createCell(4).setCellValue(p.getBrand().getName() != null ? p.getBrand().getName() : "");
-                row.createCell(6).setCellValue(p.getProvider() != null ? p.getProvider().getCompanyName() : "");
-                row.createCell(7).setCellValue(p.getCategory() != null ? p.getCategory().getName() : "");
-                row.createCell(8).setCellValue(p.getBasePrice() != null ? p.getBasePrice().doubleValue() : 0);
+                row.createCell(5).setCellValue(p.getProvider() != null ? p.getProvider().getCompanyName() : "");
+                row.createCell(6).setCellValue(p.getCategory() != null ? p.getCategory().getName() : "");
+                row.createCell(7).setCellValue(p.getBasePrice() != null ? p.getBasePrice().doubleValue() : 0);
                 //row.getCell(8).setCellType(CellType.NUMERIC);
             }
 

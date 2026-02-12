@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 
-import Utils.PdfUtils;
+import Utils.PdfRemitosUtils;
 import Utils.ServerException;
 import data.service.ClienteRestSale;
 import model.client.entities.Customer;
@@ -47,9 +47,9 @@ public class SaleController {
 		Thread t = new Thread(() ->{ 
 			byte[] file;
 			if(savedSale.getSaleNumber() == null)
-				file = PdfUtils.generatePresupuestoPdf(savedSale, patente, taller, calidades);
+				file = PdfRemitosUtils.generatePresupuestoPdf(savedSale, patente, taller, calidades);
 			else
-				file = PdfUtils.generateRemitoPdf(savedSale, patente, taller, calidades);
+				file = PdfRemitosUtils.generateRemitoPdf(savedSale, patente, taller, calidades);
 			
 			if(file != null && savedSale != null) {
 	            File tempFile = null;

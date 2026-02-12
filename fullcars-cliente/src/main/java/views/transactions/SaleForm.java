@@ -25,6 +25,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -49,8 +50,6 @@ import controller.SaleController;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
 import model.client.entities.Customer;
-import model.client.entities.Provider;
-import model.client.entities.ProviderPart;
 import model.client.entities.Sale;
 import model.client.entities.SaleDetail;
 import raven.datetime.DatePicker;
@@ -78,6 +77,7 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel tableModel;
 	private List<SaleDetail> detailsList = new ArrayList<>();
 	private CarPart detailCarpart = null;
+	private static final String COMODIN_SKU = "COMODIN";
 	private JLabel carpartNameLabel = new JLabel("", JLabel.LEFT);
 
 	private JTextField carpartTextField = new JTextField(19);
@@ -138,6 +138,20 @@ private static final long serialVersionUID = 1L;
 			Integer quantity = Integer.parseInt(quantityTextField.getText().trim());
 			SaleDetail sd = new SaleDetail(quantity, unitPriceTextField.getBigDecimal(), detailCarpart);
 			
+			if(isComodinCarPart(detailCarpart)) {
+			    String descripcionManual = JOptionPane.showInputDialog(null, 
+			            "Estás agregando un artículo genérico.\nPor favor, ingresa la descripción exacta:",
+			            "Artículo Varios",
+			            JOptionPane.QUESTION_MESSAGE
+			    );
+			    if (descripcionManual != null && !descripcionManual.trim().isEmpty()) 
+			        sd.setPrintedDescription(descripcionManual);
+			    else { 
+			        setMessage("Debe ingresar una descripción para el artículo comodín.");
+			        return; 
+			    }
+			}
+				
 			detailsList.add(sd);
 	        tableModel.addRow(new Object[]{ detailCarpart.getSku(), quantity,
 					NumberFormatArg.format(sd.getUnitPrice()),
@@ -148,7 +162,10 @@ private static final long serialVersionUID = 1L;
 	        carpartTextField.requestFocus();
         }
     }
-	
+	private boolean isComodinCarPart(CarPart carpart) {
+		return carpart.getSku().equalsIgnoreCase(COMODIN_SKU);
+	}
+
 	private void deleteDetail() {
 		int row = table.getSelectedRow();
 		detailsList.remove(row);

@@ -25,7 +25,7 @@ import com.itextpdf.layout.properties.VerticalAlignment;
 import model.client.entities.Sale;
 import model.client.entities.SaleDetail;
 
-public class PdfUtils {
+public class PdfRemitosUtils {
 
 	//public static final String PDF_DESKTOP_PATH = System.getProperty("user.home") + File.separator + "Desktop" + File.separator + "A";
 	public static final String LOGO_PATH = Icons.LOGO.getPath();
@@ -52,8 +52,7 @@ public class PdfUtils {
             for (int i = 0; i < details.size(); i++) {
                 SaleDetail detail = details.get(i);
                 detailstable.addCell(String.valueOf(detail.getQuantity()));
-                detailstable.addCell(detail.getCarPart().getName() + "  " +
-                    ((detail.getCarPart().getDescription() != null) ? detail.getCarPart().getDescription() : ""));
+                detailstable.addCell(detail.getFacturaDescription());
                 detailstable.addCell(calidades.get(i));
             }
 
@@ -97,8 +96,7 @@ public class PdfUtils {
             for (int i = 0; i < details.size(); i++) {
                 SaleDetail detail = details.get(i);
                 detailstable.addCell(String.valueOf(detail.getQuantity()));
-            	detailstable.addCell(detail.getCarPart().getName() + "  " +
-            		    ((detail.getCarPart().getDescription() != null) ? detail.getCarPart().getDescription() : ""));
+            	detailstable.addCell(detail.getFacturaDescription());
             	detailstable.addCell(NumberFormatArg.format(detail.getUnitPrice()));
             	detailstable.addCell(NumberFormatArg.format(detail.getSubTotal()));
                 detailstable.addCell(calidades.get(i));
@@ -137,7 +135,7 @@ public class PdfUtils {
 		} // o Times, Courier...
         document.setFont(font);
         
-        InputStream is = PdfUtils.class.getResourceAsStream(LOGO_PATH);
+        InputStream is = PdfRemitosUtils.class.getResourceAsStream(LOGO_PATH);
         Image img = new Image(ImageDataFactory.create(is.readAllBytes()));
         img.setHeight(150).setWidth(225);
         
