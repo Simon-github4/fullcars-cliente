@@ -16,7 +16,7 @@ import views.MainFrame;
 
 public class Initializr {
 
-	private static final String SERVER_PATH = "http://192.168.1.25:8080";
+	private static final String SERVER_PATH = "http://192.168.0.10:8080";
 	private static Properties properties = new Properties();
 	
     public static void main(String[] args) {

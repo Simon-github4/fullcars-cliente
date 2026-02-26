@@ -9,6 +9,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -165,7 +166,7 @@ private static final long serialVersionUID = 1L;
 		
 		for (Sale s : salesList) {
 			totalSold = totalSold.add(s.getTotal());
-			Object[] row = {s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getCustomer(), 
+			Object[] row = {s.getDate(), s.getCustomer(), 
 						   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
 							, NumberFormatArg.format(s.getTotal()), s.getId() };
 			saleTableModel.addRow(row);
@@ -297,6 +298,8 @@ private static final long serialVersionUID = 1L;
 			@Override
 			public Class<?> getColumnClass(int column) {
 				switch (column) {
+				case 0:
+					return LocalDate.class;
 				case 2:
 					return Long.class;
 				case 3:
@@ -331,7 +334,18 @@ private static final long serialVersionUID = 1L;
 			if (Number.class.isAssignableFrom(columnClass))
 				saleTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
-
+		DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+		    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+		    @Override
+		    protected void setValue(Object value) {
+		        if (value instanceof LocalDate) 
+		            value = ((LocalDate) value).format(formatter);
+		        super.setValue(value);
+		    }
+		};
+		dateRenderer.setHorizontalAlignment(SwingConstants.CENTER); // Opcional: centrar la fecha
+		saleTable.setDefaultRenderer(LocalDate.class, dateRenderer);
+		
 		saleTablePanel = new JPanel(new BorderLayout());
 		saleTablePanel.add(LightTheme.createSubTitle("Historial Ventas"), BorderLayout.NORTH);
 		saleTablePanel.add(new JScrollPane(saleTable), BorderLayout.CENTER);

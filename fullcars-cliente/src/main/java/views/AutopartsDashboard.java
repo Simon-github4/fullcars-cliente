@@ -99,7 +99,7 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
         text.setColumns(20);
 
         dp.setDateSelectionMode(DateSelectionMode.BETWEEN_DATE_SELECTED);
-        //dp.setSelectedDateRange(LocalDate.of(2025, 9, 1), LocalDate.now().plusMonths(2));
+        dp.setSelectedDateRange(LocalDate.now().minusMonths(1), LocalDate.now());
         dp.setEditor(text);
 
         panel.add(text);

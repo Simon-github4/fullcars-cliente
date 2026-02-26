@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -167,7 +168,7 @@ private static final long serialVersionUID = 1L;
 		for (Purchase s : purchasesList) {
 			if(hidenCheckBox.isSelected() || s.getFacturaNumber()==null || !s.getFacturaNumber().contains("*")) {
 				totalBuys = totalBuys.add(s.getAmount());
-				Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), s.getProvider(), s.getFacturaNumber(),
+				Object[] row = { s.getDate(), s.getProvider(), s.getFacturaNumber(),
 								 NumberFormatArg.format(s.getAmount()), (s.isPayed()) ? "Si" : "No", s.getId() };
 				purchaseTableModel.addRow(row);
 			}
@@ -294,6 +295,7 @@ private static final long serialVersionUID = 1L;
 			@Override
 			public Class<?> getColumnClass(int column) {
 				switch (column) {
+				case 0: return LocalDate.class; 
 				case 2:
 					return Long.class;
 				case 3:
@@ -329,7 +331,17 @@ private static final long serialVersionUID = 1L;
 			if (Number.class.isAssignableFrom(columnClass))
 				purchaseTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
-
+		DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+		    @Override
+		    protected void setValue(Object value) {
+		        if (value instanceof LocalDate) 
+		            value = ((LocalDate) value).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		        super.setValue(value);
+		    }
+		};
+		dateRenderer.setHorizontalAlignment(SwingConstants.CENTER); 
+		purchaseTable.setDefaultRenderer(LocalDate.class, dateRenderer);
+		
 		purchaseeTablePanel = new JPanel(new BorderLayout());
 		purchaseeTablePanel.add(LightTheme.createSubTitle("Historial Compras"), BorderLayout.NORTH);
 		purchaseeTablePanel.add(new JScrollPane(purchaseTable), BorderLayout.CENTER);

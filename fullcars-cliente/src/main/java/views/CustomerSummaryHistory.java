@@ -183,7 +183,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 						.reduce(BigDecimal.ZERO, BigDecimal::add);
 				BigDecimal saldo = pagosDeEstaVenta.subtract(s.getTotal()).setScale(2, RoundingMode.HALF_UP);
 				
-				Object[] row = { s.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+				Object[] row = { s.getDate(),
 						(s.getSaleNumber() == null || s.getSaleNumber().isBlank()) ? "Particular" : s.getSaleNumber(),
 						NumberFormatArg.format(s.getTotal()), NumberFormatArg.format(saldo), // Nueva columna
 						s.getId() };
@@ -327,6 +327,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 			@Override
 			public Class<?> getColumnClass(int column) {
 	            switch (column) {
+	            	case 0: return LocalDate.class; // Fecha
 	                case 1: return Long.class; // Nro siniestro
 	                case 2: return String.class; // Total (formateado)
 	                case 3: return String.class; // Saldo (formateado)
@@ -357,6 +358,16 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable{
 			if (Number.class.isAssignableFrom(columnClass))
 				saleTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 		}
+		DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+		    @Override
+		    protected void setValue(Object value) {
+		        if (value instanceof LocalDate) 
+		            value = ((LocalDate) value).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		        super.setValue(value);
+		    }
+		};
+		dateRenderer.setHorizontalAlignment(SwingConstants.CENTER); 
+		saleTable.setDefaultRenderer(LocalDate.class, dateRenderer);
 		saleTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
 		    @Override
 		    public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
