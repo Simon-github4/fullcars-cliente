@@ -5,7 +5,7 @@ import java.util.List;
 
 import Utils.ServerException;
 import data.service.ClienteRestCustomer;
-import dtos.CustomerSummaryDTO;
+import deprecated.CustomerSummaryDTO;
 import lombok.Getter;
 import lombok.Setter;
 import model.client.entities.Customer;

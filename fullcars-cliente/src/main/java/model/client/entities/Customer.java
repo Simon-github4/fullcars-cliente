@@ -1,5 +1,7 @@
 package model.client.entities;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +21,8 @@ public class Customer implements Comparable<Customer>{
     private String email;
     private String phone;
     private String adress;
+    
+    private BigDecimal creditBalance;
 
     @Override
     public String toString() {
@@ -30,6 +34,6 @@ public class Customer implements Comparable<Customer>{
 		return this.fullName.compareTo(o.getFullName());
 	}
     
-
+ 
 
 }

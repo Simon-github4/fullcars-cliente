@@ -12,8 +12,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import InitClass.Initializr;
 import Utils.ServerException;
+import dtos.MultiPaymentRequest;
+import dtos.MultiPaymentResponse;
+import dtos.PendingSalesResponse;
 import model.client.entities.Pay;
-import model.client.entities.StockMovement;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -32,28 +34,6 @@ public class ClienteRestPayments {
         this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
     
-	public List<Pay> getPays() {
-	    String uri = ADDRESS;
-
-	    Request request = new Request.Builder()
-	            .url(uri)
-	            .get()
-	            .build();
-
-	    try (Response response = client.newCall(request).execute()) {
-	        if (response.isSuccessful() && response.body() != null) {
-	        	String json = response.body().string();
-	            return mapper.readValue(json, new TypeReference<List<Pay>>() {});
-	        } else {
-	            System.err.println("Error HTTP: " + response.code());
-	            return new ArrayList<>();
-	        }
-	    } catch (IOException e) {
-	        e.printStackTrace(); // Manejo de error de conexión o de lectura
-	        return new ArrayList<>();
-	    }
-	}
-
 	public void delete(Long idPay)  throws ServerException, IOException {
 		Request request = new Request.Builder()
 	            .url(ADDRESS + "/" + idPay)
@@ -75,30 +55,96 @@ public class ClienteRestPayments {
 			}	
 	}
 
+	public PendingSalesResponse getPendingSales(Long customerId) throws ServerException, IOException {
+		Request request = new Request.Builder()
+	            .url(ADDRESS + "/customers/" + customerId + "/pending")
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, PendingSalesResponse.class);
+	        } else {
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to get pending sales. Code: " + response.code());
+	            System.err.println("Response: " + errorBody);
+	            throw new ServerException(errorBody);
+	        }
+	    } catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo obtener las ventas pendientes, falla en conexion a servidor");
+		}
+	}
 	
-	public void save(Pay pay) throws ServerException, IOException, Exception{
-		try{
-			String json = mapper.writeValueAsString(pay);
+	public MultiPaymentResponse createMultiPayment(MultiPaymentRequest request) throws ServerException, IOException {
+		try {
+			String json = mapper.writeValueAsString(request);
 	
 			RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
-			Request request = new Request.Builder().url(ADDRESS).post(body).build();
+			Request httpRequest = new Request.Builder()
+					.url(ADDRESS + "/multi")
+					.post(body)
+					.build();
 	
-			try (Response response = client.newCall(request).execute()) {
-				if (response.isSuccessful()) {
-					System.out.println("Pay posted successfully");
+			try (Response response = client.newCall(httpRequest).execute()) {
+				if (response.isSuccessful() && response.body() != null) {
+					String responseJson = response.body().string();
+					return mapper.readValue(responseJson, MultiPaymentResponse.class);
 				} else {
 					String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
-	                System.err.println("Failed to post Pay. Code: " + response.code());
+	                System.err.println("Failed to create multi payment. Code: " + response.code());
 	                System.err.println("Response: " + errorBody);
 	                throw new ServerException(errorBody);
 				}
-			}catch (IOException e) {
-				e.printStackTrace();
-				throw new IOException("No se pudo guardar el Pago, falla en conexion a servidor");
 			}
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
-			throw new Exception("No se pudo guardar");
+			throw new IOException("No se pudo procesar la respuesta del servidor");
+		}
+	}
+	
+	public List<MultiPaymentResponse> getPaymentsByCustomer(Long customerId) throws ServerException, IOException {
+		Request request = new Request.Builder()
+	            .url(ADDRESS + "/customer/" + customerId)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<List<MultiPaymentResponse>>() {});
+	        } else {
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to get payments by customer. Code: " + response.code());
+	            System.err.println("Response: " + errorBody);
+	            throw new ServerException(errorBody);
+	        }
+	    } catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo obtener los pagos del cliente, falla en conexion a servidor");
+		}
+	}
+	
+	public MultiPaymentResponse getPaymentDetail(Long payId) throws ServerException, IOException {
+		Request request = new Request.Builder()
+	            .url(ADDRESS + "/" + payId + "/detail")
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, MultiPaymentResponse.class);
+	        } else {
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to get payment detail. Code: " + response.code());
+	            System.err.println("Response: " + errorBody);
+	            throw new ServerException(errorBody);
+	        }
+	    } catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo obtener el detalle del pago, falla en conexion a servidor");
 		}
 	}
 	

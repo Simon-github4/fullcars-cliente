@@ -1,4 +1,4 @@
-package views.transactions;
+package deprecated;
 
 import java.awt.Color;
 import java.awt.Dimension;

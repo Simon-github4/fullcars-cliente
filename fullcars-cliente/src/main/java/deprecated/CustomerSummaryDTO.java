@@ -1,4 +1,4 @@
-package dtos;
+package deprecated;
 
 import java.util.List;
 

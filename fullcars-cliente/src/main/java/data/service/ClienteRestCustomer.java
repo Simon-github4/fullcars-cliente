@@ -14,7 +14,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import InitClass.Initializr;
 import Utils.ServerException;
-import dtos.CustomerSummaryDTO;
+import deprecated.CustomerSummaryDTO;
 import model.client.entities.Customer;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
