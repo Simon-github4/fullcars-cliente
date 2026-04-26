@@ -89,7 +89,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     private DefaultTableModel paysTableModel;
     
     private JPanel saleTablePanel;
-    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Total", /*"Saldo",*/ "Nro. Venta"};
+    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Total", "CAE", "Nro. Venta"};
     private JTable saleTable;
     private DefaultTableModel saleTableModel;
 
@@ -309,8 +309,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 Object[] row = { 
                     sale.getDate(),
                     sale.getSaleNumber()!= null ? sale.getSaleNumber() : "Particular",
-                    sale.getCae() != null? sale.getCae(): "No hay cae, revisar si tiene factura",
                     NumberFormatArg.format(sale.getTotal()), 
+                    sale.getCae() != null? sale.getCae(): "No hay cae, revisar si tiene factura",
                     //NumberFormatArg.format(paid),
                     //NumberFormatArg.format(saldo),
                     sale.getSaleId() 

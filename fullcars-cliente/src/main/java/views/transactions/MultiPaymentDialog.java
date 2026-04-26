@@ -24,11 +24,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
 import controller.PayController;
-import data.service.ClienteRestPayments;
 import dtos.MultiPaymentRequest;
 import dtos.MultiPaymentResponse;
 import dtos.PendingSalesResponse;
@@ -55,6 +55,7 @@ public class MultiPaymentDialog extends JDialog {
     private BigDecimalField amountField;
     private JComboBox<String> payMethodCombo;
     private DatePicker datePicker;
+	private JTextField descriptionField;
 
     private JButton confirmButton;
     private JButton cancelButton;
@@ -91,13 +92,15 @@ public class MultiPaymentDialog extends JDialog {
         amountField = new BigDecimalField(BigDecimal.ZERO);
 
         payMethodCombo = new JComboBox<>(new String[]{
-        		"Efectivo", "Tarjeta", "Transferencia", "Cheque"
+        		"Efectivo", "Tarjeta", "Transferencia", "Cheque", "ECheq", "Deposito"
         });
 
         datePicker = new DatePicker();
         datePicker.setDateSelectionMode(DateSelectionMode.SINGLE_DATE_SELECTED);
         datePicker.setSelectedDate(LocalDate.now());
 
+        descriptionField = new JTextField("",20);
+        
         confirmButton = new JButton("Confirmar Pago");
         cancelButton = new JButton("Cancelar");
 
@@ -147,13 +150,19 @@ public class MultiPaymentDialog extends JDialog {
         JFormattedTextField tf = new JFormattedTextField();
         datePicker.setEditor(tf);
         bottom.add(tf, gbc);
-
+        
         y++;
         gbc.gridx = 0; gbc.gridy = y;
         bottom.add(new JLabel("Método:"), gbc);
         gbc.gridx = 1;
         bottom.add(payMethodCombo, gbc);
 
+        y++;
+        gbc.gridx = 0; gbc.gridy = y;
+        bottom.add(new JLabel("Descripcion:"), gbc);
+        gbc.gridx = 1;
+        bottom.add(descriptionField, gbc);
+        
         y++;
         gbc.gridx = 0; gbc.gridy = y;
         gbc.gridwidth = 2;
@@ -262,6 +271,7 @@ public class MultiPaymentDialog extends JDialog {
                 .paymentAmount(amountField.getBigDecimal())
                 .paymentMethod((String) payMethodCombo.getSelectedItem())
                 .date(datePicker.getSelectedDate())
+                .notes(descriptionField.getText())
                 .saleIds(ids)
                 .useCredit(useCreditCheck.isSelected())
                 .build();
