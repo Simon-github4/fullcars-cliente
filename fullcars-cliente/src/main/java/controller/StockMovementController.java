@@ -11,6 +11,7 @@ import Utils.MovementType;
 import Utils.ServerException;
 import data.service.ClienteRestStockMovement;
 import model.client.entities.StockMovement;
+import views.StockMovementForm.StockMovementDTO;
 
 public class StockMovementController {
 	
@@ -20,12 +21,12 @@ public class StockMovementController {
 		return serviceStockMovement.getStockMovement(id);
 	}
 	
-	public List<StockMovement> getStockMovements(){
+	public List<StockMovementDTO> getStockMovements(){
 		return serviceStockMovement.getStockMovements();
 	}
 
-	public List<StockMovement> getStockMovements(LocalDate[] dates, boolean entries, boolean exits){
-		List<StockMovement> movements;
+	public List<StockMovementDTO> getStockMovements(LocalDate[] dates, boolean entries, boolean exits){
+		List<StockMovementDTO> movements;
 		if(dates != null)
 			movements = serviceStockMovement.getStockMovements(dates[0], dates[1]);
 		else
@@ -41,7 +42,7 @@ public class StockMovementController {
 	        tipos.add(MovementType.SALIDA_AJUSTE);
 	    }
 	    return movements.stream()
-	            .filter(m -> tipos.contains(m.getType()))
+	            .filter(m -> tipos.contains(m.type()))
 	            .collect(Collectors.toList());
 	}
 	

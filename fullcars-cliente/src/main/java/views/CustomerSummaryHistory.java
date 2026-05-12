@@ -84,12 +84,12 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     private JLabel creditBalanceLabel = new JLabel(" - Credito a Usar: $0.00", JLabel.CENTER);
     
     private JPanel paysTablePanel;
-    private static final Object[] PAYS_COLUMNS = {"Fecha", "Monto", "Credito Usado", "Credito Gen.", "Metodo", "Ver Detalle", "id" };
+    private static final Object[] PAYS_COLUMNS = {"Fecha", "Monto", "Credito Gen.", "Descripcion", "Ver Detalle", "id" };
     private JTable paysTable;
     private DefaultTableModel paysTableModel;
     
     private JPanel saleTablePanel;
-    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Total", "CAE", "Nro. Venta"};
+    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Pendiente", "CAE", "Nro. Venta"};
     private JTable saleTable;
     private DefaultTableModel saleTableModel;
 
@@ -130,12 +130,16 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         paysSorter = new TableRowSorter<>(paysTableModel);
         paysTable.setRowSorter(paysSorter);
         
+        List<javax.swing.RowSorter.SortKey> paySortKeys = new ArrayList<>();
+        paySortKeys.add(new javax.swing.RowSorter.SortKey(0, javax.swing.SortOrder.DESCENDING));
+        paysSorter.setSortKeys(paySortKeys);
+        
         setupLiveFilterListeners();
     }
 
     private void deletePayment() {            
         try {
-            Long idPay = (Long) paysTableModel.getValueAt(paysTable.convertRowIndexToModel(paysTable.getSelectedRow()), 6);
+            Long idPay = (Long) paysTableModel.getValueAt(paysTable.convertRowIndexToModel(paysTable.getSelectedRow()), 5);
             
             if(JOptionPane.showConfirmDialog(null, "Desea eliminar el Pago?",  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
                 payController.delete(idPay);
@@ -159,61 +163,47 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         JPanel infoPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         infoPanel.add(new JLabel("Pago #:")); infoPanel.add(new JLabel(String.valueOf(payment.getPaymentId())));
         infoPanel.add(new JLabel("Fecha:")); infoPanel.add(new JLabel(payment.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
-        infoPanel.add(new JLabel("Monto "+payment.getPaymentMethod()+":")); infoPanel.add(new JLabel(NumberFormatArg.format(payment.getPaymentAmount())));
-        //infoPanel.add(new JLabel("Metodo:")); infoPanel.add(new JLabel(payment.getPaymentMethod() != null ? payment.getPaymentMethod() : "-"));
+        infoPanel.add(new JLabel("Monto Total:")); infoPanel.add(new JLabel(NumberFormatArg.format(payment.getTotalAmount())));
         
         BigDecimal creditUsed = payment.getCreditUsed() != null ? payment.getCreditUsed() : BigDecimal.ZERO;
-        BigDecimal creditGen = payment.getCreditGenerated() != null && payment.getCreditGenerated().getAmount() != null 
-                ? payment.getCreditGenerated().getAmount() : BigDecimal.ZERO;
+        BigDecimal creditGen = payment.getCreditGenerated() != null ? payment.getCreditGenerated() : BigDecimal.ZERO;
         
         infoPanel.add(new JLabel("Credito Usado:")); infoPanel.add(new JLabel(NumberFormatArg.format(creditUsed)));
         infoPanel.add(new JLabel("Credito Generado:")); infoPanel.add(new JLabel(NumberFormatArg.format(creditGen)));
         
         panel.add(infoPanel, BorderLayout.NORTH);
         
-        JPanel allocationsPanel = new JPanel(new BorderLayout());
-        allocationsPanel.add(new JLabel("Asignaciones:"), BorderLayout.NORTH);
+        JPanel splitsPanel = new JPanel(new BorderLayout());
+        splitsPanel.add(new JLabel("Metodos de Pago:"), BorderLayout.NORTH);
         
-        Object[] allocColumns = {"Venta", "Total Venta", "Monto", "Tipo"};
-        DefaultTableModel allocModel = new DefaultTableModel(allocColumns, 0);
-        JTable allocTable = new JTable(allocModel);
-        allocTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                c.setHorizontalAlignment(SwingConstants.CENTER);
-                if ("Credito".equals(value)) {
-                    c.setForeground(new Color(200, 100, 0));
-                    c.setFont(c.getFont().deriveFont(Font.BOLD));
-                } else {
-                    c.setForeground(new Color(0, 100, 0));
-                }
-                return c;
-            }
-        });
+        Object[] splitColumns = {"Metodo", "Monto", "Referencia", "Ventas Cubiertas"};
+        DefaultTableModel splitModel = new DefaultTableModel(splitColumns, 0);
+        JTable splitTable = new JTable(splitModel);
         
-        BigDecimal totalAllocated = BigDecimal.ZERO;
-        if (payment.getAllocations() != null) {
-            for (AllocationInfo alloc : payment.getAllocations()) {
-                String tipo = Boolean.TRUE.equals(alloc.getIsCredit()) ? "Credito" : payment.getPaymentMethod();
-                allocModel.addRow(new Object[]{
-                    "Venta #" + alloc.getSaleId(),
-                    NumberFormatArg.format(alloc.getSaleTotal()),
-                    NumberFormatArg.format(alloc.getAmountApplied()),
-                    tipo
+        BigDecimal totalSplits = BigDecimal.ZERO;
+        if (payment.getSplits() != null) {
+            for (MultiPaymentResponse.PaymentSplitResponse split : payment.getSplits()) {
+                System.out.println(split.getSalesCovered());
+            	String ventasCubiertas = split.getSalesCovered() != null 
+                        ? String.join(", ", split.getSalesCovered()) : "-";
+                splitModel.addRow(new Object[]{
+                    split.getPaymentMethod(),
+                    NumberFormatArg.format(split.getAmount()),
+                    split.getReference() != null ? split.getReference() : "-",
+                    ventasCubiertas
                 });
-                totalAllocated = totalAllocated.add(alloc.getAmountApplied());
+                totalSplits = totalSplits.add(split.getAmount());
             }
         }
         
         JPanel totalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        totalPanel.add(new JLabel("Total Asignado: " + NumberFormatArg.format(totalAllocated)));
+        totalPanel.add(new JLabel("Total: " + NumberFormatArg.format(totalSplits)));
         
-        allocationsPanel.add(new JScrollPane(allocTable), BorderLayout.CENTER);
-        allocationsPanel.add(totalPanel, BorderLayout.SOUTH);
-        allocationsPanel.setPreferredSize(new Dimension(450, 150));
+        splitsPanel.add(new JScrollPane(splitTable), BorderLayout.CENTER);
+        splitsPanel.add(totalPanel, BorderLayout.SOUTH);
+        splitsPanel.setPreferredSize(new Dimension(450, 150));
         
-        panel.add(allocationsPanel, BorderLayout.CENTER);
+        panel.add(splitsPanel, BorderLayout.CENTER);
         
         JButton closeButton = new JButton("Cerrar");
         closeButton.addActionListener(e -> dialog.dispose());
@@ -233,11 +223,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         }
         
         MultiPaymentDialog dialog = new MultiPaymentDialog(null, customer);
-        MultiPaymentResponse result = dialog.showDialog();
-        
-        if (result != null) {
-            refresh();
-        }
+        dialog.setVisible(true);
+        refresh();
     }
     
     private void refreshFromDB() {
@@ -276,7 +263,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                     creditBalanceLabel.setText(" - Credito a Usar: " + NumberFormatArg.format(creditBalance));
                     creditBalanceLabel.setForeground(LightTheme.COLOR_GREEN_MONEY);
                     
-                    BigDecimal totalBalance = pendingData.getTotalPending().negate();// Saldo NEGATIVO si debe
+                    BigDecimal totalBalance = pendingData.getTotalPending().subtract(creditBalance).negate();// Saldo NEGATIVO si debe
                     
                     totalBalanceLabel.setText(" - Saldo Total: " + NumberFormatArg.format(totalBalance));
                     if(totalBalance.compareTo(BigDecimal.ZERO) < 0) 
@@ -309,10 +296,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 Object[] row = { 
                     sale.getDate(),
                     sale.getSaleNumber()!= null ? sale.getSaleNumber() : "Particular",
-                    NumberFormatArg.format(sale.getTotal()), 
+                    NumberFormatArg.format(sale.getRemainingDue()), 
                     sale.getCae() != null? sale.getCae(): "No hay cae, revisar si tiene factura",
-                    //NumberFormatArg.format(paid),
-                    //NumberFormatArg.format(saldo),
                     sale.getSaleId() 
                 };
                 saleTableModel.addRow(row);
@@ -330,18 +315,13 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 (pay.getDate().compareTo(dateRange[0]) >= 0 && pay.getDate().compareTo(dateRange[1]) <= 0);
             
             if (withinDate) {
-                BigDecimal creditUsed = pay.getCreditUsed() != null ? pay.getCreditUsed() : BigDecimal.ZERO;
-                BigDecimal creditGen = BigDecimal.ZERO;
-                if (pay.getCreditGenerated() != null && pay.getCreditGenerated().getAmount() != null) {
-                    creditGen = pay.getCreditGenerated().getAmount();
-                }
+                BigDecimal creditGen = pay.getCreditGenerated() != null ? pay.getCreditGenerated() : BigDecimal.ZERO;
                 
                 Object[] row = {
-                    pay.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                    NumberFormatArg.format(pay.getPaymentAmount()),
-                    NumberFormatArg.format(creditUsed),
+                    pay.getDate(),
+                    NumberFormatArg.format(pay.getTotalAmount()),
                     NumberFormatArg.format(creditGen),
-                    pay.getPaymentMethod() != null ? pay.getPaymentMethod() : "-",
+                    pay.getDescription() != null && !pay.getDescription().isEmpty() ? pay.getDescription() : "-",
                     "Ver >",
                     pay.getPaymentId()
                 };
@@ -423,17 +403,36 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return switch (column) {
+                    case 0 -> LocalDate.class;
+                    case 5 -> Long.class;
+                    default -> String.class;
+                };
+            }
         };
         paysTable = new JTable(paysTableModel);
         paysTable.setToolTipText("Click en 'Ver >' para ver detalle de asignaciones");
         paysTable.setShowGrid(true);
-        paysTable.getColumnModel().getColumn(6).setMaxWidth(0);
-        paysTable.getColumnModel().getColumn(6).setMinWidth(0);
-        paysTable.getColumnModel().getColumn(6).setPreferredWidth(0);
+        paysTable.getColumnModel().getColumn(5).setMaxWidth(0);
+        paysTable.getColumnModel().getColumn(5).setMinWidth(0);
+        paysTable.getColumnModel().getColumn(5).setPreferredWidth(0);
         setupClickableColumn();
         
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+        DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+            @Override
+            protected void setValue(Object value) {
+                if (value instanceof LocalDate) 
+                    value = ((LocalDate) value).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                super.setValue(value);
+            }
+        };
+        dateRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        paysTable.setDefaultRenderer(LocalDate.class, dateRenderer);
 
         paysTablePanel = new JPanel(new BorderLayout());
         paysTablePanel.add(new JScrollPane(paysTable), BorderLayout.CENTER);
@@ -449,7 +448,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     }
     private void setupClickableColumn() {
     	
-	     int linkColumnViewIndex = 5; 
+	 int linkColumnViewIndex = 4; 
 	
 	     paysTable.getColumnModel().getColumn(linkColumnViewIndex).setCellRenderer(new DefaultTableCellRenderer() {
 	         @Override
@@ -498,7 +497,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
 	             if (viewRow == -1 || viewCol != linkColumnViewIndex) return;
 	             int modelRow = paysTable.convertRowIndexToModel(viewRow);
 	
-	             Long payId = (Long) paysTableModel.getValueAt(modelRow, 6);
+	             Long payId = (Long) paysTableModel.getValueAt(modelRow, 5);
 	
 	             MultiPaymentResponse payment = paymentsList.stream()
 	                     .filter(p -> p.getPaymentId().equals(payId))
@@ -623,7 +622,29 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         if (obsText.isEmpty()) {
             paysSorter.setRowFilter(null);
         } else {
-            paysSorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(obsText), 1));
+            final String searchText = obsText.toLowerCase();
+            paysSorter.setRowFilter(new RowFilter<DefaultTableModel, Integer>() {
+                @Override
+                public boolean include(RowFilter.Entry<? extends DefaultTableModel, ? extends Integer> entry) {
+                    int modelRow = entry.getIdentifier();
+                    Long payId = (Long) paysTableModel.getValueAt(modelRow, 5);
+                    
+                    MultiPaymentResponse pay = paymentsList.stream()
+                        .filter(p -> p.getPaymentId().equals(payId))
+                        .findFirst().orElse(null);
+                    
+                    if (pay == null) return false;
+                    
+                    if (pay.getDescription() != null && pay.getDescription().toLowerCase().contains(searchText)) return true;
+                    
+                    if (pay.getSplits() != null) {
+                        for (MultiPaymentResponse.PaymentSplitResponse split : pay.getSplits()) {
+                            if (split.getReference() != null && split.getReference().toLowerCase().contains(searchText)) return true;
+                        }
+                    }
+                    return false;
+                }
+            });
         }
     }
     

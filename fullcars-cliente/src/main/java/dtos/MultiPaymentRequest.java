@@ -16,10 +16,21 @@ import lombok.NoArgsConstructor;
 public class MultiPaymentRequest {
 
     private Long customerId;
+    private List<Long> saleIds;
     private BigDecimal paymentAmount;
-    private String paymentMethod;
     private LocalDate date;
     private String notes;
-    private List<Long> saleIds;
     private Boolean useCredit;
+    private List<PaymentSplitRequest> splits;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class PaymentSplitRequest {
+        private String paymentMethod;
+        private BigDecimal amount;
+        private String reference;
+        private List<Long> saleIds;
+    }
 }

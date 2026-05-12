@@ -184,16 +184,16 @@ private static final long serialVersionUID = 1L;
 				setMessage(ioe.getMessage());
 			}
 		}
-		
+		public static record StockMovementDTO(Long id,Integer quantity,LocalDate date,String reference,String carPartSku,MovementType type) {}
 		private void loadTable() {		  
 	        if(!entries.isSelected() && !exits.isSelected())
 	        	setMessage("para buscar debe seleccionar minimo un Tipo (entrada o salida)");
 	        else{
 	        	sorter.setSortKeys(null);//resets column order
 	        	tableModel.setRowCount(0);
-	        	List<StockMovement> stockMovements = controller.getStockMovements(dpFilter.getSelectedDateRange(), entries.isSelected(), exits.isSelected());
-				for(StockMovement sm : stockMovements) {
-					Object[] row = {sm.getCarPart().getSku(), sm.getQuantity(), sm.getReference(), sm.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), sm.getType(), sm.getId()};
+	        	List<StockMovementDTO> stockMovements = controller.getStockMovements(dpFilter.getSelectedDateRange(), entries.isSelected(), exits.isSelected());
+				for(StockMovementDTO sm : stockMovements) {
+					Object[] row = {sm.carPartSku, sm.quantity, sm.reference, sm.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), sm.type, sm.id};
 					tableModel.addRow(row);
 				}
 	        }

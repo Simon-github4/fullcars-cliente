@@ -22,6 +22,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import views.StockMovementForm.StockMovementDTO;
 
 public class ClienteRestStockMovement {
 
@@ -34,7 +35,7 @@ public class ClienteRestStockMovement {
     	this.mapper.registerModule(new JavaTimeModule());
         this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
-	public List<StockMovement> getStockMovements() {
+	public List<StockMovementDTO> getStockMovements() {
 	    String uri = ADDRESS;
 
 	    Request request = new Request.Builder()
@@ -45,7 +46,7 @@ public class ClienteRestStockMovement {
 	    try (Response response = client.newCall(request).execute()) {
 	        if (response.isSuccessful() && response.body() != null) {
 	        	String json = response.body().string();
-	            return mapper.readValue(json, new TypeReference<List<StockMovement>>() {});
+	            return mapper.readValue(json, new TypeReference<List<StockMovementDTO>>() {});
 	        } else {
 	            System.err.println("Error HTTP: " + response.code());
 	            return new ArrayList<>();
@@ -56,7 +57,7 @@ public class ClienteRestStockMovement {
 	    }
 	}
 	
-	public List<StockMovement> getStockMovements(LocalDate start, LocalDate end) {
+	public List<StockMovementDTO> getStockMovements(LocalDate start, LocalDate end) {
 		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		HttpUrl url = HttpUrl.parse(ADDRESS).newBuilder()
                 .addQueryParameter("start", start.toString())
@@ -72,7 +73,7 @@ public class ClienteRestStockMovement {
 			if (!response.isSuccessful()) 
 				throw new IOException("Unexpected code " + response);
 			String jsonResponse = response.body().string();
-			return mapper.readValue(jsonResponse, new TypeReference<List<StockMovement>>() {
+			return mapper.readValue(jsonResponse, new TypeReference<List<StockMovementDTO>>() {
 			});
 		} catch (IOException e) {
 			e.printStackTrace();
