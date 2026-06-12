@@ -390,6 +390,16 @@ private static final long serialVersionUID = 1L;
 			setMessage("Error al facturar: "+e.getMessage());
 		}
 	}
+	private void notaCredito() {
+		try {
+			controller.notaCredito((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
+			loadSaleTable();
+		} catch (Exception e) {
+			e.printStackTrace();
+			setMessage("Error: "+e.getMessage());
+		}
+	}
+
 	private void verFactura() {
 		try {
 			controller.showFacturaData((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
@@ -437,6 +447,7 @@ private static final long serialVersionUID = 1L;
 		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta")
 		.addMenuItem("Abrir Remito de Venta", this::openRemito)
 		.addMenuItem("Facturar", this::facturar)
+		.addMenuItem("Nota de Crédito", this::notaCredito)
 		.addMenuItem("Ver Datos de la Factura",	this::verFactura);
 	}
 

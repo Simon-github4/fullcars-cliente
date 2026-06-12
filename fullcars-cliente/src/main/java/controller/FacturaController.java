@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Frame;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -18,9 +19,12 @@ import javax.swing.SwingWorker;
 
 import Utils.ServerException;
 import data.service.ClienteRestFactura;
+import model.client.entities.CreditNote;
 import model.client.entities.Factura;
 import views.transactions.DialogFactura;
 import views.transactions.DialogFacturaShowData;
+import views.transactions.DialogNotaCredito;
+import views.transactions.DialogNotaCreditoShowData;
 
 public class FacturaController {
 
@@ -78,6 +82,64 @@ public class FacturaController {
 
 		worker.execute();
 		loadingDialog.setVisible(true); // Esto bloquea la interacción hasta que se cierre en done()
+	}
+
+	public void emitirNotaCredito(Long saleId) throws Exception {
+		if (service.isNotaCreditoEmitida(saleId)) {
+			CreditNote nc = service.getNotaCreditoBySaleId(saleId);
+			if (nc != null) {
+				new DialogNotaCreditoShowData(null, nc);
+			} else {
+				JOptionPane.showMessageDialog(null, "No se encontraron los datos de la nota de credito.",
+						"Error", JOptionPane.ERROR_MESSAGE);
+			}
+			return;
+		}
+
+		Factura factura = service.getFacturaBySaleId(saleId);
+		if (factura == null)
+			throw new Exception("No se encontro la factura para esta venta.");
+
+		DialogNotaCredito dialogo = new DialogNotaCredito(null, factura.getImpTotal());
+		dialogo.setVisible(true);
+		BigDecimal monto = dialogo.getMonto();
+		if (monto == null)
+			return;
+
+		JDialog loadingDialog = crearDialogoCarga("Emitiendo Nota de Credito", "Generando comprobante en ARCA...");
+
+		SwingWorker<Path, Void> worker = new SwingWorker<>() {
+			@Override
+			protected Path doInBackground() throws Exception {
+				return service.emitirNotaCredito(saleId, monto);
+			}
+
+			@Override
+			protected void done() {
+				loadingDialog.dispose();
+				try {
+					Path tempFile = get();
+					if (Desktop.isDesktopSupported()) {
+						Desktop.getDesktop().open(tempFile.toFile());
+					} else {
+						JOptionPane.showMessageDialog(null, "Archivo guardado en: " + tempFile.toAbsolutePath());
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (ExecutionException e) {
+					Throwable causa = e.getCause();
+					JOptionPane.showMessageDialog(null, "Error al emitir nota de credito: " + causa.getMessage(),
+							"Error", JOptionPane.ERROR_MESSAGE);
+					causa.printStackTrace();
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(null, "No se pudo abrir el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
+					e.printStackTrace();
+				}
+			}
+		};
+
+		worker.execute();
+		loadingDialog.setVisible(true);
 	}
 
 	public void showFacturaData(Long saleId) throws Exception {
