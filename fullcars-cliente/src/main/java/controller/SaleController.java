@@ -23,10 +23,6 @@ public class SaleController {
 	public Sale getSale(Long id){
 		return serviceSale.getSale(id);
 	}
-	
-	public List<Sale> getSales(){
-		return serviceSale.getSales();
-	}
 
 	public List<Sale> getSales(Customer c, LocalDate[] dates, boolean showAll){
 		List<Sale> sales = serviceSale.getSales(dates, (c == null)?null: c.getId());

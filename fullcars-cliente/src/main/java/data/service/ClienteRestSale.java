@@ -42,27 +42,6 @@ public class ClienteRestSale {
     	this.mapper.registerModule(new JavaTimeModule());
         this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
-	public List<Sale> getSales() {
-	    String uri = ADDRESS;
-
-	    Request request = new Request.Builder()
-	            .url(uri)
-	            .get()
-	            .build();
-
-	    try (Response response = client.newCall(request).execute()) {
-	        if (response.isSuccessful() && response.body() != null) {
-	        	String json = response.body().string();
-	            return mapper.readValue(json, new TypeReference<List<Sale>>() {});
-	        } else {
-	            System.err.println("Error HTTP: " + response.code());
-	            return new ArrayList<>();
-	        }
-	    } catch (IOException e) {
-	        e.printStackTrace(); // Manejo de error de conexión o de lectura
-	        return new ArrayList<>();
-	    }
-	}
 	
 	public List<Sale> getSales(LocalDate[] dates, Long idCustomer) {
 		HttpUrl.Builder urlBuilder = HttpUrl.parse(ADDRESS + "/filters").newBuilder();
