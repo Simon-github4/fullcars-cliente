@@ -105,13 +105,14 @@ public class FacturaController {
 		BigDecimal monto = dialogo.getMonto();
 		if (monto == null)
 			return;
+		String motivo = dialogo.getMotivo();
 
 		JDialog loadingDialog = crearDialogoCarga("Emitiendo Nota de Credito", "Generando comprobante en ARCA...");
 
 		SwingWorker<Path, Void> worker = new SwingWorker<>() {
 			@Override
 			protected Path doInBackground() throws Exception {
-				return service.emitirNotaCredito(saleId, monto);
+				return service.emitirNotaCredito(saleId, monto, motivo);
 			}
 
 			@Override

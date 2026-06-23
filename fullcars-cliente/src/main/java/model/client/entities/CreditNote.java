@@ -7,26 +7,18 @@ public class CreditNote extends Comprobante {
 
 	private String comprobanteAsociadoToPDF;//comprobanteAsociado;
 
+	private String motivo;
+
 	public String getComprobanteAsociadoToPDF() {
 		return comprobanteAsociadoToPDF;
 	}
 
-    //private CustomerCredit customerCredit;
-    
-/*    public Factura getComprobanteAsociado() {
-        return comprobanteAsociado;
-    }
+	public String getMotivo() {
+		return motivo;
+	}
 
-    public void setComprobanteAsociado(Factura comprobanteAsociado) {
-        this.comprobanteAsociado = comprobanteAsociado;
-    }
-	
-	public CustomerCredit getCustomerCredit() {
-        return customerCredit;
-    }
-
-    public void setCustomerCredit(CustomerCredit customerCredit) {
-        this.customerCredit = customerCredit;
-    }*/
+	public void setMotivo(String motivo) {
+		this.motivo = motivo;
+	}
 
 }

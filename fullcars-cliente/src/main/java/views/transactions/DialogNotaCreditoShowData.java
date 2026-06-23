@@ -56,13 +56,19 @@ public class DialogNotaCreditoShowData extends JDialog {
         mainPanel.add(titleLabel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
+        String motivo = creditNote.getMotivo();
+        if (motivo == null || motivo.isEmpty()) {
+            motivo = creditNote.getObservaciones();
+        }
+
         mainPanel.add(createSectionPanel("Datos del Comprobante",
             "Número:", formatNumeroComprobante(),
             "Fecha Emisión:", formatDate(creditNote.getFechaEmision()),
             "CAE:", creditNote.getCae() != null ? creditNote.getCae() : "N/A",
             "Vto. CAE:", formatDate(creditNote.getVtoCae()),
             "Comprobante Asociado:", creditNote.getComprobanteAsociadoToPDF() != null ?
-            		creditNote.getComprobanteAsociadoToPDF() : "N/A"
+            		creditNote.getComprobanteAsociadoToPDF() : "N/A",
+            "Motivo:", motivo != null ? motivo : "N/A"
         ));
 
         mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));

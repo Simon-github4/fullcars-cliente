@@ -172,10 +172,11 @@ public class ClienteRestFactura {
 		}
 	}
 	
-	public Path emitirNotaCredito(Long SaleId, BigDecimal monto) throws ServerException {
+	public Path emitirNotaCredito(Long SaleId, BigDecimal monto, String motivo) throws ServerException {
 		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(ADDRESS + "/nota-credito/bySaleId")).newBuilder();
 		urlBuilder.addQueryParameter("SaleId", String.valueOf(SaleId));
 		urlBuilder.addQueryParameter("monto", monto.toPlainString());
+		urlBuilder.addQueryParameter("motivo", motivo);
 
 		String finalUrl = urlBuilder.build().toString();
 

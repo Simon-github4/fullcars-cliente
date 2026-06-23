@@ -23,7 +23,9 @@ import java.awt.Frame;
 public class DialogNotaCredito extends JDialog {
     private static final long serialVersionUID = 1L;
     private BigDecimal monto = null;
+    private String motivo = null;
     private JTextField montoField;
+    private JTextField motivoField;
     private BigDecimal totalFactura;
 
     private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
@@ -62,6 +64,17 @@ public class DialogNotaCredito extends JDialog {
         montoField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         montoField.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelOpciones.add(montoField);
+        panelOpciones.add(Box.createVerticalStrut(10));
+
+        JLabel lblMotivo = new JLabel("Motivo:");
+        lblMotivo.setFont(new Font("Arial", Font.PLAIN, 12));
+        lblMotivo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelOpciones.add(lblMotivo);
+
+        motivoField = new JTextField(15);
+        motivoField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        motivoField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelOpciones.add(motivoField);
 
         add(panelOpciones, BorderLayout.CENTER);
 
@@ -102,7 +115,17 @@ public class DialogNotaCredito extends JDialog {
                         "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            String motivoIngresado = motivoField.getText().trim();
+            if (motivoIngresado.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Debe ingresar un motivo.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             this.monto = montoIngresado;
+            this.motivo = motivoIngresado;
             dispose();
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this,
@@ -118,5 +141,9 @@ public class DialogNotaCredito extends JDialog {
 
     public BigDecimal getMonto() {
         return monto;
+    }
+
+    public String getMotivo() {
+        return motivo;
     }
 }
