@@ -35,6 +35,7 @@ import Utils.NumberFormatArg;
 import controller.StatisticsController;
 import dtos.SalesData;
 import dtos.StatisticsGeneralDTO;
+import dtos.StatisticsGeneralDTO.RecentSaleDTO;
 import dtos.TopProductDTO;
 import interfaces.Refreshable;
 import model.client.entities.CarPart;
@@ -316,13 +317,13 @@ public class AutopartsDashboard extends JPanel implements Refreshable {
         monthlyBarChartPanel.repaint();
     }
 
-    private void loadRecentSalesTable(List<Sale> recentSales) {
+    private void loadRecentSalesTable(List<RecentSaleDTO> recentSales) {
         String[] columns = {"Cliente", "Nro. Venta", "Total", "Fecha"};
         Object[][] data = new Object[recentSales.size()][columns.length];
 
         for (int i = 0; i < recentSales.size(); i++) {
-            Sale s = recentSales.get(i);
-            data[i][0] = s.getCustomer().getFullName();
+        	RecentSaleDTO s = recentSales.get(i);
+            data[i][0] = s.getCustomerName();
             data[i][1] = s.getId();
             data[i][2] = NumberFormatArg.format(s.getTotal());
             data[i][3] = (s.getDate());

@@ -1,8 +1,10 @@
 package dtos;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import model.client.entities.CarPart;
 import model.client.entities.Purchase;
@@ -15,7 +17,7 @@ public class StatisticsGeneralDTO {
 	private BigDecimal totalToCharge;
 	private List<SalesData> salesData;
 	private List<Purchase> purchases;
-	private List<Sale> recentSales;
+	private List<RecentSaleDTO> recentSales;
 	private List<TopProductDTO> topProducts;
 	private List<CarPart> criticalStock;
 	
@@ -28,7 +30,7 @@ public class StatisticsGeneralDTO {
 	}
 
 	public StatisticsGeneralDTO(long itemsRegistered, BigDecimal totalToCharge, List<SalesData> salesData,
-			List<Purchase> purchases, List<Sale> recentSales, List<TopProductDTO> topProducts, List<CarPart> criticalStock,
+			List<Purchase> purchases, List<RecentSaleDTO> recentSales, List<TopProductDTO> topProducts, List<CarPart> criticalStock,
 			List<Long> purchasesNotPayed) {
 		super();
 		this.itemsRegistered = itemsRegistered;
@@ -41,5 +43,12 @@ public class StatisticsGeneralDTO {
 		this.purchasesNotPayed = purchasesNotPayed;
 	}
 
+	@Getter
+	public static class RecentSaleDTO {
 
+	    private String customerName;
+	    private String id;
+	    private BigDecimal total;
+	    private LocalDate date;
+	}
 }
