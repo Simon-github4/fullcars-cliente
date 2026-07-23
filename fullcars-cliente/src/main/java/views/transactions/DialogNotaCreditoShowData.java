@@ -2,6 +2,7 @@ package views.transactions;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -9,6 +10,7 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -19,13 +21,17 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 
+import Utils.ServerException;
+import data.service.ClienteRestFactura;
 import enums.TiposComprobante;
 import model.client.entities.CreditNote;
-import model.client.entities.Factura;
 
 public class DialogNotaCreditoShowData extends JDialog {
 
@@ -33,10 +39,14 @@ public class DialogNotaCreditoShowData extends JDialog {
     private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
 
     private CreditNote creditNote;
+    private ClienteRestFactura clienteRestFactura;
+    private Long saleId;
 
-    public DialogNotaCreditoShowData(Frame parent, CreditNote factura) {
+    public DialogNotaCreditoShowData(Frame parent, CreditNote factura, ClienteRestFactura clienteRestFactura, Long saleId) {
         super(parent, "Detalle de Nota de Credito", true);
         this.creditNote = factura;
+        this.clienteRestFactura = clienteRestFactura;
+        this.saleId = saleId;
         initComponents();
         setVisible(true);
     }
@@ -50,7 +60,7 @@ public class DialogNotaCreditoShowData extends JDialog {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JLabel titleLabel = new JLabel("NOTA DE CREDITO " + getTipoComprobanteStr());
+        JLabel titleLabel = new JLabel(getTipoComprobanteStr());
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(titleLabel);
@@ -110,9 +120,14 @@ public class DialogNotaCreditoShowData extends JDialog {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
 
+        JButton downloadButton = new JButton("Ver Nota de Credito");
+        downloadButton.setIcon(UIManager.getIcon("FileView.fileIcon"));
+        downloadButton.addActionListener(e -> descargarNotaCredito());
+
         JButton closeButton = new JButton("Cerrar");
         closeButton.addActionListener(e -> dispose());
 
+        buttonPanel.add(downloadButton);
         buttonPanel.add(closeButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
@@ -171,5 +186,34 @@ public class DialogNotaCreditoShowData extends JDialog {
 
     private String formatCurrency(java.math.BigDecimal amount) {
         return amount != null ? CURRENCY_FORMAT.format(amount) : "$0,00";
+    }
+
+    private void descargarNotaCredito() {
+        SwingWorker<Path, Void> worker = new SwingWorker<Path, Void>() {
+            @Override
+            protected Path doInBackground() throws Exception {
+                return clienteRestFactura.getAndOpenNotaCreditoPdf(saleId);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Path tempFile = get();
+                    Desktop.getDesktop().open(tempFile.toFile());
+                } catch (Exception ex) {
+                    String mensaje = ex.getCause() instanceof ServerException
+                        ? ex.getCause().getMessage()
+                        : "Error al abrir el archivo: " + ex.getMessage();
+
+                    JOptionPane.showMessageDialog(DialogNotaCreditoShowData.this,
+                        mensaje,
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            }
+        };
+
+        worker.execute();
     }
 }

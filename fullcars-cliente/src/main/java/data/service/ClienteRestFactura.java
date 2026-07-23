@@ -84,28 +84,6 @@ public class ClienteRestFactura {
 		}
 	}
 
-	/*public List<Factura> getComprobantesBySaleId(Long saleId) {
-		String uri = ADDRESS + "/comprobantesBySaleId/" + URLEncoder.encode(saleId.toString(), StandardCharsets.UTF_8);
-
-		Request request = new Request.Builder()
-				.url(uri)
-				.get()
-				.build();
-
-		try (Response response = client.newCall(request).execute()) {
-			if (response.isSuccessful() && response.body() != null) {
-				String json = response.body().string();
-				return mapper.readValue(json, new TypeReference<List<Factura>>() {});
-			} else {
-				System.err.println("Error HTTP: " + response.code());
-				return List.of();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			return List.of();
-		}
-	}
-*/
 	public Path facturar(Long saleId, Integer tipoComprobante) throws ServerException {
 		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(ADDRESS + "/emitir")).newBuilder();
 	    urlBuilder.addQueryParameter("idVenta", String.valueOf(saleId));
@@ -171,7 +149,35 @@ public class ClienteRestFactura {
 			throw new ServerException("No se pudo obtener el PDF de la Factura");
 		}
 	}
-	
+
+	public Path getAndOpenNotaCreditoPdf(Long saleId) throws ServerException {
+		Request request = new Request.Builder().url(ADDRESS + "/getNotaCreditoPdfBySaleId/" + saleId.toString()).build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				System.err.println("Error al descargar archivo: " + response.code() + " - " + response.message());
+				throw new ServerException(response.body() != null ? response.body().string() : "No se pudo obtener el PDF de la Nota de Credito");
+			}
+
+			String disposition = response.header("Content-Disposition");
+			String fileName = "archivo_descargado";
+			if (disposition != null && disposition.contains("filename=")) {
+				fileName = disposition.split("filename=")[1].replace("\"", "");
+			}
+
+			Path tempFile = Files.createTempFile("NC_", "_" + fileName);
+			try (InputStream in = response.body().byteStream(); OutputStream out = Files.newOutputStream(tempFile)) {
+				in.transferTo(out);
+			}
+
+			return tempFile;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new ServerException("No se pudo obtener el PDF de la Nota de Credito");
+		}
+	}
+
 	public Path emitirNotaCredito(Long SaleId, BigDecimal monto, String motivo) throws ServerException {
 		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(ADDRESS + "/nota-credito/bySaleId")).newBuilder();
 		urlBuilder.addQueryParameter("SaleId", String.valueOf(SaleId));

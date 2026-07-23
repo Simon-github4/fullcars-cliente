@@ -88,7 +88,7 @@ public class FacturaController {
 		if (service.isNotaCreditoEmitida(saleId)) {
 			CreditNote nc = service.getNotaCreditoBySaleId(saleId);
 			if (nc != null) {
-				new DialogNotaCreditoShowData(null, nc);
+				new DialogNotaCreditoShowData(null, nc, service, saleId);
 			} else {
 				JOptionPane.showMessageDialog(null, "No se encontraron los datos de la nota de credito.",
 						"Error", JOptionPane.ERROR_MESSAGE);
