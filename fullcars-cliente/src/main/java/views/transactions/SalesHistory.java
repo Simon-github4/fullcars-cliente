@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.lang.NullPointerException;
 
 import javax.swing.AbstractAction;
@@ -29,6 +30,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
@@ -79,7 +81,7 @@ private static final long serialVersionUID = 1L;
 	private JTextField totalTextField = new JTextField("", 10);
 
     private final AutocompleteField<Customer> fieldCustomers = new AutocompleteField<Customer>();
-	private JTextField idSearchTextField = new JTextField("", 5);
+	private JTextField saleNumberSearchTextField = new JTextField("", 5);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));
@@ -141,28 +143,12 @@ private static final long serialVersionUID = 1L;
 	private void loadSaleTable() {
 		saleTableModel.setRowCount(0);
 		detailsTableModel.setRowCount(0);
-		sorter.setSortKeys(null);// resets column order
+		sorter.setSortKeys(null);
+		sorter.setRowFilter(null);
 		
-		salesList = new ArrayList<>();//controller.getSales(customerComboBox.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
 		BigDecimal totalSold = BigDecimal.ZERO;
 		
-		String nroVentaText = idSearchTextField.getText().trim();
-
-		if (!nroVentaText.isEmpty()) 
-			try {
-				Sale s = controller.getSale(Long.parseLong(nroVentaText));
-				if(s == null)
-					throw new NullPointerException();
-				if(!hidenCheckBox.isSelected() && s.getFactura() == null)
-					throw new NullPointerException();					
-				salesList.add(s);
-			} catch (NumberFormatException ex) {
-				setMessage("El número de venta no es válido");
-			}catch (NullPointerException ex) {
-				setMessage("No se encontro la venta: "+ nroVentaText);
-			}
-		 else 
-			 salesList = controller.getSales(fieldCustomers.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
+		salesList = controller.getSales(fieldCustomers.getSelectedItem(), dpFilter.getSelectedDateRange(), hidenCheckBox.isSelected());
 		
 		for (Sale s : salesList) {
 			totalSold = totalSold.add(s.getTotal());
@@ -172,6 +158,7 @@ private static final long serialVersionUID = 1L;
 			saleTableModel.addRow(row);
 		}
 		totalTextField.setText(NumberFormatArg.format(totalSold));
+		applySaleNumberFilter();
 	}
 	private void loadDetailsTable(Long idSale) {
 		int i = 0;
@@ -212,7 +199,7 @@ private static final long serialVersionUID = 1L;
 		JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filterPanel.add(new JLabel("          ", JLabel.RIGHT));
 		filterPanel.add(new JLabel("Nro Venta: ", JLabel.RIGHT));
-		filterPanel.add(idSearchTextField);
+		filterPanel.add(saleNumberSearchTextField);
 		filterPanel.add(new JLabel("Cliente ", JLabel.RIGHT));
 		filterPanel.add(fieldCustomers);
 		filterPanel.add(new JLabel("Desde/Hasta ", JLabel.RIGHT));
@@ -220,7 +207,7 @@ private static final long serialVersionUID = 1L;
 		filterPanel.add(new JLabel("  Total Vendido", JLabel.RIGHT));
 		filterPanel.add(totalTextField);		
 		dateSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-		idSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+		saleNumberSearchTextField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 		filterPanel.add(searchButton);
 		filterPanel.add(hidenCheckBox);
 		LightTheme.aplicarEstiloPrimario(searchButton);
@@ -357,7 +344,7 @@ private static final long serialVersionUID = 1L;
 		detailsTableModel.setRowCount(0);
 		fieldCustomers.clearSelection();
 		dpFilter.clearSelectedDate();
-		idSearchTextField.setText("");
+		saleNumberSearchTextField.setText("");
 		totalTextField.setText("");
 		
 		messageLabel.setText("");
@@ -431,16 +418,26 @@ private static final long serialVersionUID = 1L;
 					filtroTimer = new Timer(300, evt ->{
 						dpFilter.clearSelectedDate();
 						fieldCustomers.clearSelection();
-						dateSearchTextField.setEnabled(idSearchTextField.getText().isBlank());
-						fieldCustomers.setEnabled(idSearchTextField.getText().isBlank());
-						loadSaleTable();
+						dateSearchTextField.setEnabled(saleNumberSearchTextField.getText().isBlank());
+						fieldCustomers.setEnabled(saleNumberSearchTextField.getText().isBlank());
+						applySaleNumberFilter();
 					});
 					filtroTimer.setRepeats(false); 
 					filtroTimer.start();
 				}
 			}
 		};
-		idSearchTextField.getDocument().addDocumentListener(debounceListener);
+		saleNumberSearchTextField.getDocument().addDocumentListener(debounceListener);
+	}
+
+	private void applySaleNumberFilter() {
+		String nroVentaText = saleNumberSearchTextField.getText().trim();
+		if (!nroVentaText.isEmpty()) {
+			sorter.setRowFilter(RowFilter.regexFilter(
+				"(?i)^" + Pattern.quote(nroVentaText), 2));
+		} else {
+			sorter.setRowFilter(null);
+		}
 	}
 
 	private void createJPopupMenu() {
