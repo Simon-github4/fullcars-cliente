@@ -26,5 +26,5 @@ public class StockMovement {
     //Uno de los dos va a ser null
     private SaleDetail saleDetail;
     private PurchaseDetail purchaseDetail;
-    
+
 }

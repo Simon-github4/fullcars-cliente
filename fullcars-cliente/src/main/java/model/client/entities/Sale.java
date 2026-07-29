@@ -30,17 +30,16 @@ public class Sale {
     private Factura factura;
     private List<SaleDetail> details;
     
-    //private char type;
+    private BigDecimal total;
+    private BigDecimal totalReturned;
     
     public BigDecimal getTotal() {
-    	if(factura != null)
-    		return factura.getImpTotal();
-    	
-    	BigDecimal total = BigDecimal.ZERO;
+    	if (total != null) return total;
+    	if (factura != null) return factura.getImpTotal();
+    	BigDecimal totalCalc = BigDecimal.ZERO;
     	for (SaleDetail d : details) 
-    	    total = total.add(d.getSubTotal());
-    	
-    	return total.setScale(2, RoundingMode.HALF_UP);
+    	    totalCalc = totalCalc.add(d.getSubTotal());
+    	return totalCalc.setScale(2, RoundingMode.HALF_UP);
     }
 }
 

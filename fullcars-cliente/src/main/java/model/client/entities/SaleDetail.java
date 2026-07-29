@@ -18,6 +18,8 @@ public class SaleDetail extends Detail{
 
     private String printedDescription;
 
+    private int quantityReturned;
+
 	public SaleDetail(Integer quantity, BigDecimal unitPrice, CarPart product) {
 		super(quantity, unitPrice, product);
 		this.printedDescription = null;

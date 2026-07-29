@@ -49,7 +49,9 @@ import Utils.Icons;
 import Utils.NumberFormatArg;
 import Utils.ServerException;
 import controller.CustomerController;
+import controller.DevolucionController;
 import controller.SaleController;
+import dtos.DevolucionRequest;
 import interfaces.Refreshable;
 import model.client.entities.Customer;
 import model.client.entities.Sale;
@@ -75,13 +77,13 @@ private static final long serialVersionUID = 1L;
 	private DefaultTableModel detailsTableModel;
 	
 	private JPanel saleTablePanel;
-	private static final Object[] SALE_COLUMNS = {"Fecha", "Cliente", "Nro. Siniestro", "Total", "Nro. Venta" };
+	private static final Object[] SALE_COLUMNS = {"Fecha", "Cliente", "Nro. Siniestro", "Total", "Devuelto", "Nro. Venta" };
 	private JTable saleTable;
 	private DefaultTableModel saleTableModel;
 	private JTextField totalTextField = new JTextField("", 10);
 
     private final AutocompleteField<Customer> fieldCustomers = new AutocompleteField<Customer>();
-	private JTextField saleNumberSearchTextField = new JTextField("", 5);
+	private JTextField saleNumberSearchTextField = new JTextField("", 9);
 	private JFormattedTextField dateSearchTextField = new JFormattedTextField();
 	private DatePicker dpFilter = new DatePickerS();
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18, 18));
@@ -152,9 +154,10 @@ private static final long serialVersionUID = 1L;
 		
 		for (Sale s : salesList) {
 			totalSold = totalSold.add(s.getTotal());
+			BigDecimal devuelto = s.getTotalReturned() != null ? s.getTotalReturned() : BigDecimal.ZERO;
 			Object[] row = {s.getDate(), s.getCustomer(), 
 						   (s.getSaleNumber()==null || s.getSaleNumber().isBlank())?"Particular":s.getSaleNumber()
-							, NumberFormatArg.format(s.getTotal()), s.getId() };
+							, NumberFormatArg.format(s.getTotal()), NumberFormatArg.format(devuelto), s.getId() };
 			saleTableModel.addRow(row);
 		}
 		totalTextField.setText(NumberFormatArg.format(totalSold));
@@ -167,7 +170,7 @@ private static final long serialVersionUID = 1L;
 		while(sale.getId() != idSale) 
 			sale = salesList.get(++i);
     	for(SaleDetail d : sale.getDetails()) {
-    		Object[] row = {d.getCarPart().getSku(), d.getQuantity(), NumberFormatArg.format(d.getUnitPrice()),  NumberFormatArg.format(d.getSubTotal()), d.getId()};
+    		Object[] row = {d.getCarPart().getSku(), d.getQuantity() - d.getQuantityReturned(), NumberFormatArg.format(d.getUnitPrice()),  NumberFormatArg.format(d.getSubTotal()), d.getId()};
     		detailsTableModel.addRow(row);
     	}
 	}
@@ -198,7 +201,7 @@ private static final long serialVersionUID = 1L;
 
 		JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filterPanel.add(new JLabel("          ", JLabel.RIGHT));
-		filterPanel.add(new JLabel("Nro Venta: ", JLabel.RIGHT));
+		filterPanel.add(new JLabel("Nro Siniestro:", JLabel.RIGHT));
 		filterPanel.add(saleNumberSearchTextField);
 		filterPanel.add(new JLabel("Cliente ", JLabel.RIGHT));
 		filterPanel.add(fieldCustomers);
@@ -292,6 +295,8 @@ private static final long serialVersionUID = 1L;
 				case 3:
 					return Long.class;
 				case 4:
+					return Long.class;
+				case 5:
 					return Long.class;	
 				default:
 					return Object.class;
@@ -396,6 +401,64 @@ private static final long serialVersionUID = 1L;
 			setMessage("Error : "+e.getMessage());
 		}
 	}
+
+	private void devolver() {
+		try {
+			int modelRow = saleTable.convertRowIndexToModel(saleTable.getSelectedRow());
+			Long idSale = (Long) saleTableModel.getValueAt(modelRow, saleTable.getColumnCount() - 1);
+
+			Sale sale = salesList.stream().filter(s -> s.getId().equals(idSale)).findFirst().orElse(null);
+			if (sale == null) {
+				setMessage("No se encontró la venta");
+				return;
+			}
+
+			if (sale.isAnulada()) {
+				setMessage("No se puede devolver una venta anulada");
+				return;
+			}
+
+			BigDecimal total = sale.getTotal() != null ? sale.getTotal() : BigDecimal.ZERO;
+			BigDecimal devuelto = sale.getTotalReturned() != null ? sale.getTotalReturned() : BigDecimal.ZERO;
+			if (total.compareTo(devuelto) <= 0) {
+				setMessage("Esta venta ya fue devuelta en su totalidad");
+				return;
+			}
+
+			DialogDevolucion dialog = new DialogDevolucion(
+				(javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this), sale);
+			dialog.setVisible(true);
+
+			DevolucionRequest request = dialog.getResult();
+			if (request == null) return;
+
+			DevolucionController devolucionController = new DevolucionController();
+			devolucionController.devolver(request);
+
+			BigDecimal montoAcreditado = request.getMonto() != null ? request.getMonto() :BigDecimal.ZERO;
+			if (request.getDetalles() != null && !request.getDetalles().isEmpty()) {
+				for (SaleDetail d : sale.getDetails()) {
+					for (dtos.DevolucionRequest.DevolucionDetailRequest det : request.getDetalles()) {
+						if (d.getId().equals(det.getSaleDetailId())) {
+							montoAcreditado = montoAcreditado.add(
+								d.getUnitPrice().multiply(BigDecimal.valueOf(det.getCantidadDevuelta())));
+						}
+					}
+				}
+			}
+
+			JOptionPane.showMessageDialog(this,
+				"Devolución procesada. Monto acreditado: " + NumberFormatArg.format(montoAcreditado),
+				"Éxito", JOptionPane.INFORMATION_MESSAGE);
+			loadSaleTable();
+		} catch (ServerException e) {
+			e.printStackTrace();
+			setMessage(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
+			setMessage("Error de conexión: " + e.getMessage());
+		}
+	}
 	
 	private void setupDocumentListeners() {
 		DocumentListener debounceListener = new DocumentListener() {
@@ -445,6 +508,7 @@ private static final long serialVersionUID = 1L;
 		.addMenuItem("Abrir Remito de Venta", this::openRemito)
 		.addMenuItem("Facturar", this::facturar)
 		.addMenuItem("Nota de Crédito", this::notaCredito)
+		.addMenuItem("Devolver", this::devolver)
 		.addMenuItem("Ver Datos de la Factura",	this::verFactura);
 	}
 
