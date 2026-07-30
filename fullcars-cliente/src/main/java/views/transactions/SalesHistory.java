@@ -384,8 +384,7 @@ private static final long serialVersionUID = 1L;
 	}
 	private void notaCredito() {
 		try {
-			controller.notaCredito((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
-			loadSaleTable();
+			controller.showNotaCreditoData((Long) saleTableModel.getValueAt(saleTable.convertRowIndexToModel(saleTable.getSelectedRow()), saleTable.getColumnModel().getColumnCount()-1));
 		} catch (Exception e) {
 			e.printStackTrace();
 			setMessage("Error: "+e.getMessage());
@@ -450,6 +449,9 @@ private static final long serialVersionUID = 1L;
 			JOptionPane.showMessageDialog(this,
 				"Devolución procesada. Monto acreditado: " + NumberFormatArg.format(montoAcreditado),
 				"Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+			loadSaleTable();
+
 			loadSaleTable();
 		} catch (ServerException e) {
 			e.printStackTrace();
@@ -507,9 +509,9 @@ private static final long serialVersionUID = 1L;
 		new JPopupMenuModifyDelete(saleTable, this::delete, "Eliminar Venta")
 		.addMenuItem("Abrir Remito de Venta", this::openRemito)
 		.addMenuItem("Facturar", this::facturar)
-		.addMenuItem("Nota de Crédito", this::notaCredito)
+		.addMenuItem("Ver Datos de la Factura",	this::verFactura)
 		.addMenuItem("Devolver", this::devolver)
-		.addMenuItem("Ver Datos de la Factura",	this::verFactura);
+		.addMenuItem("Ver Nota de Crédito", this::notaCredito);
 	}
 
 	@Override

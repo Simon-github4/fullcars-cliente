@@ -85,11 +85,11 @@ public class SaleController {
 		serviceFactura.facturar(saleId);
 	}
 
-	public void notaCredito(Long idSale) throws Exception {
-		serviceFactura.emitirNotaCredito(idSale);
-	}
-
 	public void showFacturaData(Long saleId) throws Exception {
 		serviceFactura.showFacturaData(saleId);
+	}
+
+	public void showNotaCreditoData(Long saleId) throws Exception {
+		serviceFactura.showNotaCreditoData(saleId);
 	}
 }

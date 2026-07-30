@@ -16,6 +16,7 @@ public class DevolucionRequest {
 
     private Long saleId;
     private String motivo;
+    private Boolean emitirCAE;
     private BigDecimal monto;
     private List<DevolucionDetailRequest> detalles;
     

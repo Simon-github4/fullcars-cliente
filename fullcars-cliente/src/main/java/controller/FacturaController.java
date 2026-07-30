@@ -84,7 +84,7 @@ public class FacturaController {
 		loadingDialog.setVisible(true); // Esto bloquea la interacción hasta que se cierre en done()
 	}
 
-	public void emitirNotaCredito(Long saleId) throws Exception {
+	/*public void emitirNotaCredito(Long saleId) throws Exception {
 		if (service.isNotaCreditoEmitida(saleId)) {
 			CreditNote nc = service.getNotaCreditoBySaleId(saleId);
 			if (nc != null) {
@@ -141,12 +141,28 @@ public class FacturaController {
 
 		worker.execute();
 		loadingDialog.setVisible(true);
-	}
+	}*/
 
 	public void showFacturaData(Long saleId) throws Exception {
 		
 		new DialogFacturaShowData(null, service, saleId);
 		
+	}
+
+	public void showNotaCreditoData(Long saleId) throws Exception {
+		if (service.isNotaCreditoEmitida(saleId)) {
+			CreditNote nc = service.getNotaCreditoBySaleId(saleId);
+			if (nc != null) {
+				new DialogNotaCreditoShowData(null, nc, service, saleId);
+			} else {
+				JOptionPane.showMessageDialog(null, "No se encontraron los datos de la nota de crédito.",
+						"Error", JOptionPane.ERROR_MESSAGE);
+			}
+		} else {
+			JOptionPane.showMessageDialog(null,
+					"Esta venta no tiene una Nota de Crédito emitida.",
+					"Información", JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	private JDialog crearDialogoCarga(String titulo, String mensaje) {

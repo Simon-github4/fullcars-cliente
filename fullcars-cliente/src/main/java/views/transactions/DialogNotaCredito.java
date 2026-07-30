@@ -19,7 +19,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FlowLayout;
 import java.awt.Frame;
-
+@Deprecated
 public class DialogNotaCredito extends JDialog {
     private static final long serialVersionUID = 1L;
     private BigDecimal monto = null;

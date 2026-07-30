@@ -18,6 +18,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -57,6 +58,7 @@ public class DialogDevolucion extends JDialog {
 	private JTable articulosTable;
 	private JTextField montoDirectoField;
 	private JTextField motivoField;
+	private JCheckBox emitirCAECheckBox;
 
 	private BigDecimal disponible;
 
@@ -191,6 +193,11 @@ public class DialogDevolucion extends JDialog {
 		motivoPanel.add(motivoField);
 		bottomPanel.add(motivoPanel);
 
+		JPanel caePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		emitirCAECheckBox = new JCheckBox("Emitir Nota de Crédito electrónica (CAE)");
+		caePanel.add(emitirCAECheckBox);
+		bottomPanel.add(caePanel);
+
 		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		JButton btnConfirmar = new JButton("Confirmar");
 		JButton btnCancelar = new JButton("Cancelar");
@@ -239,6 +246,7 @@ public class DialogDevolucion extends JDialog {
 			result = DevolucionRequest.builder()
 				.saleId(sale.getId())
 				.motivo(motivo)
+				.emitirCAE(emitirCAECheckBox.isSelected() ? true : null)
 				.detalles(detalles)
 				.build();
 		} else {
@@ -252,11 +260,12 @@ public class DialogDevolucion extends JDialog {
 					JOptionPane.showMessageDialog(this, "El monto no puede exceder " + CURRENCY_FORMAT.format(disponible), "Error", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				result = DevolucionRequest.builder()
-					.saleId(sale.getId())
-					.motivo(motivo)
-					.monto(monto)
-					.build();
+			result = DevolucionRequest.builder()
+				.saleId(sale.getId())
+				.motivo(motivo)
+				.emitirCAE(emitirCAECheckBox.isSelected() ? true : null)
+				.monto(monto)
+				.build();
 			} catch (NumberFormatException e) {
 				JOptionPane.showMessageDialog(this, "Ingrese un monto válido.", "Error", JOptionPane.ERROR_MESSAGE);
 				return;
