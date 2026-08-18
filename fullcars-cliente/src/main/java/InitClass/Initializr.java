@@ -24,8 +24,8 @@ public class Initializr {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				//LightTheme.setup();
-				//new LoginView();
-				Initializr.launch(new User("walterlucas", "fullcontra", Role.ADMIN));
+				new LoginView();
+				//Initializr.launch(new User("walterlucas", "fullcontra", Role.ADMIN));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

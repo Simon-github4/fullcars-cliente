@@ -43,7 +43,12 @@ public class ClienteRestDevolucion {
 		try (Response response = client.newCall(httpRequest).execute()) {
 			if (response.isSuccessful() && response.body() != null) {
 				String responseJson = response.body().string();
-				return mapper.readTree(responseJson);
+				try {
+					return mapper.readTree(responseJson);
+				} catch (Exception e) {
+					System.err.println("No se pudo parsear la respuesta de la devolución: " + e.getMessage());
+					return mapper.createObjectNode().put("id", 0);
+				}
 			} else {
 				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
 				throw new ServerException(errorBody);

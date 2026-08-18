@@ -216,6 +216,9 @@ public class DialogDevolucion extends JDialog {
 	}
 
 	private void confirmar() {
+		if (articulosTable.getCellEditor() != null)
+			articulosTable.getCellEditor().stopCellEditing();
+
 		String motivo = motivoField.getText().trim();
 		if (motivo.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Debe ingresar un motivo.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -346,6 +349,13 @@ public class DialogDevolucion extends JDialog {
 		@Override
 		public boolean isCellEditable(int rowIndex, int columnIndex) {
 			return columnIndex == 5;
+		}
+
+		@Override
+		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+			if (columnIndex == 5 && aValue instanceof Integer) {
+				setCantidadDevolver(rowIndex, (Integer) aValue);
+			}
 		}
 
 		public void setCantidadDevolver(int row, int value) {

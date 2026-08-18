@@ -124,10 +124,14 @@ public class DialogNotaCreditoShowData extends JDialog {
         downloadButton.setIcon(UIManager.getIcon("FileView.fileIcon"));
         downloadButton.addActionListener(e -> descargarNotaCredito());
 
+        JButton anularNCButton = new JButton("Anular Nota de Crédito");
+        anularNCButton.addActionListener(e -> anularNotaCredito());
+
         JButton closeButton = new JButton("Cerrar");
         closeButton.addActionListener(e -> dispose());
 
         buttonPanel.add(downloadButton);
+        buttonPanel.add(anularNCButton);
         buttonPanel.add(closeButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
@@ -204,6 +208,35 @@ public class DialogNotaCreditoShowData extends JDialog {
                     String mensaje = ex.getCause() instanceof ServerException
                         ? ex.getCause().getMessage()
                         : "Error al abrir el archivo: " + ex.getMessage();
+
+                    JOptionPane.showMessageDialog(DialogNotaCreditoShowData.this,
+                        mensaje,
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            }
+        };
+
+        worker.execute();
+    }
+
+    private void anularNotaCredito() {
+        SwingWorker<Path, Void> worker = new SwingWorker<Path, Void>() {
+            @Override
+            protected Path doInBackground() throws Exception {
+                return clienteRestFactura.anularNotaCredito(creditNote.getId());
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Path tempFile = get();
+                    Desktop.getDesktop().open(tempFile.toFile());
+                } catch (Exception ex) {
+                    String mensaje = ex.getCause() instanceof ServerException
+                        ? ex.getCause().getMessage()
+                        : "Error al anular nota de crédito: " + ex.getMessage();
 
                     JOptionPane.showMessageDialog(DialogNotaCreditoShowData.this,
                         mensaje,

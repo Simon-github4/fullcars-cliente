@@ -216,6 +216,41 @@ public class ClienteRestFactura {
 		}
 	}
 
+	public Path anularNotaCredito(Long creditNoteId) throws ServerException {
+		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(ADDRESS + "/anular-nota-credito")).newBuilder();
+		urlBuilder.addQueryParameter("creditNoteId", String.valueOf(creditNoteId));
+
+		String finalUrl = urlBuilder.build().toString();
+
+		Request request = new Request.Builder()
+				.url(finalUrl)
+				.post(RequestBody.create("", MediaType.parse("application/x-www-form-urlencoded")))
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new ServerException(response.body() != null ? response.body().string() : "No se pudo anular la nota de credito");
+			}
+
+			String disposition = response.header("Content-Disposition");
+			String fileName = "archivo_descargado";
+			if (disposition != null && disposition.contains("filename=")) {
+				fileName = disposition.split("filename=")[1].replace("\"", "");
+			}
+
+			Path tempFile = Files.createTempFile("AnulacionNC_", "_" + fileName);
+			try (InputStream in = response.body().byteStream(); OutputStream out = Files.newOutputStream(tempFile)) {
+				in.transferTo(out);
+			}
+
+			return tempFile;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new ServerException(e.getMessage());
+		}
+	}
+
 	public boolean isNotaCreditoEmitida(Long SaleId) throws ServerException {
 		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(ADDRESS + "/isNotaCreditoEmitida")).newBuilder();
 		urlBuilder.addQueryParameter("SaleId", String.valueOf(SaleId));

@@ -30,8 +30,10 @@ public class Sale {
     private Factura factura;
     private List<SaleDetail> details;
     
-    private BigDecimal total;
-    private BigDecimal totalReturned;
+    @Builder.Default
+    private BigDecimal total = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal totalReturned = BigDecimal.ZERO;
     
     public BigDecimal getTotal() {
     	if (total != null) return total;
