@@ -72,12 +72,12 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
 
     private final CustomerController controller;
     private final PayController payController;
-    private final SaleController saleController;
+    //private final SaleController saleController;
     private final ClienteRestPayments restPayments;
     
     private PendingSalesResponse pendingData;
     private List<MultiPaymentResponse> paymentsList = new ArrayList<>();
-    private Map<Long, BigDecimal> salePaidMap = new HashMap<>();
+    //private Map<Long, BigDecimal> salePaidMap = new HashMap<>();
     
     private JLabel customerInfoLabel = new JLabel("", JLabel.CENTER);
     private JLabel creditBalanceLabel = new JLabel(" - Credito a Usar: $0.00", JLabel.CENTER);
@@ -88,7 +88,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     private DefaultTableModel paysTableModel;
     
     private JPanel saleTablePanel;
-    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro", "Pendiente", "CAE", "Nro. Venta"};
+    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro","Total", "Pendiente", "CAE", "Nro. Venta"};
     private JTable saleTable;
     private DefaultTableModel saleTableModel;
 
@@ -112,7 +112,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     public CustomerSummaryHistory(CustomerController controller, PayController payController, SaleController saleController) {
         this.controller = controller;
         this.payController = payController;
-        this.saleController = saleController;
+        //this.saleController = saleController;
         this.restPayments = new ClienteRestPayments();
         
         setLayout(new BorderLayout(0, 0));
@@ -179,10 +179,10 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 pendingData = restPayments.getPendingSales(customerId);
                 paymentsList = restPayments.getPaymentsByCustomer(customerId);
                 
-                salePaidMap.clear();
+                /*salePaidMap.clear();
                 for (SalePendingInfo sale : pendingData.getSales()) {
                     salePaidMap.put(sale.getSaleId(), sale.getTotalPaid());
-                }
+                }*/
                 return null;
             }
             
@@ -226,12 +226,13 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                sale.getDate().compareTo(dpFilter.getSelectedDateRange()[0]) >= 0 && 
                sale.getDate().compareTo(dpFilter.getSelectedDateRange()[1]) <= 0) {
                 
-                BigDecimal paid = salePaidMap.getOrDefault(sale.getSaleId(), BigDecimal.ZERO);
-                BigDecimal saldo = paid.subtract(sale.getTotal()).setScale(2, RoundingMode.HALF_UP);
+                //BigDecimal paid = salePaidMap.getOrDefault(sale.getSaleId(), BigDecimal.ZERO);
+                //BigDecimal saldo = paid.subtract(sale.getTotal()).setScale(2, RoundingMode.HALF_UP);
                 
                 Object[] row = { 
                     sale.getDate(),
                     sale.getSaleNumber()!= null ? sale.getSaleNumber() : "Particular",
+                    NumberFormatArg.format(sale.getTotal()),
                     NumberFormatArg.format(sale.getRemainingDue()), 
                     sale.getCae() != null? sale.getCae(): "No hay cae, revisar si tiene factura",
                     sale.getSaleId() 
@@ -460,7 +461,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 case 1: return String.class;
                 case 2: return String.class;
                 case 3: return String.class;
-                case 4: return Long.class;   
+                case 4: return String.class;
+                case 5: return Long.class;   
                 default: return Object.class;
                 }
             }
@@ -534,7 +536,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         idSearchTextField.setText("");
         observationSearchTextField.setText("");
         customerInfoLabel.setText("");
-        salePaidMap.clear();
+        //salePaidMap.clear();
         
         messageLabel.setText("");
         messageLabel.setOpaque(false);
