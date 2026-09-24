@@ -17,6 +17,7 @@ public class MultiPaymentResponse {
 
     private Long paymentId;
     private Long customerId;
+    private String customerName;
     private BigDecimal totalAmount;
     private BigDecimal creditUsed;
     private BigDecimal creditGenerated;

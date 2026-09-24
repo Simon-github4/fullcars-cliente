@@ -26,4 +26,8 @@ public class PayController {
 		return payService.createMultiPayment(request);
 	}
 
+	public List<MultiPaymentResponse> searchPayments(String query) throws ServerException, IOException {
+		return payService.searchPayments(query);
+	}
+
 }

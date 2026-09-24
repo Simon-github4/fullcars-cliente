@@ -1,6 +1,8 @@
 package data.service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,6 +128,29 @@ public class ClienteRestPayments {
 		}
 	}
 	
+	public List<MultiPaymentResponse> searchPayments(String query) throws ServerException, IOException {
+		String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
+		Request request = new Request.Builder()
+	            .url(ADDRESS + "/search?q=" + encoded)
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, new TypeReference<List<MultiPaymentResponse>>() {});
+	        } else {
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to search payments. Code: " + response.code());
+	            System.err.println("Response: " + errorBody);
+	            throw new ServerException(errorBody);
+	        }
+	    } catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo buscar los pagos, falla en conexion a servidor");
+		}
+	}
+
 	public MultiPaymentResponse getPaymentDetail(Long payId) throws ServerException, IOException {
 		Request request = new Request.Builder()
 	            .url(ADDRESS + "/" + payId + "/detail")

@@ -25,6 +25,7 @@ import views.BrandForm;
 import views.CategoryForm;
 import views.CustomerForm;
 import views.CustomerSummaryHistory;
+import views.PaymentGlobalSearch;
 import views.ProviderForm;
 import views.StockMovementForm;
 import views.carpart.CarPartForm;
@@ -66,7 +67,13 @@ public class FormFactory {
 	
 		    JPanel saldoClientesPanel = new CustomerSummaryHistory(CUSTOMER_CONTROLLER, PAY_CONTROLLER, SALE_CONTROLLER);
 		    tabbedPane.addTab("Saldo y Pagos", saldoClientesPanel);
-	
+
+		    JPanel paymentSearchPanel = new PaymentGlobalSearch(PAY_CONTROLLER, customerId -> {
+		        CUSTOMER_CONTROLLER.setCustomerSelectedId(customerId);
+		        tabbedPane.setSelectedIndex(1); // "Saldo y Pagos"
+		    });
+		    tabbedPane.addTab("Buscar Pagos", paymentSearchPanel);
+
 		    tabbedPane.addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
