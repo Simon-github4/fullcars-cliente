@@ -20,7 +20,8 @@ public class PendingSalesResponse {
     private BigDecimal totalPending;
     private BigDecimal creditBalance;
     private List<SalePendingInfo> sales;
-    
+    private List<CreditInfo> credits;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

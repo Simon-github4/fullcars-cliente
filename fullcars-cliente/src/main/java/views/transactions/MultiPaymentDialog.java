@@ -14,6 +14,7 @@ import java.awt.Toolkit;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +32,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
@@ -39,10 +39,10 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import controller.PayController;
+import dtos.CreditInfo;
 import dtos.MultiPaymentRequest;
 import dtos.MultiPaymentRequest.PaymentSplitRequest;
 import dtos.MultiPaymentResponse;
-import dtos.MultiPaymentResponse.PaymentSplitResponse;
 import dtos.PendingSalesResponse;
 import dtos.PendingSalesResponse.SalePendingInfo;
 import model.client.entities.Customer;
@@ -61,7 +61,10 @@ public class MultiPaymentDialog extends JDialog {
     private SplitsTableModel splitsTableModel;
 
     private JLabel creditBalanceLabel;
-    private JCheckBox useCreditCheck;
+    private JPanel creditsPanel;
+    private JTable creditsTable;
+    private CreditsTableModel creditsTableModel;
+    private JCheckBox selectAllCreditsCheck;
     private JCheckBox selectAllCheck;
     private JLabel totalSelectedLabel;
     private JLabel totalSplitsLabel;
@@ -102,7 +105,7 @@ public class MultiPaymentDialog extends JDialog {
         creditBalanceLabel = new JLabel("$0,00", JLabel.RIGHT);
         creditBalanceLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
-        useCreditCheck = new JCheckBox("Usar credito a favor");
+        selectAllCreditsCheck = new JCheckBox("Usar todos");
         selectAllCheck = new JCheckBox("Seleccionar todas");
 
         totalSelectedLabel = new JLabel("Total ventas: $0,00");
@@ -119,6 +122,22 @@ public class MultiPaymentDialog extends JDialog {
         salesTable = new JTable(salesTableModel);
         salesTable.setRowHeight(25);
         salesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        salesTable.setDefaultRenderer(LocalDate.class, new DefaultTableCellRenderer() {
+            @Override
+            protected void setValue(Object value) {
+                super.setValue(value instanceof LocalDate ? ((LocalDate) value).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : value);
+            }
+        });
+
+        creditsTableModel = new CreditsTableModel();
+        creditsTable = new JTable(creditsTableModel);
+        creditsTable.setRowHeight(25);
+        creditsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        creditsTable.getColumnModel().getColumn(0).setMaxWidth(45);
+        creditsTable.getColumnModel().getColumn(1).setMinWidth(100);   // "dd/MM/yyyy" entero
+        creditsTable.getColumnModel().getColumn(1).setMaxWidth(110);
+        creditsTable.getColumnModel().getColumn(2).setPreferredWidth(170);
+        creditsTable.getColumnModel().getColumn(3).setPreferredWidth(140);
 
         splitsTableModel = new SplitsTableModel();
         splitsTable = new JTable(splitsTableModel);
@@ -177,12 +196,35 @@ public class MultiPaymentDialog extends JDialog {
         splitBtns.add(addSplitButton);
         splitBtns.add(removeSplitButton);
         splitsPanel.add(splitBtns, BorderLayout.NORTH);
-        splitsPanel.add(new JScrollPane(splitsTable), BorderLayout.CENTER);
-        
-        JPanel splitsBottom = new JPanel(new GridLayout(3, 1));
+        creditsPanel = new JPanel(new BorderLayout());
+        creditsPanel.setBorder(BorderFactory.createTitledBorder("Creditos a favor (tildar los que se usan)"));
+        creditsPanel.add(selectAllCreditsCheck, BorderLayout.NORTH);
+        creditsPanel.add(new JScrollPane(creditsTable), BorderLayout.CENTER);
+        creditsPanel.setVisible(false); // solo se muestra si el cliente tiene creditos disponibles
+
+        // Alto repartido 40% metodos de pago / 60% creditos (alto preferido 0: lo decide solo el peso).
+        // Si el cliente no tiene creditos, el panel oculto no ocupa lugar y los metodos usan todo el alto.
+        JScrollPane splitsScroll = new JScrollPane(splitsTable);
+        splitsScroll.setPreferredSize(new Dimension(0, 0));
+        creditsPanel.setPreferredSize(new Dimension(0, 0));
+
+        JPanel splitsCenter = new JPanel(new GridBagLayout());
+        GridBagConstraints sc = new GridBagConstraints();
+        sc.gridx = 0;
+        sc.fill = GridBagConstraints.BOTH;
+        sc.weightx = 1;
+        sc.gridy = 0;
+        sc.weighty = 0.4;
+        splitsCenter.add(splitsScroll, sc);
+        sc.gridy = 1;
+        sc.weighty = 0.6;
+        sc.insets = new Insets(8, 0, 0, 0);
+        splitsCenter.add(creditsPanel, sc);
+        splitsPanel.add(splitsCenter, BorderLayout.CENTER);
+
+        JPanel splitsBottom = new JPanel(new GridLayout(2, 1));
         splitsBottom.add(totalSplitsLabel);
         splitsBottom.add(diffLabel);
-        splitsBottom.add(useCreditCheck);
         splitsPanel.add(splitsBottom, BorderLayout.SOUTH);
         center.add(splitsPanel);
         
@@ -234,7 +276,11 @@ public class MultiPaymentDialog extends JDialog {
 
         salesTableModel.addTableModelListener(e -> updateTotals());
         splitsTableModel.addTableModelListener(e -> updateTotals());
-        useCreditCheck.addActionListener(e -> updateTotals());
+        selectAllCreditsCheck.addActionListener(e -> {
+            creditsTableModel.selectAll(selectAllCreditsCheck.isSelected());
+            updateTotals();
+        });
+        creditsTableModel.setOnSelectionChanged(this::updateTotals);
 
         addSplitButton.addActionListener(e -> {
             splitsTableModel.addRow();
@@ -265,10 +311,10 @@ public class MultiPaymentDialog extends JDialog {
                     if (pendingData != null && pendingData.getSales() != null) {
                         salesTableModel.setData(pendingData.getSales());
                         creditBalanceLabel.setText(format(pendingData.getCreditBalance()));
-                        useCreditCheck.setEnabled(pendingData.getCreditBalance().compareTo(BigDecimal.ZERO) > 0);
-                        if (pendingData.getCreditBalance().compareTo(BigDecimal.ZERO) > 0) {
-                            useCreditCheck.setSelected(true);
-                        }
+                        List<CreditInfo> credits = pendingData.getCredits() != null
+                                ? pendingData.getCredits() : new ArrayList<>();
+                        creditsTableModel.setData(credits);
+                        creditsPanel.setVisible(!credits.isEmpty());
                         splitsTableModel.addRow();
                         updateTotals();
                     }
@@ -283,13 +329,7 @@ public class MultiPaymentDialog extends JDialog {
         BigDecimal totalSales = salesTableModel.getTotalSelected();
         BigDecimal totalSplits = splitsTableModel.getTotalAmount();
 
-        BigDecimal creditToUse = BigDecimal.ZERO;
-        if (useCreditCheck.isSelected() && pendingData != null) {
-            BigDecimal falta = totalSales.subtract(totalSplits);
-            if (falta.compareTo(BigDecimal.ZERO) > 0) {
-                creditToUse = pendingData.getCreditBalance().min(falta);
-            }
-        }
+        BigDecimal creditToUse = creditsTableModel.allocate(totalSales.subtract(totalSplits));
 
         BigDecimal totalConCredito = totalSplits.add(creditToUse);
         BigDecimal diff = totalSales.subtract(totalConCredito);
@@ -321,17 +361,23 @@ public class MultiPaymentDialog extends JDialog {
         }
 
         List<PaymentSplitRequest> splits = splitsTableModel.getValidSplits();
-        if (!useCreditCheck.isSelected() && splits.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Agrega al menos un metodo de pago con monto mayor a 0", "Atencion", JOptionPane.WARNING_MESSAGE);
+        List<Long> creditIds = creditsTableModel.getSelectedIds();
+        if (creditIds.isEmpty() && splits.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Agrega al menos un metodo de pago con monto mayor a 0, o tilda un credito a favor", "Atencion", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         BigDecimal totalSales = salesTableModel.getTotalSelected();
         BigDecimal totalSplits = splitsTableModel.getTotalAmount();
+        BigDecimal creditToUse = creditsTableModel.allocate(totalSales.subtract(totalSplits));
+        BigDecimal totalCubierto = totalSplits.add(creditToUse);
 
-        if (!useCreditCheck.isSelected() && totalSplits.compareTo(totalSales) < 0) {
-            int opcion = JOptionPane.showConfirmDialog(this, 
-                "El total de pagos (" + format(totalSplits) + ") es menor que la deuda (" + format(totalSales) + ").\nSe aplicara como pago parcial. ¿Continuar?",
+        if (totalCubierto.compareTo(totalSales) < 0) {
+            String detalle = creditToUse.compareTo(BigDecimal.ZERO) > 0
+                    ? "El total de pagos + credito (" + format(totalCubierto) + ")"
+                    : "El total de pagos (" + format(totalSplits) + ")";
+            int opcion = JOptionPane.showConfirmDialog(this,
+                detalle + " es menor que la deuda (" + format(totalSales) + ").\nSe aplicara como pago parcial. ¿Continuar?",
                 "Pago parcial", JOptionPane.YES_NO_OPTION);
             if (opcion != JOptionPane.YES_OPTION) return;
         }
@@ -341,9 +387,11 @@ public class MultiPaymentDialog extends JDialog {
                 .saleIds(selectedIds)
                 .date(datePicker.getSelectedDate())
                 .notes(descriptionField.getText())
-                .useCredit(useCreditCheck.isSelected())
+                .creditIds(creditIds.isEmpty() ? null : creditIds)
                 .splits(splits)
                 .build();
+
+        List<SalePendingInfo> selectedSales = salesTableModel.getSelectedSales();
 
         confirmButton.setEnabled(false);
         new SwingWorker<MultiPaymentResponse, Void>() {
@@ -354,7 +402,7 @@ public class MultiPaymentDialog extends JDialog {
                 confirmButton.setEnabled(true);
                 try {
                     result = get();
-                    showResult(result);
+                    showResult(result, selectedSales, totalSales);
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(MultiPaymentDialog.this, "Error procesando pago: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -362,8 +410,8 @@ public class MultiPaymentDialog extends JDialog {
         }.execute();
     }
 
-    private void showResult(MultiPaymentResponse resp) {
-        new PaymentResultDialog(this, resp).setVisible(true);
+    private void showResult(MultiPaymentResponse resp, List<SalePendingInfo> paidSales, BigDecimal debtBeforePayment) {
+        new PaymentResultDialog(this, resp, customer.getFullName(), paidSales, debtBeforePayment).setVisible(true);
     }
 
     public MultiPaymentResponse showDialog() {
@@ -400,6 +448,14 @@ public class MultiPaymentDialog extends JDialog {
             return ids;
         }
 
+        public List<SalePendingInfo> getSelectedSales() {
+            List<SalePendingInfo> result = new ArrayList<>();
+            for (int i = 0; i < sales.size(); i++) {
+                if (selected[i]) result.add(sales.get(i));
+            }
+            return result;
+        }
+
         public int getSelectedCount() {
             int count = 0;
             for (boolean b : selected) if (b) count++;
@@ -433,12 +489,107 @@ public class MultiPaymentDialog extends JDialog {
             };
         }
 
-        @Override public Class<?> getColumnClass(int c) { return c == 0 ? Boolean.class : Object.class; }
+        @Override public Class<?> getColumnClass(int c) {
+            return switch (c) {
+                case 0 -> Boolean.class;
+                case 2 -> LocalDate.class; // se muestra dd/MM/yyyy con el renderer de salesTable
+                default -> Object.class;
+            };
+        }
         @Override public boolean isCellEditable(int r, int c) { return c == 0; }
 
         @Override public void setValueAt(Object v, int r, int c) {
             if (c == 0) selected[r] = (Boolean) v;
             fireTableDataChanged();
+        }
+    }
+
+    /**
+     * Creditos a favor del cliente (devoluciones, saldos por excedente). Se tildan los que se usan;
+     * "A usar" muestra cuanto se consumira de cada uno (mas viejo primero, sin pasar de lo que falta cubrir).
+     */
+    class CreditsTableModel extends AbstractTableModel {
+        private final String[] cols = {"Sel", "Fecha", "Tipo", "Comprobante", "Disponible", "A usar"};
+        private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        private List<CreditInfo> credits = new ArrayList<>();
+        private boolean[] selected = new boolean[0];
+        private BigDecimal[] toUse = new BigDecimal[0];
+        private Runnable onSelectionChanged = () -> {};
+
+        public void setData(List<CreditInfo> data) {
+            this.credits = data;
+            this.selected = new boolean[data.size()];
+            this.toUse = new BigDecimal[data.size()];
+            java.util.Arrays.fill(toUse, BigDecimal.ZERO);
+            fireTableDataChanged();
+        }
+
+        public void setOnSelectionChanged(Runnable r) {
+            this.onSelectionChanged = r;
+        }
+
+        public void selectAll(boolean value) {
+            for (int i = 0; i < selected.length; i++) selected[i] = value;
+            fireTableDataChanged();
+        }
+
+        public List<Long> getSelectedIds() {
+            List<Long> ids = new ArrayList<>();
+            for (int i = 0; i < credits.size(); i++) {
+                if (selected[i]) ids.add(credits.get(i).getCreditId());
+            }
+            return ids;
+        }
+
+        /** Reparte "falta" entre los creditos tildados (en orden) y devuelve el total a usar. */
+        public BigDecimal allocate(BigDecimal falta) {
+            BigDecimal left = falta.max(BigDecimal.ZERO);
+            BigDecimal total = BigDecimal.ZERO;
+            for (int i = 0; i < credits.size(); i++) {
+                BigDecimal use = BigDecimal.ZERO;
+                if (selected[i] && left.compareTo(BigDecimal.ZERO) > 0) {
+                    use = credits.get(i).getRemaining().min(left);
+                    left = left.subtract(use);
+                    total = total.add(use);
+                }
+                toUse[i] = use;
+            }
+            if (!credits.isEmpty()) fireTableDataChanged();
+            return total;
+        }
+
+        @Override public int getRowCount() { return credits.size(); }
+        @Override public int getColumnCount() { return cols.length; }
+        @Override public String getColumnName(int c) { return cols[c]; }
+
+        @Override public Object getValueAt(int r, int c) {
+            CreditInfo cr = credits.get(r);
+            return switch (c) {
+                case 0 -> selected[r];
+                case 1 -> cr.getDate() != null ? cr.getDate().format(dateFormat) : "";
+                case 2 -> cr.getLabel(); // "N/C" o "Excedente de Pago#{id}", igual que en el resumen del cliente
+                case 3 -> comprobante(cr);
+                case 4 -> format(cr.getRemaining());
+                case 5 -> toUse[r].compareTo(BigDecimal.ZERO) > 0 ? format(toUse[r]) : "-";
+                default -> null;
+            };
+        }
+
+        /** Distingue entre varias N/C: numero de la N/C si se reporto a ARCA, "Sin CAE (interna)" si no. */
+        private String comprobante(CreditInfo cr) {
+            if (cr.getNroNotaCredito() != null) return cr.getNroNotaCredito();
+            if (CreditInfo.TYPE_DEVOLUCION_INTERNA.equals(cr.getType())) return "Sin CAE (interna)";
+            return "-";
+        }
+
+        @Override public Class<?> getColumnClass(int c) { return c == 0 ? Boolean.class : Object.class; }
+        @Override public boolean isCellEditable(int r, int c) { return c == 0; }
+
+        @Override public void setValueAt(Object v, int r, int c) {
+            if (c == 0) {
+                selected[r] = (Boolean) v;
+                onSelectionChanged.run();
+            }
         }
     }
 
@@ -550,62 +701,4 @@ public class MultiPaymentDialog extends JDialog {
         }
     }
 
-    class PaymentResultDialog extends JDialog {
-
-        PaymentResultDialog(JDialog parent, MultiPaymentResponse resp) {
-            super(parent, "Pago Exitoso", true);
-
-            JTextArea textArea = new JTextArea();
-            textArea.setEditable(false);
-            textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 13));
-            textArea.setText(buildResultText(resp));
-            textArea.setCaretPosition(0);
-            textArea.setMargin(new Insets(10, 10, 10, 10));
-
-            JButton okButton = new JButton("Aceptar");
-            okButton.addActionListener(e -> {
-                parent.dispose();
-                dispose();
-            });
-
-            JPanel main = new JPanel(new BorderLayout(10, 10));
-            main.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-            main.add(new JScrollPane(textArea), BorderLayout.CENTER);
-
-            JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-            btnPanel.add(okButton);
-            main.add(btnPanel, BorderLayout.SOUTH);
-
-            setContentPane(main);
-            setSize(700, 550);
-            setLocationRelativeTo(parent);
-        }
-
-        private String buildResultText(MultiPaymentResponse resp) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Pago #").append(resp.getPaymentId())
-              .append(" - ").append(format(resp.getTotalAmount())).append("\n\n");
-            sb.append("Detalle por metodo:\n");
-            for (PaymentSplitResponse split : resp.getSplits()) {
-                sb.append("  ").append(split.getPaymentMethod())
-                  .append(": ").append(format(split.getAmount()));
-                if (split.getReference() != null && !split.getReference().isEmpty()) {
-                    sb.append(" (Ref: ").append(split.getReference()).append(")");
-                }
-                if (split.getSalesCovered() != null && !split.getSalesCovered().isEmpty()) {
-                    sb.append(" -> Ventas: ").append(String.join(", ", split.getSalesCovered()));
-                }
-                sb.append("\n");
-            }
-            if (resp.getCreditUsed().compareTo(BigDecimal.ZERO) > 0) {
-                sb.append("\nCredito usado: ").append(format(resp.getCreditUsed())).append("\n");
-            }
-            if (resp.getCreditGenerated().compareTo(BigDecimal.ZERO) > 0) {
-                sb.append("\nCredito generado: ").append(format(resp.getCreditGenerated())).append("\n");
-            }
-            sb.append("\nNuevo saldo credito: ").append(format(resp.getCustomerCreditBalance()));
-            sb.append("\n\n").append(resp.getSummary());
-            return sb.toString();
-        }
-    }
 }

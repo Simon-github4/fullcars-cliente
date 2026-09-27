@@ -21,6 +21,7 @@ public class MultiPaymentRequest {
     private LocalDate date;
     private String notes;
     private Boolean useCredit;
+    private List<Long> creditIds;
     private List<PaymentSplitRequest> splits;
 
     @Data

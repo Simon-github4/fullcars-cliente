@@ -53,6 +53,7 @@ import controller.PayController;
 import controller.SaleController;
 import data.service.ClienteRestPayments;
 import dtos.AllocationInfo;
+import dtos.CreditInfo;
 import dtos.MultiPaymentResponse;
 import dtos.PendingSalesResponse;
 import dtos.PendingSalesResponse.SalePendingInfo;
@@ -88,7 +89,11 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     private DefaultTableModel paysTableModel;
     
     private JPanel saleTablePanel;
-    private static final Object[] SALE_COLUMNS = {"Fecha", "Nro siniestro","Total", "Pendiente", "CAE", "Nro. Venta"};
+    private static final Object[] SALE_COLUMNS = {"Fecha", "Tipo", "Nro siniestro","Total", "Pendiente", "CAE", "Nro. Venta"};
+    private static final int SALE_COL_TIPO = 1;
+    private static final int SALE_COL_TOTAL = 3;
+    private static final int SALE_COL_PENDIENTE = 4;
+    private static final String TIPO_VENTA = "Venta";
     private JTable saleTable;
     private DefaultTableModel saleTableModel;
 
@@ -131,6 +136,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         
         List<javax.swing.RowSorter.SortKey> paySortKeys = new ArrayList<>();
         paySortKeys.add(new javax.swing.RowSorter.SortKey(0, javax.swing.SortOrder.DESCENDING));
+        paySortKeys.add(new javax.swing.RowSorter.SortKey(5, javax.swing.SortOrder.DESCENDING)); // mismo dia: el pago mas nuevo (id) primero
         paysSorter.setSortKeys(paySortKeys);
         
         setupLiveFilterListeners();
@@ -217,32 +223,54 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         }.execute();
     }
     
+    private boolean isWithinSelectedRange(LocalDate date) {
+        LocalDate[] range = dpFilter.getSelectedDateRange();
+        return range == null || date == null || (date.compareTo(range[0]) >= 0 && date.compareTo(range[1]) <= 0);
+    }
+
     private void loadData() {
         saleTableModel.setRowCount(0);
-        sorter.setSortKeys(null);
-        
+        sorter.setSortKeys(List.of(new javax.swing.RowSorter.SortKey(0, javax.swing.SortOrder.DESCENDING)));
+
         for (dtos.PendingSalesResponse.SalePendingInfo sale : pendingData.getSales()) {
-            if(dpFilter.getSelectedDateRange() == null || 
-               sale.getDate().compareTo(dpFilter.getSelectedDateRange()[0]) >= 0 && 
-               sale.getDate().compareTo(dpFilter.getSelectedDateRange()[1]) <= 0) {
-                
+            if (isWithinSelectedRange(sale.getDate())) {
                 //BigDecimal paid = salePaidMap.getOrDefault(sale.getSaleId(), BigDecimal.ZERO);
                 //BigDecimal saldo = paid.subtract(sale.getTotal()).setScale(2, RoundingMode.HALF_UP);
-                
-                Object[] row = { 
+
+                Object[] row = {
                     sale.getDate(),
+                    TIPO_VENTA,
                     sale.getSaleNumber()!= null ? sale.getSaleNumber() : "Particular",
                     NumberFormatArg.format(sale.getTotal()),
-                    NumberFormatArg.format(sale.getRemainingDue()), 
+                    NumberFormatArg.format(sale.getRemainingDue()),
                     sale.getCae() != null? sale.getCae(): "No hay cae, revisar si tiene factura",
-                    sale.getSaleId() 
+                    sale.getSaleId()
+                };
+                saleTableModel.addRow(row);
+            }
+        }
+
+        // Creditos a favor aun sin usar (devoluciones y saldos por excedente): en negativo, como en un resumen de cuenta.
+        // Igual que en las ventas: Total = monto original del credito, Pendiente = lo que queda sin usar.
+        List<CreditInfo> credits = pendingData.getCredits() != null ? pendingData.getCredits() : new ArrayList<>();
+        for (CreditInfo credit : credits) {
+            if (isWithinSelectedRange(credit.getDate())) {
+                Object[] row = {
+                    credit.getDate(),
+                    credit.getLabel(), // "N/C" o "Excedente de Pago#{id}" (lo define el servidor)
+                    credit.getSaleNumber() != null ? credit.getSaleNumber() : (credit.getSaleId() != null ? "Particular" : "-"),
+                    NumberFormatArg.format(credit.getAmount().negate()),
+                    NumberFormatArg.format(credit.getRemaining().negate()),
+                    credit.getCae() != null ? credit.getCae()
+                            : (CreditInfo.TYPE_DEVOLUCION_INTERNA.equals(credit.getType()) ? "Sin CAE (interna)" : "-"),
+                    credit.getSaleId()
                 };
                 saleTableModel.addRow(row);
             }
         }
         loadPays();
     }
-    
+
     private void loadPays() {
         paysTableModel.setRowCount(0);
         
@@ -462,7 +490,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 case 2: return String.class;
                 case 3: return String.class;
                 case 4: return String.class;
-                case 5: return Long.class;   
+                case 5: return String.class;
+                case 6: return Long.class;
                 default: return Object.class;
                 }
             }
@@ -488,18 +517,33 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                 super.setValue(value);
             }
         };
-        dateRenderer.setHorizontalAlignment(SwingConstants.CENTER); 
+        dateRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         saleTable.setDefaultRenderer(LocalDate.class, dateRenderer);
-        
-        saleTable.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+        // El centerRenderer de arriba se asigna por columna y pisa al default por clase: la fecha lo necesita explicito.
+        // El modelo sigue guardando LocalDate, asi el orden por fecha es cronologico y no alfabetico.
+        saleTable.getColumnModel().getColumn(0).setCellRenderer(dateRenderer);
+
+        // Montos: los creditos a favor (filas que no son "Venta") van en rojo; el Total de las ventas en verde, como antes.
+        DefaultTableCellRenderer amountRenderer = new DefaultTableCellRenderer() {
             @Override
             public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 c.setHorizontalAlignment(SwingConstants.CENTER);
-                c.setForeground(new Color(0, 128, 0));
+                Object tipo = table.getModel().getValueAt(table.convertRowIndexToModel(row), SALE_COL_TIPO);
+                boolean isCredit = !TIPO_VENTA.equals(tipo);
+                if (isSelected)
+                    c.setForeground(table.getSelectionForeground());
+                else if (isCredit)
+                    c.setForeground(Color.RED);
+                else if (table.convertColumnIndexToModel(column) == SALE_COL_TOTAL)
+                    c.setForeground(new Color(0, 128, 0));
+                else
+                    c.setForeground(table.getForeground());
                 return c;
             }
-        });
+        };
+        saleTable.getColumnModel().getColumn(SALE_COL_TOTAL).setCellRenderer(amountRenderer);
+        saleTable.getColumnModel().getColumn(SALE_COL_PENDIENTE).setCellRenderer(amountRenderer);
         
         /*saleTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
@@ -524,7 +568,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         });*/
         
         saleTablePanel = new JPanel(new BorderLayout());
-        saleTablePanel.add(LightTheme.createSubTitle("Ventas Pendientes"), BorderLayout.NORTH);
+        saleTablePanel.add(LightTheme.createSubTitle("Ventas Pendientes y Creditos a Favor"), BorderLayout.NORTH);
         saleTablePanel.add(new JScrollPane(saleTable), BorderLayout.CENTER);
     }
 
