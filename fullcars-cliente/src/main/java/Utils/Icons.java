@@ -23,6 +23,7 @@ public enum Icons {
 	CALENDAR("calendario (3).png"),
 	EYE("ojo.png"),
 	EXCEL("excel.png"),
+	PDF("pdf.png"),
 	CAR("carpart.png"),
 	BRAND("brand.png"),
 	PROVIDER("provider.png"),

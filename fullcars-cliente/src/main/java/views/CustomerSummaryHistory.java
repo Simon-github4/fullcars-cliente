@@ -4,14 +4,17 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -19,10 +22,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -32,6 +37,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
+import javax.swing.RowSorter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
@@ -39,6 +45,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -47,6 +54,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 
 import Utils.Icons;
 import Utils.NumberFormatArg;
+import Utils.PdfResumenCuentaUtils;
 import Utils.ServerException;
 import controller.CustomerController;
 import controller.PayController;
@@ -96,6 +104,9 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     private static final String TIPO_VENTA = "Venta";
     private JTable saleTable;
     private DefaultTableModel saleTableModel;
+    /** Venta (SalePendingInfo) o credito (CreditInfo) de cada fila del modelo de saleTable, por indice. */
+    private final List<Object> saleRowSources = new ArrayList<>();
+    private Customer currentCustomer;
 
     private JTextField idSearchTextField = new JTextField("", 10);
     private JTextField observationSearchTextField = new JTextField("", 13);
@@ -103,6 +114,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
     private DatePicker dpFilter = new DatePickerS();
     private JButton refreshButton = new JButton("Actualizar Datos", Icons.REFRESH.create(18, 18));
     private JButton multiPayButton = new JButton("Pago Multiple", Icons.NEW.create(18, 18));
+    private JButton exportPdfButton = new JButton("Resumen", Icons.PDF.create(18, 18));
     //private JButton showAllButton = new JButton("Mostrar Todos", Icons.EYE.create());
 
     private TableRowSorter<DefaultTableModel> sorter;
@@ -176,28 +188,41 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
             JOptionPane.showMessageDialog(this, "Seleccione un Cliente de la pestana 'Clientes' para ver su balance");    
     }
     
+    /** Datos del cliente traidos del servidor en una sola carga. */
+    private record LoadedData(PendingSalesResponse pending, List<MultiPaymentResponse> payments, Customer customer) {}
+
     private void loadDataAsync() {
+        loadDataAsync(null, null);
+    }
+
+    /**
+     * Trae del servidor ventas pendientes, creditos, pagos y datos del cliente, y recien si todo salio bien los
+     * aplica a la pantalla y corre {@code onLoaded}. Si algo falla se avisa y la pantalla no queda a medio actualizar.
+     * {@code onFinished} corre siempre al terminar (bien o mal). Ambos corren en el EDT.
+     */
+    private void loadDataAsync(Runnable onLoaded, Runnable onFinished) {
         Long customerId = controller.getCustomerSelectedId();
-        
-        new SwingWorker<Void, Void>() {
+
+        new SwingWorker<LoadedData, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                pendingData = restPayments.getPendingSales(customerId);
-                paymentsList = restPayments.getPaymentsByCustomer(customerId);
-                
-                /*salePaidMap.clear();
-                for (SalePendingInfo sale : pendingData.getSales()) {
-                    salePaidMap.put(sale.getSaleId(), sale.getTotalPaid());
-                }*/
-                return null;
+            protected LoadedData doInBackground() throws Exception {
+                PendingSalesResponse pending = restPayments.getPendingSales(customerId);
+                List<MultiPaymentResponse> payments = restPayments.getPaymentsByCustomer(customerId);
+                Customer customer = controller.getCustomer(customerId);
+                if (customer == null) throw new IOException("No se pudieron obtener los datos del cliente");
+                return new LoadedData(pending, payments, customer);
             }
-            
+
             @Override
             protected void done() {
                 try {
+                    LoadedData data = get();
+                    pendingData = data.pending();
+                    paymentsList = data.payments();
                     loadData();
-                    
-                    Customer customer = controller.getCustomer(customerId);
+
+                    Customer customer = data.customer();
+                    currentCustomer = customer;
                     customerInfoLabel.setText(customer.getFullName() + " - Cuit: " + customer.getCuit());
                     
                     BigDecimal creditBalance = pendingData.getCreditBalance();
@@ -208,16 +233,20 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                     BigDecimal totalBalance = pendingData.getTotalPending().subtract(creditBalance).negate();// Saldo NEGATIVO si debe
                     
                     totalBalanceLabel.setText(" - Saldo Total: " + NumberFormatArg.format(totalBalance));
-                    if(totalBalance.compareTo(BigDecimal.ZERO) < 0) 
+                    if(totalBalance.compareTo(BigDecimal.ZERO) < 0)
                         totalBalanceLabel.setForeground(new Color(255, 0, 0));
-                    else 
+                    else
                         totalBalanceLabel.setForeground(LightTheme.COLOR_GREEN_MONEY);
-                        
+
+                    if (onLoaded != null) onLoaded.run();
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(CustomerSummaryHistory.this, 
-                            "Error al cargar datos: " + e.getMessage(),
+                    Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
+                    JOptionPane.showMessageDialog(CustomerSummaryHistory.this,
+                            "Error al cargar datos: " + cause.getMessage(),
                             "Error", JOptionPane.ERROR_MESSAGE);
                     e.printStackTrace();
+                } finally {
+                    if (onFinished != null) onFinished.run();
                 }
             }
         }.execute();
@@ -230,6 +259,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
 
     private void loadData() {
         saleTableModel.setRowCount(0);
+        saleRowSources.clear();
         sorter.setSortKeys(List.of(new javax.swing.RowSorter.SortKey(0, javax.swing.SortOrder.DESCENDING)));
 
         for (dtos.PendingSalesResponse.SalePendingInfo sale : pendingData.getSales()) {
@@ -247,6 +277,7 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                     sale.getSaleId()
                 };
                 saleTableModel.addRow(row);
+                saleRowSources.add(sale);
             }
         }
 
@@ -266,9 +297,74 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
                     credit.getSaleId()
                 };
                 saleTableModel.addRow(row);
+                saleRowSources.add(credit);
             }
         }
         loadPays();
+    }
+
+    /** Exporta a PDF lo que se ve en "Ventas Pendientes" (con filtros y en el orden de pantalla) y el balance. */
+    private void exportarResumenPdf() {
+        if (controller.getCustomerSelectedId() == null || currentCustomer == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un Cliente y espere a que carguen sus datos");
+            return;
+        }
+        // Antes de exportar se traen del servidor los datos mas recientes (manteniendo filtros y orden de pantalla).
+        exportPdfButton.setEnabled(false);
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>(sorter.getSortKeys());
+        loadDataAsync(() -> {
+            sorter.setSortKeys(sortKeys);
+            guardarResumenPdf();
+        }, () -> exportPdfButton.setEnabled(true));
+    }
+
+    private void guardarResumenPdf() {
+        byte[] pdf;
+        try {
+            pdf = generarResumenPdf();
+        } catch (IOException e) {
+            setMessage("No se pudo generar el PDF: " + e.getMessage());
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Guardar resumen de cuenta");
+        File downloads = new File(System.getProperty("user.home"), "Downloads");
+        chooser.setCurrentDirectory(downloads);
+        String cliente = currentCustomer.getFullName().trim().replaceAll("[^\\p{L}\\p{N}]+", "_");
+        chooser.setSelectedFile(new File(downloads, "Resumen_" + cliente + "_" + LocalDate.now() + ".pdf"));
+        chooser.setFileFilter(new FileNameExtensionFilter("Archivos PDF", "pdf"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".pdf")) file = new File(file.getAbsolutePath() + ".pdf");
+        if (file.exists() && JOptionPane.showConfirmDialog(this, "El archivo ya existe. ¿Reemplazarlo?\n" + file.getName(),
+                "Exportar resumen", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        try {
+            Files.write(file.toPath(), pdf);
+            if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(file);
+        } catch (IOException e) {
+            setMessage("No se pudo guardar el PDF: " + e.getMessage());
+        }
+    }
+
+    private byte[] generarResumenPdf() throws IOException {
+        List<PdfResumenCuentaUtils.Linea> lineas = new ArrayList<>();
+        for (int r = 0; r < saleTable.getRowCount(); r++) {
+            Object src = saleRowSources.get(saleTable.convertRowIndexToModel(r));
+            if (src instanceof SalePendingInfo sale) {
+                lineas.add(new PdfResumenCuentaUtils.Linea(sale.getDate(), TIPO_VENTA, sale.getSaleId(), sale.getSaleNumber(),
+                        sale.getCae(), sale.getTotal(), sale.getRemainingDue(), false));
+            } else if (src instanceof CreditInfo credit) {
+                lineas.add(new PdfResumenCuentaUtils.Linea(credit.getDate(), credit.getLabel(), credit.getSaleId(), credit.getSaleNumber(),
+                        credit.getCae(), credit.getAmount().negate(), credit.getRemaining().negate(), true));
+            }
+        }
+
+        LocalDate[] range = dpFilter.getSelectedDateRange();
+        return PdfResumenCuentaUtils.generarResumen(currentCustomer, lineas,
+                range != null ? range[0] : null, range != null ? range[1] : null,
+                idSearchTextField.getText().trim(), pendingData.getTotalPending(), pendingData.getCreditBalance());
     }
 
     private void loadPays() {
@@ -299,6 +395,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         refreshButton.addActionListener(e -> refreshFromDB());
         //showAllButton.addActionListener(e -> saleTable.clearSelection());
         multiPayButton.addActionListener(e -> openMultiPaymentDialog());
+        exportPdfButton.addActionListener(e -> exportarResumenPdf());
+        exportPdfButton.setToolTipText("Exportar el resumen de cuenta en PDF (actualiza los datos desde el servidor)");
         dpFilter.setDateSelectionMode(DatePicker.DateSelectionMode.BETWEEN_DATE_SELECTED);
         dpFilter.setUsePanelOption(true);
         dpFilter.setBackground(Color.GRAY);
@@ -337,6 +435,8 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         //LightTheme.aplicarEstiloSecundario(showAllButton);
         filterPanel.add(multiPayButton);
         LightTheme.aplicarEstiloPrimario(multiPayButton);
+        filterPanel.add(exportPdfButton);
+        LightTheme.aplicarEstiloPrimario(exportPdfButton);
         filterPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(0, 10, 10, 10),  
             BorderFactory.createTitledBorder(
@@ -576,10 +676,12 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         saleTable.clearSelection();
         paysTableModel.setRowCount(0);
         saleTableModel.setRowCount(0);
+        saleRowSources.clear();
         dpFilter.clearSelectedDate();
         idSearchTextField.setText("");
         observationSearchTextField.setText("");
         customerInfoLabel.setText("");
+        currentCustomer = null; // hasta que termine de cargar el cliente nuevo no se puede exportar
         //salePaidMap.clear();
         
         messageLabel.setText("");
