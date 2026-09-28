@@ -53,7 +53,8 @@ private static final long serialVersionUID = 1L;
 	
 	private JPanel inputPanel;
 	private JPanel tablePanel;
-	private static final Object[] COLUMNS = {"Nombre/Razon Social", "D.N.I", "CUIT / CUIL", "Email", "Telefono", "Direccion", "id"};
+	private static final Object[] COLUMNS = {"Nombre/Razon Social", "D.N.I", "CUIT / CUIL", "Compañía", "Email", "Telefono", "Direccion", "id"};
+	private static final int COL_COMPANIA = 3;
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -134,7 +135,7 @@ private static final long serialVersionUID = 1L;
 	        
 			List<Customer> customers = controller.getCustomers();
 			for(Customer c : customers) {
-				Object[] row = {c.getFullName(), c.getDni(), c.getCuit(), c.getEmail(), c.getPhone(), c.getAdress(), c.getId()};
+				Object[] row = {c.getFullName(), c.getDni(), c.getCuit(), c.isEsCompania(), c.getEmail(), c.getPhone(), c.getAdress(), c.getId()};
 				tableModel.addRow(row);
 			}
 		}
@@ -262,8 +263,9 @@ private static final long serialVersionUID = 1L;
 				@Override
 	            public Class<?> getColumnClass(int column) {
 	                switch (column) {
-	                    case 3: return String.class;
-	                    case 6: return Long.class;
+	                    case COL_COMPANIA: return Boolean.class; // se dibuja como checkbox (solo lectura)
+	                    case 4: return String.class;
+	                    case 7: return Long.class;
 	                    default:return Object.class;
 	                }
 	            }
@@ -274,6 +276,8 @@ private static final long serialVersionUID = 1L;
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMaxWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setMinWidth(0);
 			table.getColumnModel().getColumn(table.getColumnCount()-1).setPreferredWidth(0);
+			table.getColumnModel().getColumn(COL_COMPANIA).setMaxWidth(90);
+			table.getColumnModel().getColumn(COL_COMPANIA).setPreferredWidth(80);
 			table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 				@Override
 				public void valueChanged(ListSelectionEvent e) {
