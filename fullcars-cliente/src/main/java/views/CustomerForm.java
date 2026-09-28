@@ -7,7 +7,10 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
@@ -24,6 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -55,6 +59,10 @@ private static final long serialVersionUID = 1L;
 	private JPanel tablePanel;
 	private static final Object[] COLUMNS = {"Nombre/Razon Social", "D.N.I", "CUIT / CUIL", "Compañía", "Email", "Telefono", "Direccion", "id"};
 	private static final int COL_COMPANIA = 3;
+	private static final int COL_ID = 7;
+	/** Clientes con un cambio de "Compañía" en curso (su checkbox queda bloqueado hasta que responda el servidor). */
+	private final Set<Long> guardandoEsCompania = new HashSet<>();
+	private boolean revirtiendo = false;
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JLabel messageLabel;
@@ -115,7 +123,44 @@ private static final long serialVersionUID = 1L;
 				setMessage("No se pudo Guardar");
 		}
 		
-		private void delete() {			
+		/** Guarda en el servidor el checkbox "Compañía" de la tabla; si falla vuelve al valor anterior y avisa. */
+		private void guardarEsCompania(Long id, boolean value) {
+			guardandoEsCompania.add(id);
+			new SwingWorker<Void, Void>() {
+				@Override
+				protected Void doInBackground() throws Exception {
+					controller.setEsCompania(id, value);
+					return null;
+				}
+				@Override
+				protected void done() {
+					guardandoEsCompania.remove(id);
+					try {
+						get();
+						// si el formulario esta modificando a este cliente, que no vuelva a guardar el valor viejo
+						if (confirmButton.isInModifyMode() && id.equals(confirmButton.getIdToModify()))
+							esCompaniaCheck.setSelected(value);
+					} catch (Exception e) {
+						Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
+						int row = modelRowOf(id);
+						if (row != -1) {
+							revirtiendo = true;
+							tableModel.setValueAt(!value, row, COL_COMPANIA);
+							revirtiendo = false;
+						}
+						setMessage("No se pudo actualizar 'Compañía': " + cause.getMessage());
+					}
+				}
+			}.execute();
+		}
+
+		private int modelRowOf(Long id) {
+			for (int r = 0; r < tableModel.getRowCount(); r++)
+				if (id.equals(tableModel.getValueAt(r, COL_ID))) return r;
+			return -1;
+		}
+
+		private void delete() {
 			String name = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"Nombre completo"));
 			try {
 				if(JOptionPane.showConfirmDialog(null, "Desea eliminar al cliente "+ name,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
@@ -258,17 +303,25 @@ private static final long serialVersionUID = 1L;
 			tableModel = new DefaultTableModel(COLUMNS, 0){
 				@Override
 	            public boolean isCellEditable(int row, int column) {
-	                return false;
+	                // solo "Compañía", y no mientras se esta guardando un cambio anterior de ese cliente
+	                return column == COL_COMPANIA && !guardandoEsCompania.contains(getValueAt(row, COL_ID));
 	            }
 				@Override
 	            public Class<?> getColumnClass(int column) {
 	                switch (column) {
-	                    case COL_COMPANIA: return Boolean.class; // se dibuja como checkbox (solo lectura)
+	                    case COL_COMPANIA: return Boolean.class; // se dibuja como checkbox
 	                    case 4: return String.class;
-	                    case 7: return Long.class;
+	                    case COL_ID: return Long.class;
 	                    default:return Object.class;
 	                }
 	            }
+				@Override
+				public void setValueAt(Object value, int row, int column) {
+					Object anterior = getValueAt(row, column);
+					super.setValueAt(value, row, column);
+					if (column == COL_COMPANIA && !revirtiendo && !value.equals(anterior))
+						guardarEsCompania((Long) getValueAt(row, COL_ID), (Boolean) value);
+				}
 	        };
 			table = new JTable(tableModel);
 			table.setToolTipText("Click Derecho para Eliminar o Modificar, selecciona un cliente(click izquierdo) para ver su saldo");

@@ -37,6 +37,10 @@ private final ClienteRestCustomer serviceCustomer = new ClienteRestCustomer();
 	public void delete(Long id) throws IOException, ServerException {
 		serviceCustomer.delete(id);
 	}
+
+	public void setEsCompania(Long id, boolean value) throws IOException, ServerException {
+		serviceCustomer.setEsCompania(id, value);
+	}
 	
 	public CustomerSummaryDTO getCustomerSummary(Long id){
 		return serviceCustomer.getCustomerSummary(id);

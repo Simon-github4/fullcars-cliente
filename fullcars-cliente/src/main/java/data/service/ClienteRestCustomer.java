@@ -127,6 +127,25 @@ public class ClienteRestCustomer {
 		}
 	}
 
+	/** Cambia solo "Es Compania" del cliente (checkbox de la tabla de clientes). */
+	public void setEsCompania(Long id, boolean value) throws IOException, ServerException {
+		Request request = new Request.Builder()
+				.url(ADDRESS + "/" + id + "/es-compania?value=" + value)
+				.patch(RequestBody.create(new byte[0]))
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
+				System.err.println("Failed to update esCompania. Code: " + response.code());
+				throw new ServerException(errorBody);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IOException("No se pudo actualizar el cliente, falla en conexion a servidor");
+		}
+	}
+
 	public void delete(Long id) throws IOException, ServerException {
 		Request request = new Request.Builder()
 	            .url(ADDRESS + "/" + id)
