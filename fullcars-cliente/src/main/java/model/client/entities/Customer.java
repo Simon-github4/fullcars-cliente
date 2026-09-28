@@ -24,6 +24,9 @@ public class Customer implements Comparable<Customer>{
     
     private BigDecimal creditBalance;
 
+    /** Compania de seguros: en su resumen de cuenta se muestra el nro de siniestro. */
+    private boolean esCompania;
+
     @Override
     public String toString() {
     	return fullName;

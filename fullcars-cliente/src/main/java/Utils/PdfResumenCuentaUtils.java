@@ -39,7 +39,7 @@ import model.client.entities.Customer;
 public class PdfResumenCuentaUtils {
 
     /** Una fila del resumen. En los creditos, total y pendiente vienen en negativo (como en pantalla). */
-    public record Linea(LocalDate fecha, String tipo, Long nroVenta, String siniestro, String cae,
+    public record Linea(LocalDate fecha, String tipo, Long nroVenta, String siniestro,
                         BigDecimal total, BigDecimal pendiente, boolean credito) {}
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -69,7 +69,8 @@ public class PdfResumenCuentaUtils {
 
         encabezado(document, bold);
         datosCliente(document, bold, customer, desde, hasta, filtroNroVenta);
-        tablaMovimientos(document, bold, lineas);
+        // El nro de siniestro solo interesa a las companias de seguros; a los talleres se les vende "particular".
+        tablaMovimientos(document, bold, lineas, customer != null && customer.isEsCompania());
 
         BigDecimal saldoListado = BigDecimal.ZERO;
         BigDecimal creditoListado = BigDecimal.ZERO;
@@ -135,15 +136,21 @@ public class PdfResumenCuentaUtils {
         t.addCell(new Cell().setBorder(Border.NO_BORDER).add(new Paragraph(value).setFontSize(10)));
     }
 
-    private static void tablaMovimientos(Document document, PdfFont bold, List<Linea> lineas) {
-        String[] headers = { "Fecha", "Tipo", "Venta", "Siniestro", "CAE", "Total", "Pendiente" };
-        // Anchos pensados para siniestros tipo "56/02/108397/00", CAE de 14 digitos y montos de millones sin cortar linea.
-        Table t = new Table(UnitValue.createPercentArray(new float[] { 10.5f, 20.5f, 8, 15, 15, 15, 16 })).useAllAvailableWidth()
-                .setMarginTop(14);
+    private static void tablaMovimientos(Document document, PdfFont bold, List<Linea> lineas, boolean conSiniestro) {
+        // Anchos pensados para siniestros tipo "56/02/108397/00" y montos de millones sin cortar linea.
+        String[] headers = conSiniestro
+                ? new String[] { "Fecha", "Tipo", "Venta", "Siniestro", "Total", "Pendiente" }
+                : new String[] { "Fecha", "Tipo", "Venta", "Total", "Pendiente" };
+        float[] widths = conSiniestro
+                ? new float[] { 12, 26, 9, 17, 18, 18 }
+                : new float[] { 13, 33, 10, 22, 22 };
+        int firstAmountCol = headers.length - 2;
+
+        Table t = new Table(UnitValue.createPercentArray(widths)).useAllAvailableWidth().setMarginTop(14);
         for (int i = 0; i < headers.length; i++) {
             t.addHeaderCell(new Cell().setBackgroundColor(AZUL).setBorder(new SolidBorder(AZUL, 0.5f))
-                    .setTextAlignment(i >= 5 ? TextAlignment.RIGHT : TextAlignment.LEFT)
-                    .add(new Paragraph(headers[i]).setFont(bold).setFontColor(DeviceRgb.WHITE).setFontSize(8.5f)));
+                    .setTextAlignment(i >= firstAmountCol ? TextAlignment.RIGHT : TextAlignment.LEFT)
+                    .add(new Paragraph(headers[i]).setFont(bold).setFontColor(DeviceRgb.WHITE).setFontSize(9)));
         }
 
         if (lineas.isEmpty()) {
@@ -158,10 +165,11 @@ public class PdfResumenCuentaUtils {
             t.addCell(celda(l.fecha() != null ? l.fecha().format(DATE) : "-", bg, TextAlignment.LEFT, null, null));
             t.addCell(celda(nvl(l.tipo()), bg, TextAlignment.LEFT, l.credito() ? ROJO : null, l.credito() ? bold : null));
             t.addCell(celda(l.nroVenta() != null ? String.valueOf(l.nroVenta()) : "-", bg, TextAlignment.LEFT, null, null));
-            // sin siniestro: "Particular" si hay venta asociada, "-" si no (p.ej. excedente de pago)
-            String siniestro = notBlank(l.siniestro()) ? l.siniestro() : (l.nroVenta() != null ? "Particular" : "-");
-            t.addCell(celda(siniestro, bg, TextAlignment.LEFT, null, null));
-            t.addCell(celda(notBlank(l.cae()) ? l.cae() : "-", bg, TextAlignment.LEFT, null, null));
+            if (conSiniestro) {
+                // sin siniestro: "Particular" si hay venta asociada, "-" si no (p.ej. excedente de pago)
+                String siniestro = notBlank(l.siniestro()) ? l.siniestro() : (l.nroVenta() != null ? "Particular" : "-");
+                t.addCell(celda(siniestro, bg, TextAlignment.LEFT, null, null));
+            }
             t.addCell(celda(money(l.total()), bg, TextAlignment.RIGHT, montoColor, null));
             t.addCell(celda(money(l.pendiente()), bg, TextAlignment.RIGHT, montoColor, bold));
         }
@@ -169,7 +177,7 @@ public class PdfResumenCuentaUtils {
     }
 
     private static Cell celda(String text, Color bg, TextAlignment align, Color color, PdfFont font) {
-        Paragraph p = new Paragraph(text).setFontSize(8);
+        Paragraph p = new Paragraph(text).setFontSize(9);
         if (color != null) p.setFontColor(color);
         if (font != null) p.setFont(font);
         return new Cell().setBackgroundColor(bg).setBorder(Border.NO_BORDER)

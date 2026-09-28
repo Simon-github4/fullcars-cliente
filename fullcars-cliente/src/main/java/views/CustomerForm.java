@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -64,6 +65,7 @@ private static final long serialVersionUID = 1L;
 	private JTextField adressTextField = new JTextField("", 29);
 	private JTextField phoneTextField = new JTextField("", 29);
 	private JTextField mailTextField = new JTextField("", 29);
+	private JCheckBox esCompaniaCheck = new JCheckBox("Es Compañía");
 	private NewModifyButton confirmButton = new NewModifyButton();
 	
 	private JButton searchButton = new JButton("Buscar", Icons.LENS.create(18,18));
@@ -97,6 +99,7 @@ private static final long serialVersionUID = 1L;
 					.cuit(cuitTextField.getText())
 					.email(mailTextField.getText())
 					.phone(phoneTextField.getText())
+					.esCompania(esCompaniaCheck.isSelected())
 					.build();
 
 			if(confirmButton.isInModifyMode()) {
@@ -218,10 +221,13 @@ private static final long serialVersionUID = 1L;
 			rowsPanel.add(columnPanel);
 			
 			columnPanel = new JPanel(new GridLayout(1,0));
-			columnPanel.add(mailTextField);		
+			columnPanel.add(mailTextField);
 			columnPanel.add(phoneTextField);
 			rowsPanel.add(columnPanel);
-			
+
+			esCompaniaCheck.setToolTipText("Compañía de seguros: en su resumen de cuenta se muestra el número de siniestro");
+			rowsPanel.add(esCompaniaCheck);
+
 			inputPanel.add(rowsPanel);
 			
 			JPanel buttonsPanel = new JPanel(new BorderLayout());
@@ -304,7 +310,8 @@ private static final long serialVersionUID = 1L;
 					adressTextField.setText(c.getAdress());
 					phoneTextField.setText(c.getPhone());
 					mailTextField.setText(c.getEmail());
-						
+					esCompaniaCheck.setSelected(c.isEsCompania());
+
 					if(!inputPanel.isVisible())
 						toggleButton.doClick();
 					
@@ -334,6 +341,7 @@ private static final long serialVersionUID = 1L;
 			adressTextField.setText("");
 			phoneTextField.setText("");
 			mailTextField.setText("");
+			esCompaniaCheck.setSelected(false);
 			confirmButton.toNew();
 			
 			messageLabel.setText("");

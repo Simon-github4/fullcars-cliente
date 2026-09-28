@@ -370,10 +370,10 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
             Object src = saleRowSources.get(saleTable.convertRowIndexToModel(r));
             if (src instanceof SalePendingInfo sale) {
                 lineas.add(new PdfResumenCuentaUtils.Linea(sale.getDate(), TIPO_VENTA, sale.getSaleId(), sale.getSaleNumber(),
-                        sale.getCae(), sale.getTotal(), sale.getRemainingDue(), false));
+                        sale.getTotal(), sale.getRemainingDue(), false));
             } else if (src instanceof CreditInfo credit) {
                 lineas.add(new PdfResumenCuentaUtils.Linea(credit.getDate(), credit.getLabel(), credit.getSaleId(), credit.getSaleNumber(),
-                        credit.getCae(), credit.getAmount().negate(), credit.getRemaining().negate(), true));
+                        credit.getAmount().negate(), credit.getRemaining().negate(), true));
             }
         }
 
