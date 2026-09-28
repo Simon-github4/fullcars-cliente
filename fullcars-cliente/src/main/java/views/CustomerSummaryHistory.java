@@ -332,19 +332,35 @@ public class CustomerSummaryHistory extends JPanel implements Refreshable {
         File downloads = new File(System.getProperty("user.home"), "Downloads");
         chooser.setCurrentDirectory(downloads);
         String cliente = currentCustomer.getFullName().trim().replaceAll("[^\\p{L}\\p{N}]+", "_");
-        chooser.setSelectedFile(new File(downloads, "Resumen_" + cliente + "_" + LocalDate.now() + ".pdf"));
+        String fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("d-M-yyyy"));
+        chooser.setSelectedFile(archivoLibre(new File(downloads, "Resumen_" + cliente + "_" + fecha + ".pdf")));
         chooser.setFileFilter(new FileNameExtensionFilter("Archivos PDF", "pdf"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         File file = chooser.getSelectedFile();
         if (!file.getName().toLowerCase().endsWith(".pdf")) file = new File(file.getAbsolutePath() + ".pdf");
-        if (file.exists() && JOptionPane.showConfirmDialog(this, "El archivo ya existe. ¿Reemplazarlo?\n" + file.getName(),
-                "Exportar resumen", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        file = archivoLibre(file); // nunca pisa un resumen anterior
         try {
             Files.write(file.toPath(), pdf);
             if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(file);
         } catch (IOException e) {
             setMessage("No se pudo guardar el PDF: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Si el archivo ya existe devuelve el primero libre agregando " (1)", " (2)"... antes de la extension, como hace
+     * Windows con las descargas: "Resumen_Quique_28-9-2026.pdf" -> "Resumen_Quique_28-9-2026 (1).pdf".
+     */
+    static File archivoLibre(File file) {
+        if (!file.exists()) return file;
+        String name = file.getName();
+        int dot = name.lastIndexOf('.');
+        String base = dot > 0 ? name.substring(0, dot) : name;
+        String ext = dot > 0 ? name.substring(dot) : "";
+        for (int n = 1; ; n++) {
+            File candidate = new File(file.getParentFile(), base + " (" + n + ")" + ext);
+            if (!candidate.exists()) return candidate;
         }
     }
 
