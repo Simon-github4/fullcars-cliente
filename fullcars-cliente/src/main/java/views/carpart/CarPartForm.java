@@ -123,10 +123,14 @@ private static final long serialVersionUID = 1L;
 		}
 		
 		private void delete() {			  //TO-DO : Personalize
-			String sku = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"SKU"));
+			if (table.getSelectedRow() == -1)
+				return;
+			// fila del modelo: con la tabla filtrada u ordenada, la fila que se ve no es la del modelo
+			int row = table.convertRowIndexToModel(table.getSelectedRow());
+			String sku = (String)tableModel.getValueAt(row, tableModel.findColumn("SKU"));
+			Long id = (Long)tableModel.getValueAt(row, tableModel.findColumn("id"));
 			try {
 				if(JOptionPane.showConfirmDialog(null, "Desea eliminar al producto con el sku: "+sku,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-					Long id = (Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
 					controller.delete(id);
 					clearFields();
 					loadTable();

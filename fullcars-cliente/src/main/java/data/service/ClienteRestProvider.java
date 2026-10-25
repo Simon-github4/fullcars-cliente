@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import InitClass.Initializr;
+import Utils.ServerException;
 import dtos.TaskStatusInfo;
 import model.client.entities.CarPart;
 import model.client.entities.Provider;
@@ -108,7 +109,7 @@ public class ClienteRestProvider {
 		}
 	}
 
-	public void delete(Long id) throws IOException {
+	public void delete(Long id) throws IOException, ServerException {
 		Request request = new Request.Builder()
 	            .url(ADDRESS + "/" + id)
 	            .delete()
@@ -118,10 +119,12 @@ public class ClienteRestProvider {
 	            if (response.isSuccessful()) {
 	                System.out.println("Provider deleted successfully (ID: " + id + ")");
 	            } else {
+	                String errorBody = response.body() != null ? response.body().string() : "Error inesperado";
 	                System.err.println("Failed to delete Provider. Code: " + response.code());
-	                System.err.println("Response: " + response.body().string());
+	                System.err.println("Response: " + errorBody);
+	                throw new ServerException(errorBody);
 	            }
-	        } 
+	        }
 	}
 
 	public List<ProviderPart> getProviderParts() {

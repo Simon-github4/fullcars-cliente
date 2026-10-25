@@ -30,7 +30,7 @@ public class ProviderController {
 		return serviceProvider.save(c);
 	}
 
-	public void delete(Long id) throws IOException  {
+	public void delete(Long id) throws IOException, ServerException {
 		try {
 			serviceProvider.delete(id);
 		} catch (IOException e) {

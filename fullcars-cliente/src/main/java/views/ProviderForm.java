@@ -109,17 +109,21 @@ private static final long serialVersionUID = 1L;
 				setMessage("No se pudo Guardar");
 		}
 		
-		private void delete() {			
-			String name = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"Nombre"));
+		private void delete() {
+			if (table.getSelectedRow() == -1)
+				return;
+			// fila del modelo: con la tabla filtrada u ordenada, la fila que se ve no es la del modelo
+			int row = table.convertRowIndexToModel(table.getSelectedRow());
+			String name = (String)tableModel.getValueAt(row, tableModel.findColumn("Nombre"));
+			Long id = (Long)tableModel.getValueAt(row, tableModel.findColumn("id"));
 			try {
 				if(JOptionPane.showConfirmDialog(null, "Desea eliminar al proveedor "+ name,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-					Long id = (Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
 					controller.delete(id);
 					clearFields();
 					loadTable();
 				}
 			}catch(Exception e) {
-				setMessage(e.getCause().getMessage());
+				setMessage(e.getMessage());
 			}
 		}
 		
@@ -361,7 +365,9 @@ private static final long serialVersionUID = 1L;
 		}
 
 		private void uploadExcel() {
-			Long id = (Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
+			if (table.getSelectedRow() == -1)
+				return;
+			Long id = (Long)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), tableModel.findColumn("id"));
 			ExcelMappingDialog dialog = new ExcelMappingDialog(null, id);
 			dialog.setVisible(true);
 		}
