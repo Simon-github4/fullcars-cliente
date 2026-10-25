@@ -6,6 +6,7 @@ import java.util.List;
 import Utils.ServerException;
 import data.service.ClienteRestCustomer;
 import deprecated.CustomerSummaryDTO;
+import dtos.CustomerDebtStatusResponse;
 import lombok.Getter;
 import lombok.Setter;
 import model.client.entities.Customer;
@@ -44,6 +45,10 @@ private final ClienteRestCustomer serviceCustomer = new ClienteRestCustomer();
 	
 	public CustomerSummaryDTO getCustomerSummary(Long id){
 		return serviceCustomer.getCustomerSummary(id);
+	}
+
+	public CustomerDebtStatusResponse getDebtStatus(){
+		return serviceCustomer.getDebtStatus();
 	}
 
 }

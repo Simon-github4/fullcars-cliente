@@ -15,6 +15,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import InitClass.Initializr;
 import Utils.ServerException;
 import deprecated.CustomerSummaryDTO;
+import dtos.CustomerDebtStatusResponse;
 import model.client.entities.Customer;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -168,6 +169,27 @@ public class ClienteRestCustomer {
 	}
 
 	
+	/** Estado de deuda de todos los clientes (aviso de la tabla de clientes); null si no se pudo consultar. */
+	public CustomerDebtStatusResponse getDebtStatus() {
+	    Request request = new Request.Builder()
+	            .url(ADDRESS + "/debt-status")
+	            .get()
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (response.isSuccessful() && response.body() != null) {
+	        	String json = response.body().string();
+	            return mapper.readValue(json, CustomerDebtStatusResponse.class);
+	        } else {
+	            System.err.println("Error HTTP: " + response.code());
+	            return null;
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
+
 	public CustomerSummaryDTO getCustomerSummary(Long id) {
 		String uri = ADDRESS +"/"+ URLEncoder.encode(id.toString(), StandardCharsets.UTF_8)+"/summary";
 
