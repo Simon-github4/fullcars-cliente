@@ -165,15 +165,20 @@ private static final long serialVersionUID = 1L;
 			}
 		}
 		
-		private void delete() {			
+		private void delete() {
+			if (table.getSelectedRow() == -1)
+				return;
+			// fila del modelo: con la tabla filtrada u ordenada, la fila que se ve no es la del modelo.
+			// Tipo, referencia e id salen de la misma fila: el backend no impide borrar los de compras o ventas.
+			int row = table.convertRowIndexToModel(table.getSelectedRow());
 			try {
-				String type = ((MovementType)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex("Tipo"))).toString();
+				String type = ((MovementType)tableModel.getValueAt(row, tableModel.findColumn("Tipo"))).toString();
 				if(type.equalsIgnoreCase("ENTRADA_COMPRA") || type.equalsIgnoreCase("SALIDA_VENTA"))
 					throw new ServerException("No se pueden eliminar movimientos de compras o ventas, unicamente de Ajustes");//throw new Exception("No se pueden eliminar movimientos de compras o ventas, unicamente de Ajustes");
 
-				String reference = (String)tableModel.getValueAt(table.convertRowIndexToModel(table.getSelectedRow()), table.getColumnModel().getColumnIndex((String)"Referencia"));
+				String reference = (String)tableModel.getValueAt(row, tableModel.findColumn("Referencia"));
+				Long id = (Long)tableModel.getValueAt(row, tableModel.findColumn("id"));
 				if(JOptionPane.showConfirmDialog(null, "Desea eliminar el movimiento "+ reference,  "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-					Long id = (Long)tableModel.getValueAt(table.getSelectedRow(), table.getColumnModel().getColumnIndex((String)"id"));
 					controller.delete(id);
 					clearFields();
 					loadTable();
